@@ -1,4 +1,6 @@
 board: freenove-esp32-wrover-ext
+layout:
+  notes_position: right
 title: Robot drive — two motors, L298N driver and joystick (FNK0046)
 subtitle: The class robot's control circuit on the GPIO extension board
 components:
@@ -30,17 +32,17 @@ wires:
   - {from: driver.OUT3, to: bb.8.j, color: red, label: right motor +}
   - {from: driver.OUT4, to: bb.9.j, color: black, label: right motor −}
 steps:
-  - text: "Seat the ESP32 on the extension board, then plug the joystick into columns 9-13, row c."
-  - text: "Joystick: GND, 3V3, then VRx → GPIO 36, VRy → GPIO 39, SW → GPIO 4."
-  - text: "Driver logic: ENA → GPIO 13, IN1 → GPIO 12, IN2 → GPIO 14 (left motor)."
-  - text: "Driver logic: IN3 → GPIO 18, IN4 → GPIO 19, ENB → GPIO 5 (right motor)."
-  - text: "Ground the driver and the joystick to GND; never skip this wire."
-  - text: "Motor leads plug into columns 2-3 (left) and 8-9 (right), row j."
-  - text: "Run wires from those columns to the driver's OUT1/OUT2 and OUT3/OUT4 screws."
-  - text: "9V battery clip → the driver's 12V and GND terminals (not shown here)."
+  - text: "ESP32 on the extension board; joystick into columns 9-13, row c."
+  - text: "Joystick: GND, 3V3, VRx → 36, VRy → 39, SW → 4."
+  - text: "Driver: ENA → 13, IN1 → 12, IN2 → 14 (left motor)."
+  - text: "Driver: IN3 → 18, IN4 → 19, ENB → 5 (right motor)."
+  - text: "GND from both the driver and the joystick."
+  - text: "Motor leads: columns 2-3 (left) and 8-9 (right), row j."
+  - text: "Wire those columns to OUT1/OUT2 and OUT3/OUT4."
+  - text: "9V clip → the driver's 12V and GND (not shown)."
 notes:
   - "Left motor: OUT1/OUT2. Right motor: OUT3/OUT4. Swap a motor's two wires to reverse it."
-  - "ENA and ENB are PWM: duty controls speed, IN1/IN2 (and IN3/IN4) control direction."
-  - "Code: VRx = ADC(Pin(36)), VRy = ADC(Pin(39)) with ATTN_11DB; SW = Pin(4, Pin.IN, Pin.PULL_UP)."
-  - text: "The driver's 5V pin can power the board when running from the battery — never with USB and the battery connected at the same time."
+  - "ENA/ENB are PWM (speed); IN1-IN4 set direction."
+  - "VRx = ADC(Pin(36)), VRy = ADC(Pin(39)) with ATTN_11DB; SW = Pin(4, PULL_UP)."
+  - text: "The driver's 5V pin can power the board from the battery — never with USB too."
     warn: true

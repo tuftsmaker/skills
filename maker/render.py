@@ -85,8 +85,16 @@ def build_svg(spec, board):
     left_wires = sum(1 for l in lanes if l.get("side") == "L")
     if left_wires:
         L.notes_top = max(L.notes_top, L.corridor0 + (left_wires - 1) * L.corridor_pitch + 26)
-    legend = legend_rows(L, spec)
-    L.H = L.notes_top + 44 + 33 * len(steps) + 18 + 33 * len(notes) + 44 + (legend - 1) * 36
+    if str(layout_over.get("notes_position", "bottom")).lower() == "right":
+        L.notes_w = int(layout_over.get("notes_width", 640))
+        L.notes_x = L.W + 30
+        L.notes_position = "right"
+        L.W += L.notes_w
+        L.H = max(L.notes_top + 40,
+                  notes_block_height(L, spec, steps, notes) + 30)
+    else:
+        legend = legend_rows(L, spec)
+        L.H = L.notes_top + 44 + 33 * len(steps) + 18 + 33 * len(notes) + 44 + (legend - 1) * 36
 
     out = []
     add = out.append
@@ -142,6 +150,27 @@ def build_svg(spec, board):
     return "\n".join(out)
 
 
+def wrap_text(text, max_px, size=18):
+    """Greedy word wrap, sized for the 18px note font."""
+    per = max(8, int(max_px / (size * 0.53)))
+    lines, line = [], ""
+    for word in str(text).split():
+        cand = (line + " " + word).strip()
+        if len(cand) <= per:
+            line = cand
+        else:
+            if line:
+                lines.append(line)
+            line = word
+    if line:
+        lines.append(line)
+    return lines or [""]
+
+
+def notes_side(L):
+    return str((L.notes_position or "bottom")).lower() == "right"
+
+
 def legend_layout(L, spec, steps):
     """Place legend items, wrapping at the canvas edge.
 
@@ -180,6 +209,9 @@ def legend_rows(L, spec):
 
 
 def draw_notes(add, L, spec, steps, notes):
+    if notes_side(L):
+        draw_notes_right(add, L, spec, steps, notes)
+        return
     placements = legend_layout(L, spec, steps)
     rows = max(p[3] for p in placements) + 1
     for kind, payload, x, row in placements:
@@ -216,6 +248,179 @@ def draw_notes(add, L, spec, steps, notes):
         fill = "#8a5a00" if warn else "#666"
         add(f'<text x="90" y="{y}" font-size="18" fill="{fill}">{esc(text)}</text>')
         y += 33
+
+
+def notes_block_height(L, spec, steps, notes):
+    """Height the side notes column will need, wrapped at its true width."""
+    width = L.notes_w - 60
+    h = 150 + 32 * len(legend_layout(L, spec, steps))
+    if steps:
+        h += 22 + 33
+        for s in steps:
+            text = s if isinstance(s, str) else s.get("text", "")
+            h += 31 * len(wrap_text(text, width)) + 6
+    if notes:
+        h += 18
+        for n in notes:
+            text = n.get("text", "") if isinstance(n, dict) else n
+            h += 31 * len(wrap_text(text, width)) + 8
+    return h
+
+
+def draw_notes_right(add, L, spec, steps, notes):
+    """Steps and notes in a column beside the drawing (keeps the canvas wide)."""
+    x0 = L.notes_x
+    width = L.notes_w - 60
+    y = 150
+    placements = legend_layout(L, spec, steps)
+    for kind, payload, _x, _row in placements:
+        if kind == "wire":
+            c, text = payload
+            hexc = wire_mod.COLOURS.get(c, c)
+            add(f'<rect x="{x0}" y="{y-17}" width="26" height="16" rx="4" fill="{hexc}"/>')
+            add(f'<text x="{x0+34}" y="{y-2}" font-size="18" fill="#444">{esc(text)}</text>')
+            y += 32
+        elif kind == "pin":
+            add(f'<circle cx="{x0+13}" cy="{y-9}" r="9" fill="{PIN_GOLD}"/>')
+            add(f'<text x="{x0+30}" y="{y-2}" font-size="18" fill="#444">board pin</text>')
+            y += 32
+        elif kind == "net":
+            add(f'<rect x="{x0}" y="{y-20}" width="26" height="20" rx="9" fill="{NET}"/>')
+            add(f'<text x="{x0+36}" y="{y-2}" font-size="18" fill="#444">'
+                f'one connected net (5 holes)</text>')
+            y += 32
+        elif kind == "badge":
+            add(f'<circle cx="{x0+10}" cy="{y-9}" r="10" fill="{BADGE}" stroke="#fff" stroke-width="3"/>')
+            add(f'<text x="{x0+32}" y="{y-2}" font-size="18" fill="#444">build order</text>')
+            y += 32
+    if steps:
+        y += 22
+        add(f'<text x="{x0}" y="{y}" font-size="18" font-weight="700" fill="#26262b">Steps</text>')
+        y += 33
+        for i, s in enumerate(steps, start=1):
+            text = s if isinstance(s, str) else s.get("text", "")
+            for j, line in enumerate(wrap_text(text, width)):
+                prefix = f"{i}.  " if j == 0 else "    "
+                add(f'<text x="{x0}" y="{y}" font-size="18" fill="#444">{prefix}{esc(line)}</text>')
+                y += 31
+            y += 6
+    if notes:
+        y += 18
+        for n in notes:
+            warn = isinstance(n, dict)
+            text = n.get("text", "") if warn else n
+            fill = "#8a5a00" if warn else "#666"
+            for line in wrap_text(text, width):
+                add(f'<text x="{x0}" y="{y}" font-size="18" fill="{fill}">{esc(line)}</text>')
+                y += 31
+            y += 8
+
+
+HTML_TEMPLATE = """<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{title}</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #f6f4ef; }
+  body { display: flex; flex-direction: column;
+         font: 15px -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
+  header { display: flex; gap: 8px; align-items: center; padding: 10px 14px;
+           background: #fff; border-bottom: 1px solid #e2ddd3; flex: 0 0 auto; }
+  header .name { font-weight: 600; margin-right: auto; }
+  header .hint { color: #6b6b70; font-size: 13px; }
+  button { font: inherit; padding: 4px 12px; border: 1px solid #cfc9bb;
+           border-radius: 8px; background: #fff; cursor: pointer; }
+  button:hover { background: #f0ede6; }
+  #stage { flex: 1 1 auto; overflow: hidden; position: relative; cursor: grab;
+           touch-action: none; }
+  #stage.dragging { cursor: grabbing; }
+  #panel { position: absolute; top: 0; left: 0; transform-origin: 0 0; will-change: transform; }
+  #panel svg { display: block; background: #fdfaf3; box-shadow: 0 2px 16px rgba(0,0,0,.12); }
+  @media print {
+    header { display: none; }
+    #stage { overflow: visible; }
+    #panel { position: static; transform: none !important; }
+    #panel svg { width: 100%; height: auto; box-shadow: none; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <span class="name">{title}</span>
+  <span class="hint">scroll = zoom &middot; drag = pan &middot; double-click = fit</span>
+  <button id="zoomout">&minus;</button>
+  <button id="zoomin">+</button>
+  <button id="fit">Fit</button>
+  <button id="one">1:1</button>
+  <button id="print">Print</button>
+</header>
+<div id="stage"><div id="panel">{svg}</div></div>
+<script>
+(function () {
+  var stage = document.getElementById('stage');
+  var panel = document.getElementById('panel');
+  var svg = panel.querySelector('svg');
+  var scale = 1, tx = 0, ty = 0;
+  function size() {
+    var vb = svg.viewBox && svg.viewBox.baseVal;
+    return { w: (vb && vb.width) || svg.getBoundingClientRect().width,
+             h: (vb && vb.height) || svg.getBoundingClientRect().height };
+  }
+  function apply() { panel.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(' + scale + ')'; }
+  function fit() {
+    var s = size(), r = stage.getBoundingClientRect();
+    scale = Math.min(r.width / s.w, r.height / s.h) * 0.98;
+    tx = (r.width - s.w * scale) / 2;
+    ty = (r.height - s.h * scale) / 2;
+    apply();
+  }
+  function actual() { var s = size(), r = stage.getBoundingClientRect(); scale = 1; tx = (r.width - s.w) / 2; ty = 10; apply(); }
+  function zoomAt(cx, cy, factor) {
+    var next = Math.min(24, Math.max(0.05, scale * factor)), k = next / scale;
+    tx = cx - (cx - tx) * k; ty = cy - (cy - ty) * k; scale = next; apply();
+  }
+  stage.addEventListener('wheel', function (e) {
+    e.preventDefault();
+    var r = stage.getBoundingClientRect();
+    zoomAt(e.clientX - r.left, e.clientY - r.top, e.deltaY < 0 ? 1.12 : 1 / 1.12);
+  }, { passive: false });
+  stage.addEventListener('dblclick', fit);
+  document.getElementById('zoomin').onclick = function () { var r = stage.getBoundingClientRect(); zoomAt(r.width / 2, r.height / 2, 1.25); };
+  document.getElementById('zoomout').onclick = function () { var r = stage.getBoundingClientRect(); zoomAt(r.width / 2, r.height / 2, 0.8); };
+  document.getElementById('fit').onclick = fit;
+  document.getElementById('one').onclick = actual;
+  document.getElementById('print').onclick = function () { window.print(); };
+  window.addEventListener('beforeprint', function () { panel.style.transform = 'none'; });
+  window.addEventListener('afterprint', fit);
+  var drag = null;
+  stage.addEventListener('pointerdown', function (e) {
+    drag = { x: e.clientX - tx, y: e.clientY - ty };
+    stage.classList.add('dragging');
+    if (stage.setPointerCapture) stage.setPointerCapture(e.pointerId);
+  });
+  stage.addEventListener('pointermove', function (e) {
+    if (!drag) return; tx = e.clientX - drag.x; ty = e.clientY - drag.y; apply();
+  });
+  stage.addEventListener('pointerup', function () { drag = null; stage.classList.remove('dragging'); });
+  window.addEventListener('resize', fit);
+  fit();
+})();
+</script>
+</body>
+</html>
+"""
+
+
+def write_html(svg_path, html_path, title):
+    """A zoomable, pannable wrapper around the SVG for a browser."""
+    import re as _re
+    svg = open(svg_path).read()
+    svg = _re.sub(r'<\?xml[^>]*\?>', '', svg)
+    html = HTML_TEMPLATE.replace('{title}', title or 'Wiring diagram').replace('{svg}', svg)
+    with open(html_path, 'w') as f:
+        f.write(html)
 
 
 def svg_size(path):
@@ -279,6 +484,7 @@ def main():
     ap.add_argument("--scale", type=float, default=1.1,
                     help="PNG scale factor (default 1.1 — stays under 2000 px for inline previews)")
     ap.add_argument("--no-png", action="store_true", help="only write the SVG")
+    ap.add_argument("--no-html", action="store_true", help="skip the zoomable HTML wrapper")
     args = ap.parse_args()
 
     if args.list or not args.circuit:
@@ -304,6 +510,11 @@ def main():
     with open(svg_path, "w") as f:
         f.write(svg)
     print(f"wrote {svg_path}")
+
+    if not args.no_html:
+        html_path = base + ".html"
+        write_html(svg_path, html_path, spec.get("title"))
+        print(f"wrote {html_path}")
 
     if args.no_png:
         return

@@ -61,13 +61,28 @@ Also mention the file path in text. Never present a diagram by reading the PNG
 back as a tool result, and never open an external viewer for the student.
 
 Keep the PNG at or under 2000 px wide — the default scale already does.
+
+Every render also writes `<name>.html`: the SVG inlined in a small page with
+zoom and pan (scroll to zoom, drag to pan, Fit / 1:1 / Print buttons). Because
+it is vector, zooming stays crisp at any level and printing is sharp. Offer it
+as a link next to the image:
+
+```
+Zoomable version: [out/led.html](out/led.html)
+```
+
 Verified desktop behaviour, so do not fight it:
 
 - The app normalises local images before display, so rendering above ~2000 px
   gains nothing inline. The 1.1 default is the right size.
-- The image viewer has no zoom or pan. If a student needs to inspect a pin
-  closely, point them at the SVG (`out/led.svg`) — browsers zoom and pan SVG
-  losslessly and it prints sharp.
+- The inline image viewer has no zoom or pan, and tall diagrams are clipped at
+  the bottom (the box is roughly 1.9:1). Either keep the canvas wider than
+  that — `layout: {notes_position: right}` moves the steps and notes into a
+  side column, see `circuits/robot-drive.yml` — or accept that the tail of a
+  tall diagram shows only in the fullscreen preview.
+- For close inspection point students at `out/led.html` (zoom/pan/print) or the
+  raw SVG; both scale losslessly. Local links may not be clickable in every
+  desktop build, so mention the file path in text too.
 - Keep output filenames plain: `@` is parsed as a context mention and spaces
   can break the link, so `out/led.png` works while `out/led@2x.png` does not.
 

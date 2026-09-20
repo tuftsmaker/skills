@@ -57,6 +57,9 @@ class Layout:
         # Right-hand pins drop into the gutter between board and breadboard.
         # Left-hand pins leave left, run down the left gutter, cross below the
         # board in the corridor, and climb back up the right-hand gutter.
+        self.notes_position = str(g.get("notes_position", "bottom"))
+        self.notes_w = 0
+        self.notes_x = 0
         self.gutter0 = int(g.get("gutter_x", self.board_x + self.board_w + 20))
         self.gutter_pitch = int(g.get("gutter_pitch", 26))
         self.left_gutter0 = int(g.get("left_gutter_x", self.board_x - 30))
