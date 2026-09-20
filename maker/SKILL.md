@@ -64,12 +64,21 @@ Keep the PNG at or under 2000 px wide — the default scale already does.
 
 Every render also writes `<name>.html`: the SVG inlined in a small page with
 zoom and pan (scroll to zoom, drag to pan, Fit / 1:1 / Print buttons). Because
-it is vector, zooming stays crisp at any level and printing is sharp. Offer it
-as a link next to the image:
+it is vector, zooming stays crisp at any level and printing is sharp.
 
+**Showing the zoomable view inside the desktop app.** The app's browser pane
+(enable it once in Settings → General → experimental browser) only accepts
+HTTP(S), so serve the output folder on loopback and open that URL:
+
+```bash
+(cd out && nohup python3 -m http.server 8765 --bind 127.0.0.1 >/dev/null 2>&1 &)
 ```
-Zoomable version: [out/led.html](out/led.html)
-```
+
+then open `http://127.0.0.1:8765/<name>.html` in a browser tab. The pane's
+`localhost` is the student's own machine, so this works locally for them too.
+Stop the server with `pkill -f "http.server 8765"` when done. A plain markdown
+link to a local file does not open in current desktop builds — mention the
+file path in text as well.
 
 Verified desktop behaviour, so do not fight it:
 
