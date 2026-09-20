@@ -1,47 +1,65 @@
 ---
 name: maker
-description: Generate beginner-friendly breadboard wiring diagrams (SVG + PNG) for Freenove ESP32-WROVER / FNK0046 circuits from a short YAML file. Use when asked for a wiring diagram, breadboard diagram, circuit diagram, Fritzing-style picture, jumper-wire instructions, or to show how to connect an LED, button, buzzer or sensor to an ESP32.
+description: Generate beginner-friendly breadboard wiring diagrams (SVG + PNG) for the Freenove ESP32-WROVER / FNK0046 Super Starter Kit. Covers every part in the kit — LEDs, RGB LED, bar graph, 7-segment display, resistors, diodes, buttons, buzzers, speaker, transistors, potentiometer, photoresistor, thermistor, joystick, servo, TT motor, 9V battery, ultrasonic sensor, LCD1602, L298N driver, 74HC595 and the onboard camera. Use when asked for a wiring diagram, breadboard diagram, circuit diagram, Fritzing-style picture, jumper-wire instructions, or how to connect a part to an ESP32.
 ---
 
 # Breadboard wiring diagrams
 
 Renders a labelled, colour-coded breadboard diagram: the real Freenove
-ESP32-WROVER board with its true header layout, a breadboard with highlighted
-nets, components, and routed jumper wires. Output is SVG plus PNG.
+ESP32-WROVER board (or the same board on its GPIO extension board), a
+breadboard with highlighted nets, components, and routed jumper wires.
+Output is SVG plus PNG.
 
 The board drawing is written once in `boards/`. A new lesson is a ~20-line
-YAML file in `circuits/`.
+YAML file in `circuits/`. Everything the FNK0046 kit contains is supported —
+see the component table below.
 
 ## Setup check
 
 Run these first; they are cheap and the failure messages are otherwise confusing:
 
 ```bash
-command -v python3 rsvg-convert
-python3 -c "import yaml" || python3 -m pip install pyyaml
+command -v python3
+python3 -c "import yaml" || echo "no pyyaml — JSON circuits still work"
+command -v rsvg-convert qlmanage
 ```
 
-`rsvg-convert` comes from `brew install librsvg`. If it is missing the SVG is
-still written — say so rather than treating it as a failure.
+- PyYAML is optional. `.yml` circuits need it (`python3 -m pip install --user pyyaml`); `.json` circuits work with no installs at all.
+- `rsvg-convert` (librsvg) is the preferred rasteriser. If it is missing the renderer falls back to `qlmanage` (macOS) or headless Chrome, and otherwise still writes the SVG.
 
 ## Run it
 
+The skill lives wherever opencode installed it (often
+`~/.cache/opencode/skills/maker`). Resolve that path from this file's
+location — do not assume the current directory:
+
 ```bash
-python3 .opencode/skills/maker/render.py \
-    .opencode/skills/maker/circuits/led.yml \
-    -o out/led
+SKILL="<directory containing this SKILL.md>"
+python3 "$SKILL/render.py" "$SKILL/circuits/led.yml" -o out/led
 ```
 
-Writes `out/led.svg` and `out/led.png`. Also useful:
+Writes `out/led.svg` and `out/led.png` **into the current project directory**
+(never into the skill directory). Also useful:
 
 ```bash
 render.py --list                       # boards and example circuits
 render.py circuits/led.yml --no-png    # SVG only
-render.py circuits/led.yml --scale 3   # bigger PNG
+render.py circuits/led.yml --scale 2   # bigger PNG
 ```
 
-Always show the result to the user. Inline images often do not render in a
-terminal, so on macOS open it: `open out/led.png`.
+## Show the result inline
+
+The desktop app renders a PNG inline when the reply contains plain markdown
+image syntax with a workspace-relative path. After every render, finish your
+reply with a line exactly like this (not inside a code fence):
+
+```
+![Add an external LED](out/led.png)
+```
+
+Also mention the file path in text. Never present a diagram by reading the PNG
+back as a tool result, and never open an external viewer for the student.
+Keep the PNG at or under 2000 px wide — the default scale already does.
 
 ## Writing a circuit
 
@@ -49,6 +67,7 @@ Copy `circuits/led.yml` and edit it. Full schema:
 
 ```yaml
 board: freenove-esp32-wrover      # required; see render.py --list
+# freenove-esp32-wrover-ext       # same board seated on the GPIO extension board
 
 title: Add an external LED
 subtitle: Four steps, two jumper wires
@@ -83,6 +102,8 @@ steps:                            # numbered list under the diagram
 notes:                            # plain string = grey; {text, warn} = amber
   - text: "Never wire an LED without the resistor — it will burn out."
     warn: true
+
+camera: true                      # optional: draw the camera on the board
 ```
 
 ### Endpoints
@@ -102,17 +123,65 @@ breadboard, and the renderer highlights those columns automatically.
 an error listing the candidates; use `board.R17` style instead. Same for any
 repeated name.
 
-## Component library
+### Component library
 
-Defined in `bbd/components.py`; add new ones there.
+Defined in `bbd/components.py`. Footprints follow the real kit parts.
 
-| `type`     | Required keys         | Notes                                       |
-| ---------- | --------------------- | ------------------------------------------- |
-| `resistor` | `value`, `from`       | `span` defaults to 4 columns (0.4")         |
-| `led`      | `at`                  | anode at `at`, cathode one column right     |
-| `button`   | `at`                  | 4 legs, 0.3" wide, 2 rows tall              |
-| `buzzer`   | `at`                  | 2 pins, one column apart                    |
-| `module`   | `at`, `pins`, `label_text` | generic labelled sensor board          |
+| `type`            | Required keys            | Notes                                              |
+| ----------------- | ------------------------ | -------------------------------------------------- |
+| `resistor`        | `value`, `from`          | `span` defaults to 4 columns (0.4")                 |
+| `led`             | `at`                     | anode at `at`, cathode one column right             |
+| `diode`           | `from`                   | axial, silver band = cathode; `band: left` to flip  |
+| `photoresistor`   | `at`                     | LDR, 2 legs one column apart                        |
+| `thermistor`      | `at`                     | 2 legs one column apart                             |
+| `button`          | `at`                     | 4 legs, 0.3" wide, 2 rows tall                      |
+| `buzzer`          | `at`                     | 2 pins, one column apart                            |
+| `speaker`         | `at`                     | 2 wires (red/black), body above the board           |
+| `potentiometer`   | `at`                     | 3 legs; `pins: [left, wiper, right]` to label them  |
+| `transistor`      | `at`                     | TO-92, 3 legs; `kind: npn\|pnp`, `pins: [E, B, C]`  |
+| `rgb_led`         | `at`                     | 4 legs; `pins: [R, common, G, B]`, `common_at: 1`   |
+| `ic`              | `at`                     | DIP straddling the channel; `pins: 16`, `label_text`, `pin_labels: true` |
+| `display_7seg`    | `at`                     | 10 pins (5+5) straddling; `pins: 10`                |
+| `bar_graph`       | `at`                     | 20 pins (10+10) straddling; `pins: 20`              |
+| `servo`           | `at`                     | 3 wires (brown/red/orange)                          |
+| `motor`           | `at`                     | TT gearbox + wheel, 2 wires                         |
+| `battery`         | `at`                     | 9V clip, 2 wires                                    |
+| `ultrasonic`      | `at`                     | HC-SR04, 4 pins; `pins:` to relabel                 |
+| `joystick`        | `at`                     | KY-023, 5 pins; `pins:` to relabel                  |
+| `lcd`             | `at`                     | LCD1602 + I2C backpack, 4 pins                      |
+| `l298n`           | `at`                     | motor driver board, 8 pins; `pins:` to relabel      |
+| `module`          | `at`, `pins`, `label_text` | generic labelled sensor board                     |
+
+DIP parts (`ic`, `display_7seg`, `bar_graph`) always straddle the centre
+channel: pins land in row `e` and row `f`, so `at: [col, e]` and the row part
+is ignored. 3- and 4-lead parts occupy consecutive columns starting at `at`.
+
+## MicroPython rules
+
+The class runs MicroPython (Thonny + the kit's Python tutorial), and the pin
+choices in the examples follow it. Keep these in mind:
+
+- **Analog inputs only on ADC1: GPIO 32-39.** ADC2 does not work while Wi-Fi is on. GPIO 34-39 are input-only (no output, no pull-up).
+- **Buttons**: use `Pin.PULL_UP` in code and wire the button between the pin and GND — no resistor needed.
+- **Servo**: signal on GPIO 15, 50 Hz PWM; power from 5 V.
+- **Ultrasonic HC-SR04**: 5 V powered, Trig GPIO 13, Echo GPIO 14.
+- **LCD1602 I2C**: `I2C(scl=Pin(14), sda=Pin(13))` — the class's pins, not MicroPython's defaults.
+- **Motor driver (L298N)**: IN1 GPIO 12, IN2 GPIO 14, ENA GPIO 13 (PWM); battery + common ground.
+- **74HC595**: DS GPIO 14, ST_CP GPIO 12, SH_CP GPIO 13, OE GPIO 5, MR tied high.
+- **Camera**: needs custom firmware (lemariva/micropython-camera-driver) and claims GPIO 4, 5, 18, 19, 21, 22, 23, 25, 26, 27, 34, 35, 36, 39 — pot/joystick/LDR circuits stop working while it is flashed. Say so in a note.
+
+The examples in `circuits/` already follow this table — start from the closest one.
+
+## Boards
+
+| board                          | when                                            |
+| ------------------------------ | ----------------------------------------------- |
+| `freenove-esp32-wrover`        | bare board; wires go straight to its header pins |
+| `freenove-esp32-wrover-ext`    | ESP32 seated on the GPIO extension board — the class setup |
+
+On the extension board every pin breaks out to a row of 5 holes; wires attach
+at the outer end of the row (the gold hole when the pin is highlighted). Use it
+for class handouts; use the bare board when showing the board itself.
 
 ## Pitfalls
 
@@ -120,14 +189,18 @@ Defined in `bbd/components.py`; add new ones there.
   wrong, check the column number against the rendered image before editing code.
 - `span` on a resistor is the gap between legs, in columns. 4 columns is the
   standard 0.4" lead spacing.
-- Wires are auto-routed through a gutter between the board and the breadboard,
-  one lane per wire. If two wires overlap, give one an explicit `via:`.
-- Re-render and actually look at the PNG after every edit. Layout is geometry;
-  reasoning about coordinates in your head is unreliable.
+- Wires are auto-routed: right-hand pins through the gutter, left-hand pins
+  down the left side and across the corridor under the board. If two runs
+  overlap, give one an explicit `via:`.
+- Tall parts (modules, LCD, servo, motor, battery) sit above their row. Leave
+  the rows above them clear of other parts, or move the part to a lower row.
+- **Re-render and actually look at the PNG after every edit.** Layout is
+  geometry; reasoning about coordinates in your head is unreliable.
 
 ## Adding a board
 
-Copy `boards/freenove-esp32-wrover.yml`, replace `headers.left` / `headers.right`
-with the pin names in physical top-to-bottom order, and set `highlight:` to the
-pins that should glow. Geometry lives in `bbd/layout.py` and can be overridden
-per circuit under a `layout:` key.
+Copy `boards/freenove-esp32-wrover.yml`, replace `headers.left` /
+`headers.right` with the pin names in physical top-to-bottom order, and set
+`highlight:` to the pins that should glow. Geometry lives in `bbd/layout.py`
+and can be overridden per circuit under a `layout:` key (board YAML defaults
+merge with circuit overrides).

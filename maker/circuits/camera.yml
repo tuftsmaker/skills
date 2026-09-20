@@ -1,0 +1,9 @@
+board: freenove-esp32-wrover
+camera: true
+title: Camera — Freenove ESP32-WROVER (FNK0046)
+subtitle: Onboard camera, no breadboard wiring
+notes:
+  - "The camera plugs onto the board's camera connector on its orange ribbon — nothing goes on the breadboard."
+  - "MicroPython needs the special camera firmware (lemariva/micropython-camera-driver); the stock build has no camera module."
+  - text: "The camera firmware claims GPIO 4, 5, 18, 19, 21, 22, 23, 25, 26, 27, 34, 35, 36 and 39 — the knob and joystick circuits stop working while it is flashed."
+    warn: true

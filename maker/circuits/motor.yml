@@ -1,0 +1,10 @@
+board: freenove-esp32-wrover
+title: TT gearbox motor + wheel — Freenove ESP32-WROVER (FNK0046)
+subtitle: Never wire it straight to the ESP32
+components:
+  - {type: motor, at: [3, c]}
+notes:
+  - "The two wires go to a motor driver's output terminals (OUT1/OUT2 on the L298N)."
+  - "Swapping the two wires reverses the direction."
+  - text: "A stalled motor can draw over 1 A — the driver, not the ESP32, handles that current."
+    warn: true

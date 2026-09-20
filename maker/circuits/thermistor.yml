@@ -1,0 +1,13 @@
+board: freenove-esp32-wrover
+title: Thermistor — Freenove ESP32-WROVER (FNK0046)
+subtitle: Temperature as a voltage divider on GPIO 32
+components:
+  - {type: thermistor, at: [2, c]}
+  - {type: resistor, value: "10k", from: [3, e], span: 4}
+wires:
+  - {from: bb.2.c, to: board.L17, color: red, label: 3V3}
+  - {from: bb.3.e, to: board.GPIO32, color: orange, label: signal — GPIO 32}
+  - {from: bb.7.e, to: board.L14, color: black, label: ground — GND}
+notes:
+  - "The thermistor's resistance falls as it warms, so the reading follows temperature."
+  - "Pinch the bead between your fingers to watch the value change."

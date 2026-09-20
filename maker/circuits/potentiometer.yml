@@ -1,0 +1,12 @@
+board: freenove-esp32-wrover
+title: Potentiometer — Freenove ESP32-WROVER (FNK0046)
+subtitle: The wiper reads on an ADC pin (GPIO 34)
+components:
+  - {type: potentiometer, at: [3, c], pins: [left, wiper, right]}
+wires:
+  - {from: bb.3.c, to: board.L14, color: black, label: left — GND}
+  - {from: bb.4.c, to: board.GPIO34, color: orange, label: wiper — GPIO 34}
+  - {from: bb.5.c, to: board.L17, color: red, label: right — 3V3}
+notes:
+  - "GPIO 34 is an ADC1 pin and input-only — perfect for a knob."
+  - "In MicroPython: adc = ADC(Pin(34)); adc.atten(ADC.ATTN_11DB) reads the full 0-3.3 V range."

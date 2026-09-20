@@ -2,7 +2,7 @@
   "skills": [
     {
       "name": "maker",
-      "version": "e15d9cfaa5c1",
+      "version": "1413621989f4",
       "files": [
         "SKILL.md",
         "bbd/__init__.py",
@@ -11,9 +11,30 @@
         "bbd/components.py",
         "bbd/layout.py",
         "bbd/wires.py",
+        "boards/freenove-esp32-wrover-ext.yml",
         "boards/freenove-esp32-wrover.yml",
+        "circuits/bar-graph.yml",
+        "circuits/battery.yml",
         "circuits/button.yml",
+        "circuits/buzzer.yml",
+        "circuits/camera.yml",
+        "circuits/diode.yml",
+        "circuits/display-7seg.yml",
+        "circuits/doorbell.yml",
+        "circuits/ic-74hc595.yml",
+        "circuits/joystick.yml",
+        "circuits/lcd.yml",
         "circuits/led.yml",
+        "circuits/motor-driver.yml",
+        "circuits/motor.yml",
+        "circuits/photoresistor.yml",
+        "circuits/potentiometer.yml",
+        "circuits/rgb_led.yml",
+        "circuits/servo-extension-board.yml",
+        "circuits/servo.yml",
+        "circuits/speaker.yml",
+        "circuits/thermistor.yml",
+        "circuits/ultrasonic.yml",
         "render.py"
       ]
     }

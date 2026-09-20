@@ -1,0 +1,15 @@
+board: freenove-esp32-wrover
+title: Rectifier diode — Freenove ESP32-WROVER (FNK0046)
+subtitle: A one-way valve in series with the LED
+components:
+  - {type: diode, from: [1, c], span: 4}
+  - {type: resistor, value: "220", from: [5, e], span: 4}
+  - {type: led, color: red, at: [9, b]}
+wires:
+  - {from: bb.1.c, to: board.L17, color: red, label: 3V3}
+  - {from: bb.10.b, to: board.L14, color: black, label: ground — GND}
+notes:
+  - "Column 5 joins the diode to the resistor and column 9 joins the resistor to the LED — the net highlight shows it."
+  - "The silver band marks the cathode (the bar in the symbol): current flows from anode to cathode."
+  - text: "Flip the diode around and the LED goes dark — that is the whole point of a diode."
+    warn: true

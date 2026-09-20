@@ -1,0 +1,17 @@
+board: freenove-esp32-wrover
+title: 74HC595 shift register — Freenove ESP32-WROVER (FNK0046)
+subtitle: Three GPIOs drive eight outputs
+components:
+  - {type: ic, at: [3, e], pins: 16, label_text: 74HC595, pin_labels: true}
+wires:
+  - {from: bb.3.f, to: board.L16, color: red, label: VCC (16) — 3V3}
+  - {from: bb.5.f, to: board.GPIO14, color: orange, label: DS (14) — GPIO 14}
+  - {from: bb.6.f, to: board.GPIO5, color: purple, label: OE (13) — GPIO 5}
+  - {from: bb.7.f, to: board.GPIO12, color: blue, label: ST_CP (12) — GPIO 12}
+  - {from: bb.8.f, to: board.GPIO13, color: green, label: SH_CP (11) — GPIO 13}
+  - {from: bb.9.f, to: board.L17, color: red, label: MR (10) — 3V3}
+  - {from: bb.10.e, to: board.L14, color: black, label: GND (8) — GND}
+notes:
+  - "Top row is pins 1-8, bottom row 9-16 (read the numbers next to each hole)."
+  - "Q0-Q7 (pins 15 and 1-7) drive LEDs or a display — one 220 Ω resistor per output."
+  - "MR must be tied high (3V3) or the register clears itself."

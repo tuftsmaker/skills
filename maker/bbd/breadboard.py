@@ -13,7 +13,7 @@ from .layout import BOT_ROWS, TOP_ROWS
 
 def draw_breadboard(add, L, spec):
     bb = (spec.get("breadboard") or {})
-    highlights = bb.get("highlight_columns") or []
+    holes = bb.get("highlight_holes") or []
     labels = bb.get("labels") or {}
 
     add(f'<rect x="{L.bb_x}" y="{L.bb_y}" width="{L.bb_w}" height="{L.bb_h}" rx="14" '
@@ -40,15 +40,19 @@ def draw_breadboard(add, L, spec):
         for i in range(L.ncol):
             add(f'<circle cx="{L.col_x(i)}" cy="{y}" r="3.4" fill="{HOLE}"/>')
 
-    # highlight the columns that form a single net
-    for col in highlights:
-        y0, y1 = L.row_top[0] - 16, L.row_top[-1] + 16
+    # highlight each tie-point group that forms a single net
+    groups = set()
+    for col, row in holes:
+        groups.add((int(col), str(row).lower() in BOT_ROWS))
+    for col, bottom in sorted(groups):
+        rows = L.row_bot if bottom else L.row_top
+        y0, y1 = rows[0] - 16, rows[-1] + 16
         add(f'<rect x="{L.col_x(col)-16}" y="{y0}" width="32" height="{y1-y0}" rx="16" '
             f'fill="{NET}" opacity="0.75"/>')
-        for y in L.row_top:
+        for y in rows:
             add(f'<circle cx="{L.col_x(col)}" cy="{y}" r="3.4" fill="{HOLE}"/>')
-        add(f'<line x1="{L.col_x(col)}" y1="{L.row_top[0]}" x2="{L.col_x(col)}" '
-            f'y2="{L.row_top[-1]}" stroke="{NET_LINE}" stroke-width="2" opacity="0.85"/>')
+        add(f'<line x1="{L.col_x(col)}" y1="{rows[0]}" x2="{L.col_x(col)}" '
+            f'y2="{rows[-1]}" stroke="{NET_LINE}" stroke-width="2" opacity="0.85"/>')
 
     # free-form labels: [{text: "one net", at: [col, row], offset: [dx, dy]}]
     for item in labels:

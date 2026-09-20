@@ -1,0 +1,21 @@
+board: freenove-esp32-wrover
+title: Transistor doorbell — Freenove ESP32-WROVER (FNK0046)
+subtitle: A button, an NPN transistor and a 5V buzzer
+components:
+  - {type: button, at: [1, a]}
+  - {type: resistor, value: "1k", from: [5, c], span: 2}
+  - {type: transistor, at: [8, c], kind: npn, pins: [E, B, C]}
+  - {type: buzzer, at: [11, c]}
+wires:
+  - {from: board.GPIO4, to: bb.1.a, color: green, label: button — GPIO 4}
+  - {from: bb.4.a, to: board.R17, color: black, label: ground — GND}
+  - {from: board.GPIO13, to: bb.5.c, color: orange, label: signal — GPIO 13}
+  - {from: bb.7.c, to: bb.9.c, color: purple, label: base link}
+  - {from: bb.11.c, to: board.L19, color: red, label: buzzer + — 5V}
+  - {from: bb.12.c, to: bb.10.c, color: blue, label: collector link}
+  - {from: bb.8.c, to: board.L14, color: black, label: emitter — GND}
+notes:
+  - "The NPN transistor is the switch: a small base current lets a bigger collector current flow."
+  - "Code: button = Pin(4, Pin.IN, Pin.PULL_UP); activeBuzzer = Pin(13, Pin.OUT)."
+  - text: "The buzzer runs on 5 V and switches on the low side (emitter to GND, collector to the buzzer)."
+    warn: true

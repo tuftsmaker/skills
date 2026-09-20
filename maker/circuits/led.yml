@@ -29,8 +29,6 @@ wires:
 breadboard:
   labels:
     - {text: "one net", at: [2, a], offset: [0, -30]}
-    - {text: "these 5 holes", at: [2, e], offset: [-30, 44]}
-    - {text: "are connected", at: [2, e], offset: [-30, 62]}
 
 steps:
   - text: "Red jumper: board GPIO 2 → breadboard column 2, top row."
@@ -45,4 +43,5 @@ steps:
 notes:
   - text: "Never wire an LED straight to 3.3 V or a GPIO without the resistor — it will burn out."
     warn: true
+  - "The five holes in one breadboard column are already connected — that is the whole point of a breadboard."
   - "GPIO 2 also drives the onboard LED, so both light together. Move the red wire to GPIO 4 for a separate LED."

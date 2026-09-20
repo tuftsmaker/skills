@@ -61,16 +61,44 @@ def esc(s):
     return str(s).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
+def legend_rows(L, spec):
+    """How many rows the wire legend needs at this canvas width."""
+    rows, x = 1, 90
+    seen = []
+    for w in spec.get("wires") or []:
+        c = str(w.get("color", "red")).lower()
+        if c in seen:
+            continue
+        seen.append(c)
+        text = next((w2.get("label") for w2 in spec.get("wires") or []
+                     if str(w2.get("color", "red")).lower() == c and w2.get("label")),
+                    f"{c} wire")
+        width = 30 + 8 * len(text) + 60
+        if x + width > L.W - 80:
+            rows += 1
+            x = 90
+        x += width
+    return rows
+
+
 def build_svg(spec, board):
     steps = spec.get("steps") or []
     notes = spec.get("notes") or []
-    layout_over = spec.get("layout") or {}
+    # board-level layout defaults, then circuit overrides
+    bl = board.get("layout") or {}
+    sl = spec.get("layout") or {}
+    layout_over = {**bl, **sl}
+    for key in ("board", "breadboard"):
+        merged = {**(bl.get(key) or {}), **(sl.get(key) or {})}
+        if merged:
+            layout_over[key] = merged
 
     layout_over.setdefault(
         "height",
         1040 + 40 + 26 * len(steps) + 46 + 26 * len(notes) + 40,
     )
     L = Layout({**spec, "layout": layout_over})
+    L.H += (legend_rows(L, spec) - 1) * 30
 
     out = []
     add = out.append
@@ -86,26 +114,30 @@ def build_svg(spec, board):
         add(f'<text x="{L.W/2}" y="88" font-size="16" fill="#6b6b70" '
             f'text-anchor="middle">{esc(spec["subtitle"])}</text>')
 
-    board_mod.draw_board(add, L, board)
+    board_mod.draw_board(add, L, {**board, "camera": spec.get("camera", board.get("camera"))})
 
-    # which breadboard columns carry a net (used by wires or component legs)
+    # Breadboard holes that carry a net (touched by a wire or a component leg).
+    # The top half (a-e) and the bottom half (f-j) of a column are separate nets,
+    # so the renderer highlights the tie-point group each hole belongs to.
     used = set()
     for spec_wire in spec.get("wires") or []:
-        for col, _row in wire_mod.wire_holes(L, board, spec_wire):
-            used.add(col)
+        used.update(wire_mod.wire_holes(L, board, spec_wire))
     for spec_comp in spec.get("components") or []:
-        for col, _row in comp_mod.component_holes(L, spec_comp):
-            used.add(col)
+        used.update(comp_mod.component_holes(L, spec_comp))
     explicit = (spec.get("breadboard") or {}).get("highlight_columns")
-    cols = sorted(set(explicit) if explicit is not None else used)
+    if explicit is not None:
+        holes = {(int(col), row) for col in explicit for row in ("a", "b", "c", "d", "e")}
+    else:
+        holes = used
 
     bb_mod.draw_breadboard(add, L, {**spec, "breadboard": {
         **(spec.get("breadboard") or {}),
-        "highlight_columns": cols,
+        "highlight_holes": sorted(holes),
     }})
 
+    lanes = wire_mod.assign_lanes(L, board, spec.get("wires") or [])
     for i, spec_wire in enumerate(spec.get("wires") or []):
-        wire_mod.draw_wire(add, L, board, spec_wire, lane=i)
+        wire_mod.draw_wire(add, L, board, spec_wire, lanes[i])
 
     for spec_comp in spec.get("components") or []:
         comp_mod.draw_component(add, L, spec_comp)
@@ -138,13 +170,18 @@ def draw_notes(add, L, spec, steps, notes):
                 return w["label"]
         return f"{c} wire"
 
-    x = 90
+    rows, x = 1, 90
     for c in used_colours:
         hexc = wire_mod.COLOURS.get(c, c)
         text = wire_label(c)
+        width = 30 + 8 * len(text) + 60
+        if x + width > L.W - 80:
+            rows += 1
+            x = 90
+            y += 30
         add(f'<rect x="{x}" y="{y-14}" width="22" height="14" rx="4" fill="{hexc}"/>')
         add(f'<text x="{x+30}" y="{y-2}" font-size="15" fill="#444">{esc(text)}</text>')
-        x += 30 + 8 * len(text) + 60
+        x += width
     add(f'<circle cx="{x+8}" cy="{y-7}" r="8" fill="{PIN_GOLD}"/>')
     add(f'<text x="{x+26}" y="{y-2}" font-size="15" fill="#444">board pin</text>')
     x += 190
@@ -174,12 +211,66 @@ def draw_notes(add, L, spec, steps, notes):
         y += 26
 
 
+def svg_size(path):
+    """Read width/height attributes from the SVG header."""
+    import re
+    with open(path) as f:
+        head = f.read(400)
+    w = re.search(r'width="(\d+)"', head)
+    h = re.search(r'height="(\d+)"', head)
+    return (int(w.group(1)) if w else 1800, int(h.group(1)) if h else 1260)
+
+
+def find_chrome():
+    candidates = [
+        "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+        "/Applications/Chromium.app/Contents/MacOS/Chromium",
+        "google-chrome", "chromium", "chromium-browser",
+        "C:/Program Files/Google/Chrome/Application/chrome.exe",
+    ]
+    for c in candidates:
+        if os.path.sep in c and os.path.exists(c):
+            return c
+        found = shutil.which(c)
+        if found:
+            return found
+    return None
+
+
+def rasterise(svg_path, png_path, scale):
+    """SVG -> PNG with the first rasteriser available. Returns a note or None."""
+    w, h = svg_size(svg_path)
+    if shutil.which("rsvg-convert"):
+        subprocess.run(["rsvg-convert", "-z", str(scale), svg_path, "-o", png_path],
+                       check=True)
+        return None
+    if sys.platform == "darwin" and shutil.which("qlmanage"):
+        out_dir = os.path.dirname(os.path.abspath(png_path))
+        subprocess.run(["qlmanage", "-t", "-s", str(int(max(w, h) * scale)),
+                        "-o", out_dir, svg_path], check=True, capture_output=True)
+        produced = os.path.join(out_dir, os.path.basename(svg_path) + ".png")
+        if os.path.exists(produced):
+            os.replace(produced, png_path)
+            return None
+    chrome = find_chrome()
+    if chrome:
+        subprocess.run([chrome, "--headless=new", "--disable-gpu",
+                        f"--screenshot={png_path}",
+                        f"--window-size={int(w*scale)},{int(h*scale)}",
+                        "--hide-scrollbars", f"file://{os.path.abspath(svg_path)}"],
+                       check=True, capture_output=True)
+        return None
+    return ("no rasteriser found, so no PNG was written. Install librsvg "
+            "(brew install librsvg), or open the SVG directly.")
+
+
 def main():
     ap = argparse.ArgumentParser(description="Render a breadboard wiring diagram.")
     ap.add_argument("circuit", nargs="?", help="circuit file (.yml or .json)")
     ap.add_argument("-o", "--out", help="output basename, e.g. out/led (writes .svg and .png)")
     ap.add_argument("--list", action="store_true", help="list boards and example circuits")
-    ap.add_argument("--scale", type=float, default=2.0, help="PNG scale factor (default 2)")
+    ap.add_argument("--scale", type=float, default=1.1,
+                    help="PNG scale factor (default 1.1 — stays under 2000 px for inline previews)")
     ap.add_argument("--no-png", action="store_true", help="only write the SVG")
     args = ap.parse_args()
 
@@ -209,14 +300,12 @@ def main():
 
     if args.no_png:
         return
-    if not shutil.which("rsvg-convert"):
-        print("note: rsvg-convert not found, so no PNG was written.")
-        print("      install with:  brew install librsvg")
-        return
     png_path = base + ".png"
-    subprocess.run(["rsvg-convert", "-z", str(args.scale), svg_path, "-o", png_path],
-                   check=True)
-    print(f"wrote {png_path}")
+    note = rasterise(svg_path, png_path, args.scale)
+    if note:
+        print("note: " + note)
+    elif os.path.exists(png_path):
+        print(f"wrote {png_path}")
 
 
 if __name__ == "__main__":

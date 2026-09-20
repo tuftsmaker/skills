@@ -1,0 +1,10 @@
+board: freenove-esp32-wrover
+title: 9V battery clip — Freenove ESP32-WROVER (FNK0046)
+subtitle: Motor power, shared ground with the ESP32
+components:
+  - {type: battery, at: [3, c]}
+notes:
+  - "The clip's red lead is + and the black lead is −; they feed the driver's 12V and GND terminals."
+  - "The battery does not need a breadboard: the tutorial wires it straight to the driver."
+  - text: "Always join the battery's − to the ESP32's GND (common ground) or the logic will float."
+    warn: true

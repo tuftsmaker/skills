@@ -1,0 +1,11 @@
+board: freenove-esp32-wrover
+title: Speaker — Freenove ESP32-WROVER (FNK0046)
+subtitle: Two wires; drive it from a DAC or PWM pin
+components:
+  - {type: speaker, at: [3, c]}
+wires:
+  - {from: bb.3.c, to: board.GPIO25, color: orange, label: signal — GPIO 25 (DAC1)}
+  - {from: bb.4.c, to: board.L14, color: black, label: ground — GND}
+notes:
+  - "GPIO 25 and 26 are the ESP32's DAC pins — the simplest way to play a tone in MicroPython."
+  - "For more volume, drive the speaker through a transistor instead of the pin."

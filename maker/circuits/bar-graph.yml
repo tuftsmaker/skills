@@ -1,0 +1,9 @@
+board: freenove-esp32-wrover
+title: LED bar graph — Freenove ESP32-WROVER (FNK0046)
+subtitle: Ten segments, twenty pins — driven through the 74HC595
+components:
+  - {type: bar_graph, at: [3, e], pins: 20, label_text: LED bar graph}
+notes:
+  - "Ten independent LEDs in one package: ten anodes on one row, ten cathodes on the other."
+  - "The kit's tutorial drives it with the 74HC595 plus eight 220 Ω resistors (see ic-74hc595.yml)."
+  - "If nothing lights, the bar is probably in upside down — unplug it and flip it."

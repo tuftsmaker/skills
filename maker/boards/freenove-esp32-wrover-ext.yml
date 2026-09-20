@@ -1,0 +1,62 @@
+name: Freenove ESP32-WROVER on GPIO Extension Board (FNK0046)
+module: ESP32-WROVER
+silkscreen: [FREENOVE, ESP32 WROVER]
+usb_label: USB
+board_title: Freenove ESP32 GPIO Extension Board
+source: https://github.com/Freenove/Freenove_ESP32_WROVER_Board (ESP32_Pinout_V3.0.png)
+
+# How the class physically seats the ESP32: the board plugs into the GPIO
+# extension board, which breaks every pin out to a row of 5 holes. Wires plug
+# into the outer end of a pin's row. See SKILL.md.
+layout:
+  board:
+    mount: extension
+    w: 470
+
+# Pins glow when named here so students can find them at a glance.
+# GND appears five times, so it is always addressed positionally (board.R17).
+highlight: [GPIO2, GND]
+
+headers:
+  left:
+    - 3V3
+    - RST
+    - GPIO36
+    - GPIO39
+    - GPIO34
+    - GPIO35
+    - GPIO32
+    - GPIO33
+    - GPIO25
+    - GPIO26
+    - GPIO27
+    - GPIO14
+    - GPIO12
+    - GND
+    - GPIO13
+    - 3V3
+    - 3V3
+    - 3V3
+    - 5V
+    - 5V
+  right:
+    - GND
+    - GPIO23
+    - GPIO22
+    - GPIO1
+    - GPIO3
+    - GPIO21
+    - GND
+    - GPIO19
+    - GPIO18
+    - GPIO5
+    - GND
+    - GND
+    - GPIO4
+    - GPIO0
+    - GPIO2
+    - GPIO15
+    - GND
+    - GND
+    - GND
+    - GND

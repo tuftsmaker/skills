@@ -1,0 +1,13 @@
+board: freenove-esp32-wrover
+title: Active buzzer — Freenove ESP32-WROVER (FNK0046)
+subtitle: GPIO 13 drives the buzzer; the long leg is +
+components:
+  - {type: buzzer, at: [3, c]}
+wires:
+  - {from: board.GPIO13, to: bb.3.c, color: orange, label: signal — GPIO 13}
+  - {from: bb.4.c, to: board.R17, color: black, label: ground — GND}
+notes:
+  - "The buzzer's longer leg is positive (+) and goes to the signal wire."
+  - "The passive buzzer works the same way but is driven with PWM (machine.PWM) at ~2 kHz."
+  - text: "Buzzer current is higher than a GPIO should supply — for a loud buzzer the tutorial switches it with an NPN transistor."
+    warn: true

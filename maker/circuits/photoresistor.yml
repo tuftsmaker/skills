@@ -1,0 +1,13 @@
+board: freenove-esp32-wrover
+title: Photoresistor (LDR) — Freenove ESP32-WROVER (FNK0046)
+subtitle: Light level as a voltage divider on GPIO 35
+components:
+  - {type: photoresistor, at: [2, c]}
+  - {type: resistor, value: "10k", from: [3, e], span: 4}
+wires:
+  - {from: bb.2.c, to: board.L17, color: red, label: 3V3}
+  - {from: bb.3.e, to: board.GPIO35, color: orange, label: signal — GPIO 35}
+  - {from: bb.7.e, to: board.L14, color: black, label: ground — GND}
+notes:
+  - "Column 3 joins the LDR and the 10 kΩ resistor: that junction is the signal."
+  - "Cover the LDR and the reading drops; shine a light and it rises."

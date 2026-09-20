@@ -4,10 +4,12 @@ Endpoint syntax in a circuit file:
     board.GPIO2   -> a pin on the ESP32 board, by its silkscreen name
     bb.2.a        -> breadboard hole at column 2, row a
 
-Routing is automatic: a wire leaves a board pin sideways into a vertical
-"gutter" between the board and the breadboard, then runs to its hole. Wires
-that cross the board/breadboard gap are given their own lane so they never
-overlap. Override with `via:` (explicit waypoints) if you want a specific path.
+Routing is automatic. Right-hand pins drop straight into the gutter between
+the board and the breadboard. Left-hand pins leave left, run down the left
+gutter, cross below the board in the corridor, climb the right-hand gutter and
+enter the breadboard through the centre channel. Every wire gets its own lane
+so runs never sit on top of each other. Override with `via:` (explicit
+waypoints) if you want a specific path.
 """
 
 from .board import find_pin
@@ -16,6 +18,8 @@ from .layout import BOT_ROWS, TOP_ROWS
 COLOURS = {"red": "#e02020", "black": "#2b2b2b", "blue": "#2b6cb0",
            "green": "#2f9e44", "yellow": "#e8c22a", "orange": "#e07a1f",
            "white": "#e8e8ee", "purple": "#7a4fbf", "grey": "#9aa0a6"}
+
+CHANNEL_OFFSETS = [0, -12, 12, -24, 24, -36, 36, -48, 48]
 
 
 def parse_endpoint(L, board, text):
@@ -33,6 +37,38 @@ def parse_endpoint(L, board, text):
     raise ValueError(f"cannot parse endpoint {text!r} — use 'board.PIN' or 'bb.COL.ROW'")
 
 
+def _pin_side(L, parsed):
+    """Which side of the board a parsed endpoint sits on."""
+    px = parsed[1][0]
+    return "L" if px < L.board_x + L.board_w / 2 else "R"
+
+
+def assign_lanes(L, board, wires):
+    """Plan routing lanes: one per wire, plus side lanes for left-hand pins."""
+    lanes = []
+    gutter = left = corridor = 0
+    for spec in wires:
+        pin = None
+        for end in (spec["from"], spec["to"]):
+            parsed = parse_endpoint(L, board, end)
+            if parsed[0] == "board":
+                pin = parsed
+                break
+        if pin is None:
+            lanes.append({"side": "C"})
+            continue
+        side = _pin_side(L, pin)
+        if side == "L":
+            lanes.append({"side": "L", "gutter": gutter, "left": left, "corridor": corridor})
+            gutter += 1
+            left += 1
+            corridor += 1
+        else:
+            lanes.append({"side": "R", "gutter": gutter})
+            gutter += 1
+    return lanes
+
+
 def wire_holes(L, board, spec):
     """Breadboard holes this wire touches (for column highlighting)."""
     holes = []
@@ -41,6 +77,22 @@ def wire_holes(L, board, spec):
         if parsed[0] == "bb":
             holes.append(parsed[1])
     return holes
+
+
+def _channel_y(L, lane):
+    return L.channel + CHANNEL_OFFSETS[lane.get("gutter", 0) % len(CHANNEL_OFFSETS)]
+
+
+def _board_to_hole(L, pin, hole, lane):
+    px, py = pin
+    hx, hy = hole
+    gx = L.gutter_x(lane["gutter"])
+    cy = _channel_y(L, lane)
+    if lane["side"] == "L":
+        lgx = L.left_gutter_x(lane["left"])
+        ky = L.corridor_y(lane["corridor"])
+        return [(px, py), (lgx, py), (lgx, ky), (gx, ky), (gx, cy), (hx, cy), (hx, hy)]
+    return [(px, py), (gx, py), (gx, cy), (hx, cy), (hx, hy)]
 
 
 def route(L, board, spec, lane):
@@ -57,16 +109,10 @@ def route(L, board, spec, lane):
     b = parse_endpoint(L, board, spec["to"])
 
     if a[0] == "board" and b[0] == "bb":
-        px, py = a[1]
-        hx, hy = b[2]
-        gx = L.gutter_x(lane) if px > L.board_x + L.board_w / 2 else -L.gutter_x(lane)
-        return [(px, py), (gx, py), (gx, hy), (hx, hy)]
+        return _board_to_hole(L, a[1], b[2], lane)
 
     if a[0] == "bb" and b[0] == "board":
-        hx, hy = a[2]
-        px, py = b[1]
-        gx = L.gutter_x(lane) if px > L.board_x + L.board_w / 2 else -L.gutter_x(lane)
-        return [(hx, hy), (hx, L.channel), (gx, L.channel), (gx, py), (px, py)]
+        return list(reversed(_board_to_hole(L, b[1], a[2], lane)))
 
     # breadboard to breadboard — hop through the centre channel
     hx1, hy1 = a[2]

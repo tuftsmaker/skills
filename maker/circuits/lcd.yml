@@ -1,0 +1,13 @@
+board: freenove-esp32-wrover
+title: LCD1602 with I2C backpack — Freenove ESP32-WROVER (FNK0046)
+subtitle: SDA on GPIO 13, SCL on GPIO 14
+components:
+  - {type: lcd, at: [3, a]}
+wires:
+  - {from: bb.3.a, to: board.L14, color: black, label: GND}
+  - {from: bb.4.a, to: board.L19, color: red, label: VCC — 5V}
+  - {from: bb.5.a, to: board.GPIO13, color: blue, label: SDA — GPIO 13}
+  - {from: bb.6.a, to: board.GPIO14, color: green, label: SCL — GPIO 14}
+notes:
+  - "In MicroPython: I2C(scl=Pin(14), sda=Pin(13), freq=400000) — scan() finds the backpack (0x27 or 0x3F)."
+  - "Only 4 wires: the PCF8574 backpack drives the LCD's 16 pins for you."

@@ -1,0 +1,14 @@
+board: freenove-esp32-wrover
+title: KY-023 joystick — Freenove ESP32-WROVER (FNK0046)
+subtitle: Two ADC axes plus a push button
+components:
+  - {type: joystick, at: [3, c]}
+wires:
+  - {from: bb.3.c, to: board.L14, color: black, label: GND}
+  - {from: bb.4.c, to: board.L17, color: red, label: +5V — 3V3}
+  - {from: bb.5.c, to: board.GPIO36, color: orange, label: VRx — GPIO 36}
+  - {from: bb.6.c, to: board.GPIO39, color: yellow, label: VRy — GPIO 39}
+  - {from: bb.7.c, to: board.GPIO14, color: green, label: SW — GPIO 14}
+notes:
+  - "VRx and VRy are analog (ADC1 pins); SW is a button — use Pin.PULL_UP, it reads LOW when pressed."
+  - "The +5V pin is happy on 3V3 here."

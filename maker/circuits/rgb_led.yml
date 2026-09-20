@@ -1,0 +1,14 @@
+board: freenove-esp32-wrover
+title: RGB LED — Freenove ESP32-WROVER (FNK0046)
+subtitle: Common anode to 3V3 through one 220 Ω resistor
+components:
+  - {type: rgb_led, at: [2, e], pins: [R, common, G, B], common_at: 1}
+  - {type: resistor, value: "220", from: [3, a], span: 4}
+wires:
+  - {from: board.L17, to: bb.7.a, color: red, label: 3V3 — common anode}
+  - {from: board.GPIO4, to: bb.2.e, color: red, label: R — GPIO 4}
+  - {from: board.GPIO2, to: bb.4.e, color: green, label: G — GPIO 2}
+  - {from: board.GPIO15, to: bb.5.e, color: blue, label: B — GPIO 15}
+notes:
+  - "The longest leg is the common pin (anode on this RGB LED): it goes to 3V3 through the resistor."
+  - "Drive R, G and B with PWM (machine.PWM) to mix any colour — 1000 Hz is a good starting frequency."

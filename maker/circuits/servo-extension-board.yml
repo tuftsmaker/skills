@@ -1,0 +1,12 @@
+board: freenove-esp32-wrover-ext
+title: Servo on the GPIO extension board — Freenove ESP32-WROVER (FNK0046)
+subtitle: "The class setup — ESP32 seated on the extension board"
+components:
+  - {type: servo, at: [3, c]}
+wires:
+  - {from: bb.3.c, to: board.L14, color: black, label: brown — GND}
+  - {from: bb.4.c, to: board.L19, color: red, label: red — 5V}
+  - {from: bb.5.c, to: board.GPIO15, color: orange, label: orange — GPIO 15}
+notes:
+  - "Every pin breaks out to a row of five holes: any hole in the row is that pin. The gold hole is the one to use."
+  - "This is how the ESP32 sits in class — plugged into the extension board, not on the breadboard."
