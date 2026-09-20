@@ -195,8 +195,9 @@ def draw_button(add, L, spec):
         for y in (y1, y2):
             add(f'<circle cx="{x}" cy="{y}" r="6" fill="#b9b3a6"/>')
     add(f'<rect x="{x1+10}" y="{y1-14}" width="{x2-x1-20}" height="{y2-y1+28}" rx="8" '
-        f'fill="#3a3a3f" stroke="#202024" stroke-width="2"/>')
-    add(f'<circle cx="{cx}" cy="{cy}" r="14" fill="#e03030" stroke="#9c1616" stroke-width="2"/>')
+        f'fill="#2b2b30" stroke="#15151a" stroke-width="2"/>')
+    add(f'<circle cx="{cx}" cy="{cy}" r="14" fill="#3a3a3f" stroke="#15151a" stroke-width="2"/>')
+    add(f'<ellipse cx="{cx-4}" cy="{cy-5}" rx="5" ry="3" fill="#6d6d76" opacity="0.6"/>')
     if spec.get("label", True):
         add(f'<text x="{cx}" y="{y1-26}" font-size="15" font-weight="700" fill="#3a3a3f" '
             f'text-anchor="middle">{spec.get("label_text", "button")}</text>')
@@ -227,7 +228,9 @@ def draw_buzzer(add, L, spec):
     add(f'<line x1="{x1}" y1="{y}" x2="{x1}" y2="{cy+r*0.4}" stroke="#9a9a9a" stroke-width="3.5"/>')
     add(f'<line x1="{x2}" y1="{y}" x2="{x2}" y2="{cy+r*0.4}" stroke="#9a9a9a" stroke-width="3.5"/>')
     add(f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="#2b2b30" stroke="#15151a" stroke-width="2.5"/>')
-    add(f'<circle cx="{cx}" cy="{cy}" r="{r*0.35}" fill="#111"/>')
+    # top label ring, like the real buzzers
+    add(f'<circle cx="{cx}" cy="{cy}" r="{r*0.62}" fill="#dcdce4" opacity="0.85"/>')
+    add(f'<circle cx="{cx}" cy="{cy}" r="{r*0.18}" fill="#2b2b30"/>')
     add(f'<text x="{cx+r+8}" y="{cy-r+6}" font-size="12.5" fill="#8a8a8a">+</text>')
     if spec.get("label", True):
         add(f'<text x="{cx}" y="{cy-r-12}" font-size="15" font-weight="700" fill="#2b2b30" '
@@ -321,17 +324,22 @@ def draw_potentiometer(add, L, spec):
     xs = [L.col_x(col + i) for i in range(3)]
     cx = (xs[0] + xs[2]) / 2
     _, top, bottom, _ = _attach_slot(L, row, 58, pad=16)
-    attach = bottom if _bottom_half(row) else top
+    attach = top if _bottom_half(row) else bottom
 
     for x in xs:
         _lead(add, x, y, x, attach)
+    # metal body with a blue base, like the kit's pots
     add(f'<rect x="{xs[0]-24}" y="{top}" width="{xs[2]-xs[0]+48}" height="{bottom-top}" '
-        f'rx="7" fill="#4a4a52" stroke="#2b2b30" stroke-width="2"/>')
-    add(f'<circle cx="{cx}" cy="{(top+bottom)/2}" r="24" fill="#2b2b30" '
-        f'stroke="#15151a" stroke-width="2"/>')
-    add(f'<circle cx="{cx}" cy="{(top+bottom)/2}" r="10" fill="#6d6d76"/>')
-    add(f'<line x1="{cx}" y1="{(top+bottom)/2}" x2="{cx}" y2="{(top+bottom)/2 - 19}" '
-        f'stroke="#f2f2f2" stroke-width="3" stroke-linecap="round"/>')
+        f'rx="7" fill="#c9c9d1" stroke="#8a8a94" stroke-width="2"/>')
+    add(f'<rect x="{xs[0]-24}" y="{bottom-14}" width="{xs[2]-xs[0]+48}" height="14" '
+        f'rx="4" fill="#2b6cb0" stroke="#1a4a8a" stroke-width="1.5"/>')
+    # threaded bushing + slotted shaft
+    add(f'<circle cx="{cx}" cy="{(top+bottom)/2}" r="19" fill="#b9b9c2" '
+        f'stroke="#8a8a94" stroke-width="2"/>')
+    add(f'<circle cx="{cx}" cy="{(top+bottom)/2}" r="13" fill="#dcdce4" '
+        f'stroke="#9a9aa4" stroke-width="1.5"/>')
+    add(f'<line x1="{cx}" y1="{(top+bottom)/2 - 10}" x2="{cx}" y2="{(top+bottom)/2 + 10}" '
+        f'stroke="#55555c" stroke-width="4" stroke-linecap="round"/>')
     if spec.get("label", True):
         _text(add, cx, top - 12, spec.get("label_text", "potentiometer"), 15, "#2b2b30")
     if spec.get("pins"):
@@ -352,7 +360,7 @@ def draw_transistor(add, L, spec):
     xs = [L.col_x(col + i) for i in range(3)]
     cx = (xs[0] + xs[2]) / 2
     _, top, bottom, _ = _attach_slot(L, row, 52, pad=14)
-    attach = bottom if _bottom_half(row) else top
+    attach = top if _bottom_half(row) else bottom
     r = (xs[2] - xs[0]) / 2 + 18
 
     for x in xs:
@@ -386,7 +394,9 @@ def draw_rgb_led(add, L, spec):
         dy = (r * r - (spread - cx) ** 2) ** 0.5
         add(f'<polyline points="{x},{y} {x},{y-26} {spread},{cy+dy}" fill="none" '
             f'stroke="#9a9a9a" stroke-width="3.5" stroke-linejoin="round"/>')
-    add(f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="#dcdce4" stroke="#9a9aa4" stroke-width="2.5"/>')
+    # clear water-clear lens with the three colour dies visible
+    add(f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="#e8eef4" stroke="#9a9aa4" stroke-width="2.5"/>')
+    add(f'<circle cx="{cx-r*0.3}" cy="{cy-r*0.3}" r="{r*0.45}" fill="#ffffff" opacity="0.5"/>')
     for dx, dy, c in ((-13, -8, "#e03030"), (13, -8, "#2fbf5a"), (0, 11, "#3b7dd8")):
         add(f'<circle cx="{cx+dx}" cy="{cy+dy}" r="7" fill="{c}" opacity="0.9"/>')
     if spec.get("label", True):
@@ -490,14 +500,15 @@ def draw_bar_graph(add, L, spec):
     add(f'<rect x="{x1}" y="{top}" width="{x2-x1}" height="{bottom-top}" rx="8" '
         f'fill="{DARK}" stroke="{DARK_EDGE}" stroke-width="2.5"/>')
 
-    # ten level-meter windows, green through red
-    seg_cols = ["#2fbf5a"] * 4 + ["#e8c22a"] * 3 + ["#e03030"] * 3
+    # ten unlit segment windows, like the real bar graph
     inner_x1, inner_x2 = x1 + 18, x2 - 18
     step = (inner_x2 - inner_x1) / per
     for i in range(per):
         wx = inner_x1 + i * step
         add(f'<rect x="{wx}" y="{top+16}" width="{step-9}" height="{bottom-top-32}" '
-            f'rx="4" fill="{seg_cols[i % len(seg_cols)]}" opacity="0.9"/>')
+            f'rx="4" fill="#e8e8ee" opacity="0.9"/>')
+        add(f'<rect x="{wx}" y="{top+16}" width="{step-9}" height="{bottom-top-32}" '
+            f'rx="4" fill="none" stroke="#b03030" stroke-width="1" opacity="0.6"/>')
     if spec.get("label_text"):
         _text(add, x1 + 20, top - 10, spec["label_text"], 14, "#3a3a3f", anchor="start")
 
@@ -518,7 +529,7 @@ def draw_module(add, L, spec):
     x2 = L.col_x(col + max(len(pins) - 1, 1)) + L.dcol * 0.4
     h = int(spec.get("height", 110))
     _, top, bottom, _ = _module_slot(L, row, h)
-    attach = bottom if _bottom_half(row) else top
+    attach = top if _bottom_half(row) else bottom
 
     for i in range(len(pins)):
         x = L.col_x(col + i)
@@ -544,7 +555,7 @@ def draw_servo(add, L, spec):
     xs = [L.col_x(col + i) for i in range(3)]
     cx = (xs[0] + xs[2]) / 2
     _, top, bottom, _ = _module_slot(L, row, 92)
-    attach = bottom if _bottom_half(row) else top
+    attach = top if _bottom_half(row) else bottom
 
     colours = ["#7a4a1e", WIRE_RED, "#e07a1f"]
     names = ["GND", "5V", "SIG"]
@@ -555,14 +566,23 @@ def draw_servo(add, L, spec):
     bx1 = cx - bw / 2
     up = -1 if not _bottom_half(row) else +1
     far = top if up < 0 else bottom
+    # translucent blue SG90 case with a pale top and white horn
     add(f'<rect x="{bx1}" y="{top}" width="{bw}" height="{bh}" rx="10" '
         f'fill="#3a6ea5" stroke="#26496e" stroke-width="2.5"/>')
+    add(f'<rect x="{bx1+8}" y="{top+8}" width="{bw-16}" height="26" rx="6" '
+        f'fill="#cfe0f5" opacity="0.55"/>')
     add(f'<rect x="{bx1-12}" y="{far-6}" width="{bw+24}" height="12" rx="4" '
         f'fill="#5b8fc9" opacity="0.9"/>')
+    # cable boot where the wires leave the case
+    boot_y = attach - (10 if up < 0 else -10)
+    add(f'<rect x="{xs[0]-8}" y="{boot_y-8}" width="{xs[2]-xs[0]+16}" height="16" rx="4" '
+        f'fill="#202024"/>')
     horn_y = far + up * 18
     add(f'<circle cx="{cx}" cy="{horn_y}" r="17" fill="#f2f2f2" stroke="#c9c9d1" stroke-width="2"/>')
+    add(f'<circle cx="{cx}" cy="{horn_y}" r="4" fill="#9a9aa4"/>')
     add(f'<rect x="{cx-4}" y="{horn_y + up*30}" width="8" height="30" rx="4" '
         f'fill="#f2f2f2" stroke="#c9c9d1" stroke-width="2"/>')
+    _text(add, cx, (top + bottom) / 2 + 5, "SG90", 13, "#cfe0f5")
     _pin_labels(add, L, xs, row, names)
 
 
@@ -580,7 +600,7 @@ def draw_motor(add, L, spec):
     xs = [L.col_x(col), L.col_x(col + 1)]
     cx = (xs[0] + xs[1]) / 2
     _, top, bottom, _ = _module_slot(L, row, 116)
-    attach = bottom if _bottom_half(row) else top
+    attach = top if _bottom_half(row) else bottom
 
     for x, c in zip(xs, [WIRE_RED, WIRE_BLACK]):
         _lead(add, x, y, x, attach, colour=c, w=5)
@@ -618,7 +638,7 @@ def draw_battery(add, L, spec):
     xs = [L.col_x(col), L.col_x(col + 1)]
     cx = (xs[0] + xs[1]) / 2
     _, top, bottom, _ = _module_slot(L, row, 88)
-    attach = bottom if _bottom_half(row) else top
+    attach = top if _bottom_half(row) else bottom
 
     for x, c in zip(xs, [WIRE_RED, WIRE_BLACK]):
         _lead(add, x, y, x, attach, colour=c, w=5)
@@ -649,7 +669,7 @@ def draw_speaker(add, L, spec):
     xs = [L.col_x(col), L.col_x(col + 1)]
     cx = (xs[0] + xs[1]) / 2
     _, top, bottom, _ = _module_slot(L, row, 84)
-    attach = bottom if _bottom_half(row) else top
+    attach = top if _bottom_half(row) else bottom
 
     for x, c in zip(xs, [WIRE_RED, WIRE_BLACK]):
         _lead(add, x, y, x, attach, colour=c, w=5)
@@ -677,19 +697,27 @@ def draw_ultrasonic(add, L, spec):
     xs = [L.col_x(col + i) for i in range(4)]
     cx = (xs[0] + xs[3]) / 2
     _, top, bottom, _ = _module_slot(L, row, 96)
-    attach = bottom if _bottom_half(row) else top
+    attach = top if _bottom_half(row) else bottom
 
     for x in xs:
         _lead(add, x, y, x, attach)
     bw = xs[3] - xs[0] + 110
     bx1 = cx - bw / 2
+    # blue PCB like the real HC-SR04
     add(f'<rect x="{bx1}" y="{top}" width="{bw}" height="96" rx="8" '
-        f'fill="#2f6f4f" stroke="#1d4732" stroke-width="2.5"/>')
-    for dx in (-42, 42):
-        add(f'<circle cx="{cx+dx}" cy="{top+48}" r="27" fill="#9aa0a6" '
-            f'stroke="#6d6d76" stroke-width="2.5"/>')
-        add(f'<circle cx="{cx+dx}" cy="{top+48}" r="18" fill="none" stroke="#7d838a" stroke-width="1.5"/>')
-    _text(add, cx, top + 14, spec.get("label_text", "HC-SR04"), 14, "#fff")
+        f'fill="#2b6cb0" stroke="#1a4a8a" stroke-width="2.5"/>')
+    # black pin header along the bottom edge
+    add(f'<rect x="{xs[0]-14}" y="{attach-26 if not _bottom_half(row) else attach+4}" '
+        f'width="{xs[3]-xs[0]+28}" height="20" rx="3" fill="#1a1a1a"/>')
+    # two silver mesh transducers
+    for dx, tag in ((-42, "T"), (42, "R")):
+        cxx, cyy = cx + dx, top + 46
+        add(f'<circle cx="{cxx}" cy="{cyy}" r="28" fill="#c9c9d1" stroke="#8a8a94" stroke-width="2.5"/>')
+        for rr in (22, 16, 10):
+            add(f'<circle cx="{cxx}" cy="{cyy}" r="{rr}" fill="none" stroke="#9aa0a6" stroke-width="1.2"/>')
+        add(f'<circle cx="{cxx}" cy="{cyy}" r="4" fill="#6d6d76"/>')
+        _text(add, cxx, cyy + 44, tag, 12, "#cfe0f5")
+    _text(add, cx, top + 14, spec.get("label_text", "HC-SR04"), 13, "#fff")
     _pin_labels(add, L, xs, row, spec.get("pins", ["VCC", "TRIG", "ECHO", "GND"]))
 
 
@@ -707,19 +735,33 @@ def draw_joystick(add, L, spec):
     xs = [L.col_x(col + i) for i in range(5)]
     cx = (xs[0] + xs[4]) / 2
     _, top, bottom, _ = _module_slot(L, row, 100)
-    attach = bottom if _bottom_half(row) else top
+    attach = top if _bottom_half(row) else bottom
 
     for x in xs:
         _lead(add, x, y, x, attach)
     bw = xs[4] - xs[0] + 80
     bx1 = cx - bw / 2
+    # black PCB like the real KY-023
     add(f'<rect x="{bx1}" y="{top}" width="{bw}" height="100" rx="8" '
-        f'fill="#2f6f4f" stroke="#1d4732" stroke-width="2.5"/>')
-    add(f'<circle cx="{cx}" cy="{top+50}" r="26" fill="#15151a"/>')
-    add(f'<circle cx="{cx}" cy="{top+50}" r="18" fill="#3a3a3f"/>')
-    add(f'<rect x="{cx-3}" y="{top+30}" width="6" height="40" rx="3" fill="#15151a"/>')
-    add(f'<rect x="{cx-20}" y="{top+47}" width="40" height="6" rx="3" fill="#15151a"/>')
-    _text(add, cx, top + 16, spec.get("label_text", "KY-023 joystick"), 13, "#fff")
+        f'fill="#1a1a1a" stroke="#3a3a3f" stroke-width="2.5"/>')
+    for mx in (bx1 + 20, bx1 + bw - 20):
+        add(f'<circle cx="{mx}" cy="{top + 16}" r="5" fill="none" stroke="#55555c" stroke-width="2"/>')
+        add(f'<circle cx="{mx}" cy="{top + 84}" r="5" fill="none" stroke="#55555c" stroke-width="2"/>')
+    # tactile push button beside the stick
+    add(f'<rect x="{bx1+bw-64}" y="{top+58}" width="26" height="26" rx="3" '
+        f'fill="#2b2b30" stroke="#55555c"/>')
+    add(f'<circle cx="{bx1+bw-51}" cy="{top+71}" r="7" fill="#8a8a94"/>')
+    # black pin header along the bottom edge
+    add(f'<rect x="{xs[0]-14}" y="{attach-26 if not _bottom_half(row) else attach+4}" '
+        f'width="{xs[4]-xs[0]+28}" height="20" rx="3" fill="#111"/>')
+    # two-tier rubber stick cap
+    cyy = top + 44
+    add(f'<rect x="{cx-8}" y="{cyy-6}" width="16" height="34" rx="4" fill="#202024"/>')
+    add(f'<circle cx="{cx}" cy="{cyy}" r="30" fill="#2b2b30" stroke="#15151a" stroke-width="2"/>')
+    add(f'<ellipse cx="{cx-10}" cy="{cyy-10}" rx="10" ry="6" fill="#55555c" opacity="0.5"/>')
+    add(f'<circle cx="{cx}" cy="{cyy-22}" r="17" fill="#202024" stroke="#15151a" stroke-width="2"/>')
+    add(f'<ellipse cx="{cx-6}" cy="{cyy-27}" rx="6" ry="4" fill="#55555c" opacity="0.5"/>')
+    _text(add, cx, top + 16, spec.get("label_text", "KY-023"), 13, "#e8e8ee")
     _pin_labels(add, L, xs, row, spec.get("pins", ["GND", "+5V", "VRx", "VRy", "SW"]))
 
 
@@ -737,22 +779,23 @@ def draw_lcd(add, L, spec):
     xs = [L.col_x(col + i) for i in range(4)]
     cx = (xs[0] + xs[3]) / 2
     _, top, bottom, _ = _module_slot(L, row, 148)
-    attach = bottom if _bottom_half(row) else top
+    attach = top if _bottom_half(row) else bottom
 
     for x in xs:
         _lead(add, x, y, x, attach)
     bw, bh = 420, 148
     bx1, by1 = cx - bw / 2, top
+    # green PCB with a blue backlit screen, like the kit's LCD1602
     add(f'<rect x="{bx1}" y="{by1}" width="{bw}" height="{bh}" rx="8" '
-        f'fill="#2b6cb0" stroke="#1a4a8a" stroke-width="2.5"/>')
-    sx, sy, sw, sh = bx1 + 26, by1 + 20, bw - 52, bh - 40
-    add(f'<rect x="{sx}" y="{sy}" width="{sw}" height="{sh}" rx="4" '
-        f'fill="#4a90d9" stroke="#1a4a8a" stroke-width="1.5"/>')
+        f'fill="#2f6f4f" stroke="#1d4732" stroke-width="2.5"/>')
+    sx, sy, sw, sh = bx1 + 30, by1 + 18, bw - 60, bh - 40
+    add(f'<rect x="{sx}" y="{sy}" width="{sw}" height="{sh}" rx="3" '
+        f'fill="#1a4a8a" stroke="#e8e8ee" stroke-width="1.5"/>')
     for r in range(2):
         for c in range(16):
-            add(f'<rect x="{sx+10+c*(sw-20)/16}" y="{sy+16+r*44}" width="{(sw-20)/16-5}" '
-                f'height="30" rx="2" fill="#cfe8ff" opacity="0.55"/>')
-    _text(add, cx, by1 + bh - 10, spec.get("label_text", "LCD1602 (I2C)"), 13, "#e8f2ff")
+            add(f'<rect x="{sx+10+c*(sw-20)/16}" y="{sy+18+r*44}" width="{(sw-20)/16-5}" '
+                f'height="30" rx="2" fill="#cfe8ff" opacity="0.75"/>')
+    _text(add, cx, by1 + bh - 8, spec.get("label_text", "LCD1602 (I2C)"), 13, "#e8f2ff")
     _pin_labels(add, L, xs, row, spec.get("pins", ["GND", "VCC", "SDA", "SCL"]))
 
 
@@ -771,7 +814,7 @@ def draw_l298n(add, L, spec):
     xs = [L.col_x(col + i) for i in range(len(pins))]
     cx = (xs[0] + xs[-1]) / 2
     _, top, bottom, _ = _module_slot(L, row, 120)
-    attach = bottom if _bottom_half(row) else top
+    attach = top if _bottom_half(row) else bottom
 
     for x in xs:
         _lead(add, x, y, x, attach)
@@ -786,12 +829,18 @@ def draw_l298n(add, L, spec):
     for i in range(6):
         add(f'<line x1="{hx+8+i*15}" y1="{top+28}" x2="{hx+8+i*15}" y2="{top+92}" '
             f'stroke="#55555c" stroke-width="5"/>')
-    # terminal blocks
+    # blue screw terminals with silver screws
     for tx in (bx1 + bw - 190, bx1 + bw - 110):
         add(f'<rect x="{tx}" y="{top+26}" width="70" height="68" rx="4" '
-            f'fill="#2f6f4f" stroke="#1d4732" stroke-width="2"/>')
+            f'fill="#2b6cb0" stroke="#1a4a8a" stroke-width="2"/>')
         for k in range(3):
-            add(f'<circle cx="{tx+35}" cy="{top+44+k*18}" r="6" fill="#8a8a94"/>')
+            add(f'<circle cx="{tx+35}" cy="{top+44+k*18}" r="7" fill="#c9c9d1" stroke="#8a8a94"/>')
+            add(f'<line x1="{tx+30}" y1="{top+44+k*18}" x2="{tx+40}" y2="{top+44+k*18}" '
+                f'stroke="#55555c" stroke-width="2"/>')
+    # jumper header for the logic pins
+    add(f'<rect x="{hx+104}" y="{top+34}" width="26" height="52" rx="3" fill="#1a1a1a"/>')
+    for k in range(3):
+        add(f'<circle cx="{hx+117}" cy="{top+46+k*16}" r="4" fill="#d9a441"/>')
     _text(add, cx, top + 16, spec.get("label_text", "L298N motor driver"), 14, "#fff")
     _pin_labels(add, L, xs, row, pins)
 
