@@ -229,9 +229,10 @@ The examples in `circuits/` already follow this table — start from the closest
 | `freenove-esp32-wrover`        | bare board; wires go straight to its header pins |
 | `freenove-esp32-wrover-ext`    | ESP32 seated on the GPIO extension board — the class setup |
 
-On the extension board every pin breaks out to a row of 5 holes; wires attach
-at the outer end of the row (the gold hole when the pin is highlighted). Use it
-for class handouts; use the bare board when showing the board itself.
+On the extension board every pin has a single pad that a jumper plugs into
+(gold when the pin is highlighted), and the labels sit inside the board so
+wires never cross them. Use it for class handouts; use the bare board when
+showing the board itself.
 
 ## Pitfalls
 

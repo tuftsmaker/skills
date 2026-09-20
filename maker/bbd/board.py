@@ -3,8 +3,7 @@
 Two mounts are supported:
   - `bare` (default): the ESP32-WROVER board on its own, header pins labelled.
   - `extension`: the ESP32 seated on the Freenove GPIO extension board, where
-    every pin breaks out to a horizontal row of holes (5 by default) that a
-    jumper can plug into. Wires attach at the outer end of the row.
+    every pin has a single pad that a jumper plugs straight into.
 """
 
 PCB_TOP = "#26262a"
@@ -119,8 +118,8 @@ def draw_extension_board(add, L, board):
         f'{_esc(board.get("board_title", "Freenove ESP32 GPIO Extension Board"))}</text>')
 
     # --- ESP32 module between the two pin columns ---
-    mx1 = L.board_x + 180
-    mx2 = L.board_x + L.board_w - 180
+    mx1 = L.board_x + 170
+    mx2 = L.board_x + L.board_w - 170
     my1 = L.board_y + 60
     add(f'<rect x="{mx1}" y="{my1}" width="{mx2-mx1}" height="290" rx="10" '
         f'fill="#3a3a3f" stroke="#55555c"/>')
@@ -141,25 +140,21 @@ def draw_extension_board(add, L, board):
     if board.get("camera"):
         draw_camera(add, L, (mx1 + mx2) / 2, my1 + 14)
 
-    # --- pin strips: a printed box per pin with its holes, label inside ---
+    # --- pin pads: one connection point per pin, label inside the board ---
     for pins, which, anchor in ((left, "left", "start"), (right, "right", "end")):
+        pad_x = L.pin_strip_x(which)
+        label_x = pad_x + 18 if which == "left" else pad_x - 18
         for i, name in enumerate(pins):
             y = L.pin_y(i)
-            xs = [L.strip_x(which, k) for k in range(L.strip_holes)]
-            bx1, bx2 = min(xs) - 8, max(xs) + 8
-            add(f'<rect x="{bx1}" y="{y-13}" width="{bx2-bx1}" height="26" rx="6" '
-                f'fill="#1b1b1f" stroke="#3a3a3f" stroke-width="1.5"/>')
-            for k, x in enumerate(xs):
-                glow = ' filter="url(#glow)"' if name in hot and k == 0 else ''
-                fill = PIN_GOLD if name in hot and k == 0 else HOLE
-                add(f'<circle cx="{x}" cy="{y}" r="3.6" fill="{fill}"{glow}/>')
+            glow = ' filter="url(#glow)"' if name in hot else ''
+            fill = PIN_GOLD if name in hot else "#d9d4c8"
+            add(f'<circle cx="{pad_x}" cy="{y}" r="6.5" fill="{fill}" '
+                f'stroke="#8a8a94" stroke-width="1.5"{glow}/>')
+            add(f'<circle cx="{pad_x}" cy="{y}" r="2.6" fill="#141418"/>')
             is_gpio = str(name).startswith("GPIO")
             colour = GPIO_LABEL if is_gpio else OTHER_LABEL
             label = str(name)[4:] if is_gpio else str(name)
-            # labels sit inside the board, to the right of the left-hand pins
-            # (and the left of the right-hand pins) so wires never cross them
-            lx = bx2 + 10 if which == "left" else bx1 - 10
-            add(f'<text x="{lx}" y="{y+6}" font-size="17" fill="{colour}" '
+            add(f'<text x="{label_x}" y="{y+6}" font-size="17" fill="{colour}" '
                 f'text-anchor="{anchor}">{_esc(label)}</text>')
 
 
