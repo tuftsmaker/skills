@@ -104,7 +104,7 @@ def _pin_labels(add, L, xs, row, names):
     y = L.row_y(row)
     ty = y - 8 if _bottom_half(row) else y + 17
     for x, name in zip(xs, names):
-        add(f'<text x="{x - 30}" y="{ty}" font-size="15" fill="#444" '
+        add(f'<text x="{x - 32}" y="{ty}" font-size="17" fill="#444" '
             f'text-anchor="middle">{name}</text>')
 
 
@@ -450,8 +450,8 @@ def draw_ic(add, L, spec):
         _text(add, (x1 + x2) / 2, cy + 6, spec["label_text"], 16, "#e8e8ee")
     if spec.get("pin_labels"):
         for i in range(per):
-            _text(add, xs[i], ye - 10, str(i + 1), 14, "#666")
-            _text(add, xs[i], yf + 20, str(n - i), 14, "#666")
+            _text(add, xs[i], ye - 11, str(i + 1), 16, "#666")
+            _text(add, xs[i], yf + 22, str(n - i), 16, "#666")
 
 
 def holes_display_7seg(L, spec):

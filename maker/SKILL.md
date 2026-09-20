@@ -59,7 +59,17 @@ reply with a line exactly like this (not inside a code fence):
 
 Also mention the file path in text. Never present a diagram by reading the PNG
 back as a tool result, and never open an external viewer for the student.
+
 Keep the PNG at or under 2000 px wide — the default scale already does.
+Verified desktop behaviour, so do not fight it:
+
+- The app normalises local images before display, so rendering above ~2000 px
+  gains nothing inline. The 1.1 default is the right size.
+- The image viewer has no zoom or pan. If a student needs to inspect a pin
+  closely, point them at the SVG (`out/led.svg`) — browsers zoom and pan SVG
+  losslessly and it prints sharp.
+- Keep output filenames plain: `@` is parsed as a context mention and spaces
+  can break the link, so `out/led.png` works while `out/led@2x.png` does not.
 
 ## Writing a circuit
 

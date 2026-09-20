@@ -73,12 +73,16 @@ def build_svg(spec, board):
         if merged:
             layout_over[key] = merged
 
-    layout_over.setdefault(
-        "height",
-        1040 + 40 + 33 * len(steps) + 52 + 33 * len(notes) + 44,
-    )
+    layout_over.setdefault("height", 1200)
     L = Layout({**spec, "layout": layout_over})
-    L.H += (legend_rows(L, spec) - 1) * 36
+    # wires routed down the left side cross under the board in the corridor;
+    # if those lanes would reach the notes band, push the notes down instead
+    left_wires = sum(1 for l in wire_mod.assign_lanes(L, board, spec.get("wires") or [])
+                     if l.get("side") == "L")
+    if left_wires:
+        L.notes_top = max(L.notes_top, L.corridor0 + (left_wires - 1) * L.corridor_pitch + 26)
+    legend = legend_rows(L, spec)
+    L.H = L.notes_top + 44 + 33 * len(steps) + 18 + 33 * len(notes) + 44 + (legend - 1) * 36
 
     out = []
     add = out.append

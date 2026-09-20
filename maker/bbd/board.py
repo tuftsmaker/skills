@@ -96,7 +96,7 @@ def draw_board(add, L, board):
             is_gpio = str(name).startswith("GPIO")
             colour = GPIO_LABEL if is_gpio else OTHER_LABEL
             label = str(name)[4:] if is_gpio else str(name)
-            add(f'<text x="{tx}" y="{y+5}" font-size="14" fill="{colour}" '
+            add(f'<text x="{tx}" y="{y+5}" font-size="16" fill="{colour}" '
                 f'text-anchor="{anchor}">{_esc(label)}</text>')
 
 
