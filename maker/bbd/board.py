@@ -60,9 +60,11 @@ def draw_board(add, L, board):
                 f'fill="#111" stroke="#3a3a3f"/>')
             glow = ' filter="url(#glow)"' if name in hot else ''
             add(f'<circle cx="{px}" cy="{y}" r="5.5" fill="{PIN_GOLD}"{glow}/>')
-            colour = GPIO_LABEL if str(name).startswith("GPIO") else OTHER_LABEL
+            is_gpio = str(name).startswith("GPIO")
+            colour = GPIO_LABEL if is_gpio else OTHER_LABEL
+            label = str(name)[4:] if is_gpio else str(name)
             add(f'<text x="{tx}" y="{y+5}" font-size="14" fill="{colour}" '
-                f'text-anchor="{anchor}">{_esc(name)}</text>')
+                f'text-anchor="{anchor}">{_esc(label)}</text>')
 
 
 def find_pin(L, board, name):
