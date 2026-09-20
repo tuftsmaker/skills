@@ -104,7 +104,7 @@ def _pin_labels(add, L, xs, row, names):
     y = L.row_y(row)
     ty = y - 8 if _bottom_half(row) else y + 17
     for x, name in zip(xs, names):
-        add(f'<text x="{x - 26}" y="{ty}" font-size="10.5" fill="#444" '
+        add(f'<text x="{x - 30}" y="{ty}" font-size="15" fill="#444" '
             f'text-anchor="middle">{name}</text>')
 
 
@@ -263,7 +263,7 @@ def draw_diode(add, L, spec):
     if spec.get("label", True):
         _text(add, (x1 + x2) / 2, y - 28, spec.get("label_text", "diode"), 15, "#2b2b30")
     _text(add, bx2 + 14 if band == "right" else bx1 - 14, y + 6,
-          "\u2212", 14, "#8a8a8a", anchor="start" if band == "right" else "end")
+          "\u2212", 16, "#8a8a8a", anchor="start" if band == "right" else "end")
 
 
 # --------------------------------------------------------------------------
@@ -436,16 +436,22 @@ def draw_ic(add, L, spec):
         _lead(add, x, yf, x, bottom)
     add(f'<rect x="{x1}" y="{top}" width="{x2-x1}" height="{bottom-top}" rx="7" '
         f'fill="{DARK}" stroke="{DARK_EDGE}" stroke-width="2.5"/>')
+    # moulded top band and silver leg stubs, like a real DIP package
+    add(f'<rect x="{x1+8}" y="{top+5}" width="{x2-x1-16}" height="9" rx="4" '
+        f'fill="#3a3a3f" opacity="0.9"/>')
+    for x in xs:
+        add(f'<rect x="{x-5}" y="{top-5}" width="10" height="7" rx="2" fill="#c9c9d1"/>')
+        add(f'<rect x="{x-5}" y="{bottom-2}" width="10" height="7" rx="2" fill="#c9c9d1"/>')
     # pin-1 end notch and dot
     cy = (top + bottom) / 2
     add(f'<path d="M{x1} {cy-13} A 13 13 0 0 1 {x1} {cy+13} Z" fill="{PAPER}"/>')
-    add(f'<circle cx="{x1+20}" cy="{top+16}" r="5" fill="#6d6d76"/>')
+    add(f'<circle cx="{x1+20}" cy="{top+16}" r="5" fill="#55555c"/>')
     if spec.get("label_text"):
         _text(add, (x1 + x2) / 2, cy + 6, spec["label_text"], 16, "#e8e8ee")
     if spec.get("pin_labels"):
         for i in range(per):
-            _text(add, xs[i], ye - 9, str(i + 1), 10.5, "#666")
-            _text(add, xs[i], yf + 19, str(n - i), 10.5, "#666")
+            _text(add, xs[i], ye - 10, str(i + 1), 14, "#666")
+            _text(add, xs[i], yf + 20, str(n - i), 14, "#666")
 
 
 def holes_display_7seg(L, spec):
@@ -463,10 +469,14 @@ def draw_display_7seg(add, L, spec):
     add(f'<rect x="{x1}" y="{top}" width="{x2-x1}" height="{bottom-top}" rx="8" '
         f'fill="{DARK}" stroke="{DARK_EDGE}" stroke-width="2.5"/>')
 
-    # seven segments in a figure-8, drawn lit
-    cx, cy = (x1 + x2) / 2, (top + bottom) / 2
-    w, h, t = 104, 64, 8
-    seg = "#d02a2a"
+    # light grey face with lit red segments, like the real display
+    fx, fy = x1 + 16, top + 10
+    fw, fh = (x2 - x1) - 32, (bottom - top) - 20
+    add(f'<rect x="{fx}" y="{fy}" width="{fw}" height="{fh}" rx="4" '
+        f'fill="#b9b9c2" stroke="#8a8a94" stroke-width="1.5"/>')
+    cx, cy = (fx + fx + fw) / 2, (fy + fy + fh) / 2
+    w, h, t = min(104, fw * 0.45), fh * 0.78, 8
+    seg = "#e02020"
     def hseg(yy):
         add(f'<line x1="{cx-w/2}" y1="{yy}" x2="{cx+w/2}" y2="{yy}" stroke="{seg}" '
             f'stroke-width="{t}" stroke-linecap="round"/>')
@@ -500,15 +510,15 @@ def draw_bar_graph(add, L, spec):
     add(f'<rect x="{x1}" y="{top}" width="{x2-x1}" height="{bottom-top}" rx="8" '
         f'fill="{DARK}" stroke="{DARK_EDGE}" stroke-width="2.5"/>')
 
-    # ten unlit segment windows, like the real bar graph
+    # ten lit red segment windows, like the tutorial's flowing-water demo
     inner_x1, inner_x2 = x1 + 18, x2 - 18
     step = (inner_x2 - inner_x1) / per
     for i in range(per):
         wx = inner_x1 + i * step
         add(f'<rect x="{wx}" y="{top+16}" width="{step-9}" height="{bottom-top-32}" '
-            f'rx="4" fill="#e8e8ee" opacity="0.9"/>')
+            f'rx="4" fill="#e02020" opacity="0.92"/>')
         add(f'<rect x="{wx}" y="{top+16}" width="{step-9}" height="{bottom-top-32}" '
-            f'rx="4" fill="none" stroke="#b03030" stroke-width="1" opacity="0.6"/>')
+            f'rx="4" fill="none" stroke="#9c1616" stroke-width="1"/>')
     if spec.get("label_text"):
         _text(add, x1 + 20, top - 10, spec["label_text"], 14, "#3a3a3f", anchor="start")
 
@@ -582,7 +592,7 @@ def draw_servo(add, L, spec):
     add(f'<circle cx="{cx}" cy="{horn_y}" r="4" fill="#9a9aa4"/>')
     add(f'<rect x="{cx-4}" y="{horn_y + up*30}" width="8" height="30" rx="4" '
         f'fill="#f2f2f2" stroke="#c9c9d1" stroke-width="2"/>')
-    _text(add, cx, (top + bottom) / 2 + 5, "SG90", 13, "#cfe0f5")
+    _text(add, cx, (top + bottom) / 2 + 5, "SG90", 15, "#cfe0f5")
     _pin_labels(add, L, xs, row, names)
 
 
@@ -645,13 +655,18 @@ def draw_battery(add, L, spec):
 
     bw, bh = 116, 78
     bx1 = cx - bw / 2
+    # 9V body: dark case, amber top band and a clip, like the real battery
     add(f'<rect x="{bx1}" y="{top}" width="{bw}" height="{bh}" rx="8" '
-        f'fill="#3a3a3f" stroke="#202024" stroke-width="2.5"/>')
-    add(f'<rect x="{bx1+14}" y="{top+10}" width="{bw-28}" height="18" rx="4" '
-        f'fill="#c9c9d1" opacity="0.85"/>')
-    _text(add, cx, top + bh / 2 + 12, "9V", 20, "#f2f2f2")
+        f'fill="#2b2b30" stroke="#15151a" stroke-width="2.5"/>')
+    add(f'<rect x="{bx1}" y="{top}" width="{bw}" height="24" rx="8" '
+        f'fill="#c08a4a" stroke="#8a5f30" stroke-width="1.5"/>')
+    add(f'<rect x="{bx1+16}" y="{top-12}" width="{bw-32}" height="14" rx="4" '
+        f'fill="#3a3a3f" stroke="#15151a" stroke-width="1.5"/>')
+    for sx in (cx - 26, cx + 26):
+        add(f'<rect x="{sx-8}" y="{top-16}" width="16" height="8" rx="2" fill="#c9c9d1"/>')
+    _text(add, cx, top + bh / 2 + 16, "9V", 22, "#f2f2f2")
     if spec.get("label", True):
-        _text(add, cx, top - 12, spec.get("label_text", "battery pack"), 15, "#3a3a3f")
+        _text(add, cx, top - 26, spec.get("label_text", "battery pack"), 17, "#3a3a3f")
     _pin_labels(add, L, xs, row, spec.get("pins", ["+", "\u2212"]))
 
 
@@ -675,12 +690,18 @@ def draw_speaker(add, L, spec):
         _lead(add, x, y, x, attach, colour=c, w=5)
 
     cy = (top + bottom) / 2
-    add(f'<circle cx="{cx}" cy="{cy}" r="34" fill="#3a3a3f" stroke="#202024" stroke-width="2.5"/>')
-    add(f'<circle cx="{cx}" cy="{cy}" r="14" fill="#15151a"/>')
-    add(f'<path d="M{cx-34} {cy-18} L{cx-58} {cy-30} L{cx-58} {cy+30} L{cx-34} {cy+18} Z" '
-        f'fill="#2b2b30" stroke="#15151a" stroke-width="2"/>')
+    # square black frame with a silver-ringed cone, like the real speaker
+    add(f'<rect x="{cx-46}" y="{cy-46}" width="92" height="92" rx="8" '
+        f'fill="#2b2b30" stroke="#15151a" stroke-width="2.5"/>')
+    for hx2, hy2 in ((cx-36, cy-36), (cx+36, cy-36), (cx-36, cy+36), (cx+36, cy+36)):
+        add(f'<circle cx="{hx2}" cy="{hy2}" r="4" fill="#15151a"/>')
+    add(f'<circle cx="{cx}" cy="{cy}" r="33" fill="#3a3a3f" stroke="#202024" stroke-width="2"/>')
+    add(f'<circle cx="{cx}" cy="{cy}" r="28" fill="none" stroke="#c9c9d1" stroke-width="3"/>')
+    add(f'<circle cx="{cx}" cy="{cy}" r="12" fill="#15151a"/>')
+    add(f'<ellipse cx="{cx-4}" cy="{cy-4}" rx="4" ry="3" fill="#55555c" opacity="0.7"/>')
+    add(f'<rect x="{cx-20}" y="{cy+46}" width="40" height="12" fill="#1a1a1a"/>')
     if spec.get("label", True):
-        _text(add, cx, top - 12, spec.get("label_text", "speaker"), 15, "#3a3a3f")
+        _text(add, cx, top - 12, spec.get("label_text", "speaker"), 17, "#3a3a3f")
 
 
 # --------------------------------------------------------------------------
@@ -785,17 +806,22 @@ def draw_lcd(add, L, spec):
         _lead(add, x, y, x, attach)
     bw, bh = 420, 148
     bx1, by1 = cx - bw / 2, top
-    # green PCB with a blue backlit screen, like the kit's LCD1602
+    # green PCB, dark bezel and the backlit screen, like the kit's LCD1602
     add(f'<rect x="{bx1}" y="{by1}" width="{bw}" height="{bh}" rx="8" '
         f'fill="#2f6f4f" stroke="#1d4732" stroke-width="2.5"/>')
-    sx, sy, sw, sh = bx1 + 30, by1 + 18, bw - 60, bh - 40
+    for mx, my in ((bx1+16, by1+16), (bx1+bw-16, by1+16),
+                   (bx1+16, by1+bh-16), (bx1+bw-16, by1+bh-16)):
+        add(f'<circle cx="{mx}" cy="{my}" r="6" fill="#fdfaf3" stroke="#1d4732" stroke-width="1.5"/>')
+    add(f'<rect x="{bx1+28}" y="{by1+14}" width="{bw-56}" height="{bh-30}" rx="4" '
+        f'fill="#1a1a1a"/>')
+    sx, sy, sw, sh = bx1 + 42, by1 + 24, bw - 84, bh - 50
     add(f'<rect x="{sx}" y="{sy}" width="{sw}" height="{sh}" rx="3" '
-        f'fill="#1a4a8a" stroke="#e8e8ee" stroke-width="1.5"/>')
+        f'fill="#1a4a8a" stroke="#0f2f57" stroke-width="1.5"/>')
     for r in range(2):
         for c in range(16):
-            add(f'<rect x="{sx+10+c*(sw-20)/16}" y="{sy+18+r*44}" width="{(sw-20)/16-5}" '
-                f'height="30" rx="2" fill="#cfe8ff" opacity="0.75"/>')
-    _text(add, cx, by1 + bh - 8, spec.get("label_text", "LCD1602 (I2C)"), 13, "#e8f2ff")
+            add(f'<rect x="{sx+10+c*(sw-20)/16}" y="{sy+13+r*40}" width="{(sw-20)/16-5}" '
+                f'height="28" rx="2" fill="#cfe8ff" opacity="0.75"/>')
+    _text(add, cx, by1 + bh - 5, spec.get("label_text", "LCD1602 (I2C)"), 15, "#e8f2ff")
     _pin_labels(add, L, xs, row, spec.get("pins", ["GND", "VCC", "SDA", "SCL"]))
 
 

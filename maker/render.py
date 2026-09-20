@@ -61,26 +61,6 @@ def esc(s):
     return str(s).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
-def legend_rows(L, spec):
-    """How many rows the wire legend needs at this canvas width."""
-    rows, x = 1, 90
-    seen = []
-    for w in spec.get("wires") or []:
-        c = str(w.get("color", "red")).lower()
-        if c in seen:
-            continue
-        seen.append(c)
-        text = next((w2.get("label") for w2 in spec.get("wires") or []
-                     if str(w2.get("color", "red")).lower() == c and w2.get("label")),
-                    f"{c} wire")
-        width = 30 + 8 * len(text) + 60
-        if x + width > L.W - 80:
-            rows += 1
-            x = 90
-        x += width
-    return rows
-
-
 def build_svg(spec, board):
     steps = spec.get("steps") or []
     notes = spec.get("notes") or []
@@ -95,10 +75,10 @@ def build_svg(spec, board):
 
     layout_over.setdefault(
         "height",
-        1040 + 40 + 26 * len(steps) + 46 + 26 * len(notes) + 40,
+        1040 + 40 + 33 * len(steps) + 52 + 33 * len(notes) + 44,
     )
     L = Layout({**spec, "layout": layout_over})
-    L.H += (legend_rows(L, spec) - 1) * 30
+    L.H += (legend_rows(L, spec) - 1) * 36
 
     out = []
     add = out.append
@@ -111,7 +91,7 @@ def build_svg(spec, board):
         add(f'<text x="{L.W/2}" y="58" font-size="30" font-weight="700" fill="#26262b" '
             f'text-anchor="middle">{esc(spec["title"])}</text>')
     if spec.get("subtitle"):
-        add(f'<text x="{L.W/2}" y="88" font-size="16" fill="#6b6b70" '
+        add(f'<text x="{L.W/2}" y="92" font-size="19" fill="#6b6b70" '
             f'text-anchor="middle">{esc(spec["subtitle"])}</text>')
 
     board_mod.draw_board(add, L, {**board, "camera": spec.get("camera", board.get("camera"))})
@@ -155,60 +135,80 @@ def build_svg(spec, board):
     return "\n".join(out)
 
 
-def draw_notes(add, L, spec, steps, notes):
-    y = L.notes_top
+def legend_layout(L, spec, steps):
+    """Place legend items, wrapping at the canvas edge.
 
-    used_colours = []
+    Returns [(kind, payload, x, row)] with kind in wire | pin | net | badge.
+    """
+    items = []
+    seen = []
     for w in spec.get("wires") or []:
         c = str(w.get("color", "red")).lower()
-        if c not in used_colours:
-            used_colours.append(c)
-
-    def wire_label(c):
-        for w in spec.get("wires") or []:
-            if str(w.get("color", "red")).lower() == c and w.get("label"):
-                return w["label"]
-        return f"{c} wire"
-
-    rows, x = 1, 90
-    for c in used_colours:
-        hexc = wire_mod.COLOURS.get(c, c)
-        text = wire_label(c)
-        width = 30 + 8 * len(text) + 60
-        if x + width > L.W - 80:
-            rows += 1
-            x = 90
-            y += 30
-        add(f'<rect x="{x}" y="{y-14}" width="22" height="14" rx="4" fill="{hexc}"/>')
-        add(f'<text x="{x+30}" y="{y-2}" font-size="15" fill="#444">{esc(text)}</text>')
-        x += width
-    add(f'<circle cx="{x+8}" cy="{y-7}" r="8" fill="{PIN_GOLD}"/>')
-    add(f'<text x="{x+26}" y="{y-2}" font-size="15" fill="#444">board pin</text>')
-    x += 190
-    add(f'<rect x="{x}" y="{y-15}" width="22" height="18" rx="8" fill="{NET}"/>')
-    add(f'<text x="{x+32}" y="{y-2}" font-size="15" fill="#444">'
-        f'one connected net (5 holes)</text>')
-    x += 350
+        if c in seen:
+            continue
+        seen.append(c)
+        text = next((w2.get("label") for w2 in spec.get("wires") or []
+                     if str(w2.get("color", "red")).lower() == c and w2.get("label")),
+                    f"{c} wire")
+        items.append(("wire", (c, text), 34 + 9.6 * len(text) + 64))
+    items.append(("pin", None, 215))
+    items.append(("net", None, 400))
     if any(s.get("at") for s in steps):
-        add(f'<circle cx="{x+9}" cy="{y-7}" r="9" fill="{BADGE}" stroke="#fff" stroke-width="3"/>')
-        add(f'<text x="{x+28}" y="{y-2}" font-size="15" fill="#444">build order</text>')
+        items.append(("badge", None, 200))
 
-    y += 40
+    placements = []
+    row, x = 0, 90
+    for kind, payload, width in items:
+        if x + width > L.W - 60:
+            row += 1
+            x = 90
+        placements.append((kind, payload, x, row))
+        x += width
+    return placements
+
+
+def legend_rows(L, spec):
+    """How many rows the legend needs at this canvas width."""
+    return max(p[3] for p in legend_layout(L, spec, spec.get("steps") or [])) + 1
+
+
+def draw_notes(add, L, spec, steps, notes):
+    placements = legend_layout(L, spec, steps)
+    rows = max(p[3] for p in placements) + 1
+    for kind, payload, x, row in placements:
+        y = L.notes_top + row * 36
+        if kind == "wire":
+            c, text = payload
+            hexc = wire_mod.COLOURS.get(c, c)
+            add(f'<rect x="{x}" y="{y-17}" width="26" height="16" rx="4" fill="{hexc}"/>')
+            add(f'<text x="{x+34}" y="{y-2}" font-size="18" fill="#444">{esc(text)}</text>')
+        elif kind == "pin":
+            add(f'<circle cx="{x+13}" cy="{y-9}" r="9" fill="{PIN_GOLD}"/>')
+            add(f'<text x="{x+30}" y="{y-2}" font-size="18" fill="#444">board pin</text>')
+        elif kind == "net":
+            add(f'<rect x="{x}" y="{y-20}" width="26" height="20" rx="9" fill="{NET}"/>')
+            add(f'<text x="{x+36}" y="{y-2}" font-size="18" fill="#444">'
+                f'one connected net (5 holes)</text>')
+        else:
+            add(f'<circle cx="{x+10}" cy="{y-9}" r="10" fill="{BADGE}" stroke="#fff" stroke-width="3"/>')
+            add(f'<text x="{x+32}" y="{y-2}" font-size="18" fill="#444">build order</text>')
+
+    y = L.notes_top + (rows - 1) * 36 + 44
     if steps:
-        add(f'<text x="90" y="{y}" font-size="15" font-weight="700" fill="#26262b">Steps</text>')
-        y += 26
+        add(f'<text x="90" y="{y}" font-size="18" font-weight="700" fill="#26262b">Steps</text>')
+        y += 33
         for i, s in enumerate(steps, start=1):
             text = s if isinstance(s, str) else s.get("text", "")
-            add(f'<text x="90" y="{y}" font-size="15" fill="#444">{i}.  {esc(text)}</text>')
-            y += 26
-        y += 20
+            add(f'<text x="90" y="{y}" font-size="18" fill="#444">{i}.  {esc(text)}</text>')
+            y += 33
+        y += 18
 
     for n in notes:
         warn = isinstance(n, dict)
         text = n.get("text", "") if warn else n
         fill = "#8a5a00" if warn else "#666"
-        add(f'<text x="90" y="{y}" font-size="15" fill="{fill}">{esc(text)}</text>')
-        y += 26
+        add(f'<text x="90" y="{y}" font-size="18" fill="{fill}">{esc(text)}</text>')
+        y += 33
 
 
 def svg_size(path):
