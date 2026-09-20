@@ -1,0 +1,48 @@
+board: freenove-esp32-wrover
+
+title: Add an external LED — Freenove ESP32-WROVER (FNK0046)
+subtitle: Four steps, two jumper wires — the ESP32 board stays off the breadboard
+
+components:
+  # column 2, row b, body spans 4 columns (0.4")
+  - type: resistor
+    value: "220"
+    from: [2, b]
+    span: 4
+  # anode in column 6 row d, cathode in column 7 row d
+  - type: led
+    color: red
+    at: [6, d]
+
+wires:
+  # GPIO 2 is unique on this board, so it can be named directly.
+  # GND is not — R17 is the 17th pin down the right header, right next to GPIO 2.
+  - from: board.GPIO2
+    to: bb.2.a
+    color: red
+    label: signal — GPIO 2
+  - from: bb.7.e
+    to: board.R17
+    color: black
+    label: ground — GND
+
+breadboard:
+  labels:
+    - {text: "one net", at: [2, a], offset: [0, -30]}
+    - {text: "these 5 holes", at: [2, e], offset: [-30, 44]}
+    - {text: "are connected", at: [2, e], offset: [-30, 62]}
+
+steps:
+  - text: "Red jumper: board GPIO 2 → breadboard column 2, top row."
+    at: [496, 732]
+  - text: "Resistor 220 Ω: one leg in column 2, other leg in column 6 (same row)."
+    at: [912, 552]
+  - text: "LED: long leg (anode) in column 6, short leg (cathode) in column 7, same row."
+    at: [1082, 460]
+  - text: "Black jumper: breadboard column 7, bottom row → board GND (right header, pin 17)."
+    at: [512, 892]
+
+notes:
+  - text: "Never wire an LED straight to 3.3 V or a GPIO without the resistor — it will burn out."
+    warn: true
+  - "GPIO 2 also drives the onboard LED, so both light together. Move the red wire to GPIO 4 for a separate LED."

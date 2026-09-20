@@ -1,0 +1,21 @@
+{
+  "skills": [
+    {
+      "name": "maker",
+      "version": "bc63971a6e02",
+      "files": [
+        "SKILL.md",
+        "bbd/__init__.py",
+        "bbd/board.py",
+        "bbd/breadboard.py",
+        "bbd/components.py",
+        "bbd/layout.py",
+        "bbd/wires.py",
+        "boards/freenove-esp32-wrover.yml",
+        "circuits/button.yml",
+        "circuits/led.yml",
+        "render.py"
+      ]
+    }
+  ]
+}

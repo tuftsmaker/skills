@@ -1,0 +1,33 @@
+board: freenove-esp32-wrover
+
+title: Add a push button — Freenove ESP32-WROVER (FNK0046)
+subtitle: Uses the ESP32's internal pull-up, so no resistor is needed
+
+components:
+  # 4 legs: columns 4 and 7, rows b and c
+  - type: button
+    at: [4, b]
+    label_text: button
+
+wires:
+  - from: board.GPIO4
+    to: bb.4.b
+    color: red
+    label: signal — GPIO 4
+  - from: bb.7.b
+    to: board.R17
+    color: black
+    label: ground — GND
+
+steps:
+  - text: "Push the button into the breadboard so its 4 legs sit in columns 4 and 7, rows b and c."
+    at: [600, 420]
+  - text: "Red jumper: board GPIO 4 → breadboard column 4, row b (either left leg)."
+    at: [496, 640]
+  - text: "Black jumper: breadboard column 7, row b (either right leg) → board GND (right header, pin 17)."
+    at: [560, 900]
+
+notes:
+  - text: "No resistor needed here: the code enables the ESP32's internal pull-up on GPIO 4."
+    warn: true
+  - "The button connects the pin to GND when pressed, so the pin reads LOW while it is held down."
