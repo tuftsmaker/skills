@@ -30,7 +30,7 @@ class Layout:
         # extension board: every pin gets a horizontal strip of `strip_holes`
         # holes, addressed from the strip end furthest from the board centre.
         self.strip_holes = int(b.get("strip_holes", 5))
-        self.strip_pitch = int(b.get("strip_pitch", 20))
+        self.strip_pitch = int(b.get("strip_pitch", 16))
 
         # ---- breadboard ----
         d = g.get("breadboard", {}) or {}
@@ -78,7 +78,7 @@ class Layout:
         """
         if self.mount != "extension":
             return self.left_pin_x if which == "left" else self.right_pin_x
-        return self.board_x + 50 if which == "left" else self.board_x + self.board_w - 60
+        return self.board_x + 40 if which == "left" else self.board_x + self.board_w - 40
 
     def strip_x(self, which, i):
         """X of hole `i` (0 = outer end) in a pin's extension-board strip."""
