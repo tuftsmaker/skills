@@ -605,32 +605,53 @@ def holes_motor(L, spec):
 
 
 def draw_motor(add, L, spec):
+    """Yellow-gearbox TT motor with its wheel, seen from above: silver can,
+    yellow gearbox, output shaft, and the wheel edge-on crossing the shaft."""
     col, row = spec["at"]
     y = L.row_y(row)
     xs = [L.col_x(col), L.col_x(col + 1)]
     cx = (xs[0] + xs[1]) / 2
-    _, top, bottom, _ = _module_slot(L, row, 116)
+    asm_h = 116
+    _, top, bottom, _ = _module_slot(L, row, asm_h)
     attach = top if _bottom_half(row) else bottom
 
     for x, c in zip(xs, [WIRE_RED, WIRE_BLACK]):
         _lead(add, x, y, x, attach, colour=c, w=5)
 
-    body_y = (top + bottom) / 2
-    # motor can on the left, gearbox, then the wheel
-    add(f'<rect x="{cx-120}" y="{body_y-26}" width="96" height="52" rx="12" '
-        f'fill="#b9b9c2" stroke="#8a8a94" stroke-width="2"/>')
-    add(f'<rect x="{cx-30}" y="{body_y-38}" width="72" height="76" rx="6" '
-        f'fill="#dcdce4" stroke="#9a9aa4" stroke-width="2"/>')
-    add(f'<circle cx="{cx+76}" cy="{body_y}" r="46" fill="#e8c22a" '
-        f'stroke="#a88a10" stroke-width="2.5"/>')
-    add(f'<circle cx="{cx+76}" cy="{body_y}" r="12" fill="#f2f2f2" stroke="#a88a10" stroke-width="2"/>')
-    for i in range(6):
-        ang = i * 60
-        px = cx + 76 + 30 * math.cos(math.radians(ang))
-        py = body_y + 30 * math.sin(math.radians(ang))
-        add(f'<circle cx="{px:.1f}" cy="{py:.1f}" r="4" fill="#a88a10"/>')
+    up = -1 if not _bottom_half(row) else 1
+    cy = attach + up * (asm_h / 2 + 4)
+    ax = cx - 186
+
+    # motor can, with end cap and the two solder terminals
+    add(f'<rect x="{ax}" y="{cy-33}" width="92" height="66" rx="12" '
+        f'fill="#c9c9d1" stroke="#8a8a94" stroke-width="2.5"/>')
+    add(f'<rect x="{ax}" y="{cy-33}" width="16" height="66" rx="10" fill="#9aa0a6"/>')
+    for ty in (cy - 22, cy + 22):
+        add(f'<circle cx="{ax+7}" cy="{ty}" r="5.5" fill="#c9a06a" stroke="#8a6a3a" stroke-width="1.5"/>')
+    _text(add, ax + 54, cy + 5, "DC 9V", 11, "#55555c")
+
+    # yellow gearbox
+    gx = ax + 92
+    add(f'<rect x="{gx}" y="{cy-42}" width="150" height="84" rx="8" '
+        f'fill="#e8b32a" stroke="#b08a10" stroke-width="2.5"/>')
+    add(f'<line x1="{gx+20}" y1="{cy-42}" x2="{gx+20}" y2="{cy+42}" '
+        f'stroke="#d0a020" stroke-width="2"/>')
+    add(f'<circle cx="{gx+9}" cy="{cy}" r="11" fill="#f0c85a" stroke="#b08a10" stroke-width="2"/>')
+
+    # output shaft and the wheel mounted on it (edge-on)
+    sx = gx + 150
+    add(f'<rect x="{sx}" y="{cy-8}" width="104" height="16" rx="6" '
+        f'fill="#f0c85a" stroke="#b08a10" stroke-width="2"/>')
+    wx = sx + 66
+    add(f'<rect x="{wx-15}" y="{cy-58}" width="30" height="116" rx="13" '
+        f'fill="#f2f2f2" stroke="#c9c9d1" stroke-width="2"/>')
+    add(f'<rect x="{wx-3}" y="{cy-58}" width="6" height="116" rx="3" fill="#dcdce4"/>')
+    add(f'<circle cx="{wx}" cy="{cy}" r="9" fill="#b9b9c2" stroke="#8a8a94" stroke-width="1.5"/>')
+
     if spec.get("label", True):
-        _text(add, cx - 30, top - 12, spec.get("label_text", "TT motor + wheel"), 15, "#3a3a3f")
+        _text(add, cx, cy + up * (asm_h / 2 + 6) + (0 if up > 0 else 0),
+              spec.get("label_text", "TT motor + wheel"), 17, "#3a3a3f",
+              anchor="middle")
     _pin_labels(add, L, xs, row, spec.get("pins", ["+", "\u2212"]))
 
 
@@ -839,35 +860,86 @@ def draw_l298n(add, L, spec):
     y = L.row_y(row)
     xs = [L.col_x(col + i) for i in range(len(pins))]
     cx = (xs[0] + xs[-1]) / 2
-    _, top, bottom, _ = _module_slot(L, row, 120)
+    bh = 200
+    _, top, bottom, _ = _module_slot(L, row, bh)
     attach = top if _bottom_half(row) else bottom
 
     for x in xs:
         _lead(add, x, y, x, attach)
     bw = xs[-1] - xs[0] + 90
     bx1 = cx - bw / 2
-    add(f'<rect x="{bx1}" y="{top}" width="{bw}" height="120" rx="8" '
+    add(f'<rect x="{bx1}" y="{top}" width="{bw}" height="{bh}" rx="8" '
         f'fill="#b03030" stroke="#7a2020" stroke-width="2.5"/>')
-    # heatsink
-    hx = bx1 + 24
-    add(f'<rect x="{hx}" y="{top+22}" width="90" height="76" rx="5" '
-        f'fill="#3a3a3f" stroke="#202024" stroke-width="2"/>')
-    for i in range(6):
-        add(f'<line x1="{hx+8+i*15}" y1="{top+28}" x2="{hx+8+i*15}" y2="{top+92}" '
-            f'stroke="#55555c" stroke-width="5"/>')
-    # blue screw terminals with silver screws
-    for tx in (bx1 + bw - 190, bx1 + bw - 110):
-        add(f'<rect x="{tx}" y="{top+26}" width="70" height="68" rx="4" '
-            f'fill="#2b6cb0" stroke="#1a4a8a" stroke-width="2"/>')
-        for k in range(3):
-            add(f'<circle cx="{tx+35}" cy="{top+44+k*18}" r="7" fill="#c9c9d1" stroke="#8a8a94"/>')
-            add(f'<line x1="{tx+30}" y1="{top+44+k*18}" x2="{tx+40}" y2="{top+44+k*18}" '
-                f'stroke="#55555c" stroke-width="2"/>')
-    # jumper header for the logic pins
-    add(f'<rect x="{hx+104}" y="{top+34}" width="26" height="52" rx="3" fill="#1a1a1a"/>')
+    # corner mounting holes
+    for mx, my in ((bx1+15, top+15), (bx1+bw-15, top+15),
+                   (bx1+15, top+bh-15), (bx1+bw-15, top+bh-15)):
+        add(f'<circle cx="{mx}" cy="{my}" r="9" fill="#15151a"/>')
+        add(f'<circle cx="{mx}" cy="{my}" r="4" fill="#fdfaf3"/>')
+
+    # big finned heatsink, top centre
+    hs_w, hs_h = 210, 62
+    hx1, hy1 = cx - hs_w / 2, top + 22
+    add(f'<rect x="{hx1}" y="{hy1}" width="{hs_w}" height="{hs_h}" rx="5" '
+        f'fill="#2b2b30" stroke="#15151a" stroke-width="2"/>')
+    for i in range(7):
+        fx = hx1 + 16 + i * 30
+        add(f'<line x1="{fx}" y1="{hy1+8}" x2="{fx}" y2="{hy1+hs_h-8}" '
+            f'stroke="#55555c" stroke-width="6"/>')
+    for sx in (hx1 + 24, hx1 + hs_w - 24):
+        add(f'<circle cx="{sx}" cy="{hy1+hs_h-6}" r="5" fill="#c9c9d1"/>')
+
+    # eight rectifier diodes in two columns beside the heatsink
+    for dx in (bx1 + 122, bx1 + bw - 122):
+        for i in range(4):
+            dy = top + 14 + i * 21
+            add(f'<rect x="{dx-10}" y="{dy}" width="20" height="16" rx="3" '
+                f'fill="#1a1a1a" stroke="#000"/>')
+            add(f'<rect x="{dx-10}" y="{dy-5}" width="20" height="6" rx="2" fill="#c9c9d1"/>')
+
+    # the L298N chip itself, with its pin rows
+    ic_w, ic_h = 176, 42
+    ix1, iy1 = cx - ic_w / 2, top + 88
+    for i in range(9):
+        px = ix1 + 12 + i * (ic_w - 24) / 8
+        add(f'<rect x="{px-3}" y="{iy1-6}" width="6" height="8" fill="#c9c9d1"/>')
+        add(f'<rect x="{px-3}" y="{iy1+ic_h-2}" width="6" height="8" fill="#c9c9d1"/>')
+    add(f'<rect x="{ix1}" y="{iy1}" width="{ic_w}" height="{ic_h}" rx="3" '
+        f'fill="#1a1a1a" stroke="#000"/>')
+    _text(add, cx, top + 156, "L298N", 17, "#fff")
+
+    # two electrolytic capacitors
+    for dx in (-58, 58):
+        ccx, ccy = cx + dx, top + 158
+        add(f'<circle cx="{ccx}" cy="{ccy}" r="19" fill="#f2f2f2" stroke="#9a9aa4" stroke-width="2"/>')
+        add(f'<path d="M{ccx-13} {ccy-14} A 19 19 0 0 0 {ccx-13} {ccy+14} Z" fill="#3a3a3f"/>')
+
+    # voltage regulator and its jumper
+    rx1 = cx - 190
+    add(f'<rect x="{rx1}" y="{top+112}" width="58" height="12" rx="2" fill="#3a3a3f"/>')
+    add(f'<rect x="{rx1+7}" y="{top+120}" width="44" height="34" rx="3" '
+        f'fill="#1a1a1a" stroke="#000"/>')
+    _text(add, rx1 + 29, top + 106, "5VEN", 11, "#fff")
+    jx1 = cx + 150
+    add(f'<rect x="{jx1}" y="{top+150}" width="38" height="24" rx="3" fill="#1a1a1a"/>')
     for k in range(3):
-        add(f'<circle cx="{hx+117}" cy="{top+46+k*16}" r="4" fill="#d9a441"/>')
-    _text(add, cx, top + 16, spec.get("label_text", "L298N motor driver"), 14, "#fff")
+        add(f'<circle cx="{jx1+8+k*11}" cy="{top+162}" r="4" fill="#d9a441"/>')
+
+    # blue screw terminals, two blocks each side
+    for side, labels in ((-1, ("OUT1", "OUT2")), (1, ("OUT3", "OUT4"))):
+        tx = bx1 + 14 if side < 0 else bx1 + bw - 78
+        for k, name in enumerate(labels):
+            ty = top + 56 + k * 68
+            add(f'<rect x="{tx}" y="{ty}" width="64" height="58" rx="4" '
+                f'fill="#3b8ed0" stroke="#1a4a8a" stroke-width="2"/>')
+            add(f'<rect x="{tx+6}" y="{ty+6}" width="52" height="46" rx="3" fill="#2b6cb0"/>')
+            for j in range(2):
+                sy = ty + 20 + j * 26
+                add(f'<circle cx="{tx+32}" cy="{sy}" r="10" fill="#c9c9d1" stroke="#8a8a94"/>')
+                add(f'<line x1="{tx+24}" y1="{sy}" x2="{tx+40}" y2="{sy}" '
+                    f'stroke="#55555c" stroke-width="2.5"/>')
+            _text(add, tx + 32, ty + 52, name, 11, "#e8f2ff")
+
+    _text(add, cx, top + 16, spec.get("label_text", "L298N motor driver"), 15, "#fff")
     _pin_labels(add, L, xs, row, pins)
 
 
