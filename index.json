@@ -2,7 +2,7 @@
   "skills": [
     {
       "name": "maker",
-      "version": "292432c2d92f",
+      "version": "f73a0f02aba5",
       "files": [
         "SKILL.md",
         "bbd/__init__.py",
@@ -22,6 +22,7 @@
         "circuits/display-7seg.yml",
         "circuits/doorbell.yml",
         "circuits/ic-74hc595.yml",
+        "circuits/joystick-servo.yml",
         "circuits/joystick.yml",
         "circuits/lcd.yml",
         "circuits/led.yml",

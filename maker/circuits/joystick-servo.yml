@@ -1,0 +1,28 @@
+board: freenove-esp32-wrover
+layout:
+  notes_position: right
+title: Joystick steering a servo — Freenove ESP32-WROVER (FNK0046)
+subtitle: VRx sets the angle; the stick's button recentres it
+components:
+  - {type: joystick, at: [1, c], pins: [GND, +5V, VRx, VRy, SW]}
+  - {type: servo, at: [8, c]}
+wires:
+  - {from: bb.1.c, to: board.L14, color: black, label: joystick GND}
+  - {from: bb.2.c, to: board.L17, color: red, label: joystick +5V — 3V3}
+  - {from: bb.3.c, to: board.GPIO36, color: orange, label: VRx — GPIO 36}
+  - {from: bb.4.c, to: board.GPIO39, color: yellow, label: VRy — GPIO 39}
+  - {from: bb.5.c, to: board.GPIO14, color: green, label: SW — GPIO 14}
+  - {from: bb.8.c, to: board.L14, color: black, label: servo brown — GND}
+  - {from: bb.9.c, to: board.L19, color: red, label: servo red — 5V}
+  - {from: bb.10.c, to: board.GPIO15, color: orange, label: servo orange — GPIO 15}
+steps:
+  - text: "Joystick into columns 1-5, row c: GND, 3V3, then VRx, VRy and SW."
+  - text: "Servo into columns 8-10, row c: brown → GND, red → 5V, orange → signal."
+  - text: "Signal goes to GPIO 15 — the pin the class servo code uses."
+  - text: "Push the stick sideways and the arm follows VRx."
+notes:
+  - "Code: vrx = ADC(Pin(36)); vrx.atten(ADC.ATTN_11DB). servo = PWM(Pin(15), 50)."
+  - "Angle from the stick: angle = int(vrx.read() * 180 / 4096); duty = 26 + int(angle * 102 / 180)."
+  - "VRy is free for a second servo (pan/tilt); SW is a button — Pin(14, Pin.IN, Pin.PULL_UP)."
+  - text: "The servo takes its power from the board's 5V pin; a stalled servo draws ~0.7 A, so use an external 5V supply if it jitters or the board resets."
+    warn: true
