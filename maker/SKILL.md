@@ -124,6 +124,22 @@ camera: true                      # optional: draw the camera on the board
 | `board.R17`    | right header, 17th pin from the top (1-based)         |
 | `board.L1`     | left header, 1st pin from the top                     |
 | `bb.2.a`       | breadboard column 2, row a                            |
+| `driver.OUT1`  | a component terminal, when the component has an `id`  |
+
+**Component terminals.** Give a component an `id:` and you can wire to its
+terminals, e.g. the L298N's `OUT1`–`OUT4` screw outputs:
+
+```yaml
+components:
+  - {type: l298n, id: driver, at: [0, a]}
+wires:
+  - {from: driver.OUT1, to: bb.2.j, color: red, label: left motor +}
+```
+
+The usual way to wire a motor is: plug the motor's leads into two breadboard
+columns (`motor at: [2, j]`), then wire those columns to `driver.OUT1/OUT2` —
+the column is the junction, exactly like on the real board. See
+`circuits/robot-drive.yml`.
 
 Rows `a`–`e` are the top half, `f`–`j` the bottom half. Holes in one column
 within the same half are already connected — that is the whole point of a

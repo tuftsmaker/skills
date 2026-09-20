@@ -77,8 +77,12 @@ def build_svg(spec, board):
     L = Layout({**spec, "layout": layout_over})
     # wires routed down the left side cross under the board in the corridor;
     # if those lanes would reach the notes band, push the notes down instead
-    left_wires = sum(1 for l in wire_mod.assign_lanes(L, board, spec.get("wires") or [])
-                     if l.get("side") == "L")
+    parts = {}
+    for comp in spec.get("components") or []:
+        if comp.get("id"):
+            parts[comp["id"]] = comp_mod.component_terminals(L, comp)
+    lanes = wire_mod.assign_lanes(L, board, spec.get("wires") or [], parts)
+    left_wires = sum(1 for l in lanes if l.get("side") == "L")
     if left_wires:
         L.notes_top = max(L.notes_top, L.corridor0 + (left_wires - 1) * L.corridor_pitch + 26)
     legend = legend_rows(L, spec)
@@ -105,7 +109,7 @@ def build_svg(spec, board):
     # so the renderer highlights the tie-point group each hole belongs to.
     used = set()
     for spec_wire in spec.get("wires") or []:
-        used.update(wire_mod.wire_holes(L, board, spec_wire))
+        used.update(wire_mod.wire_holes(L, board, spec_wire, parts))
     for spec_comp in spec.get("components") or []:
         used.update(comp_mod.component_holes(L, spec_comp))
     explicit = (spec.get("breadboard") or {}).get("highlight_columns")
@@ -119,9 +123,8 @@ def build_svg(spec, board):
         "highlight_holes": sorted(holes),
     }})
 
-    lanes = wire_mod.assign_lanes(L, board, spec.get("wires") or [])
     for i, spec_wire in enumerate(spec.get("wires") or []):
-        wire_mod.draw_wire(add, L, board, spec_wire, lanes[i])
+        wire_mod.draw_wire(add, L, board, spec_wire, lanes[i], parts)
 
     for spec_comp in spec.get("components") or []:
         comp_mod.draw_component(add, L, spec_comp)

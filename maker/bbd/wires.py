@@ -22,8 +22,12 @@ COLOURS = {"red": "#e02020", "black": "#2b2b2b", "blue": "#2b6cb0",
 CHANNEL_OFFSETS = [0, -12, 12, -24, 24, -36, 36, -48, 48]
 
 
-def parse_endpoint(L, board, text):
-    """Return ("board", (x, y)) or ("bb", (col, row), (x, y))."""
+def parse_endpoint(L, board, text, parts=None):
+    """Return ("board", (x, y)), ("bb", (col, row), (x, y)) or ("part", (x, y)).
+
+    `parts` maps a component's `id` to its named terminals, so a wire can end
+    on e.g. the driver's `driver.OUT1` screw terminal.
+    """
     text = str(text).strip()
     if text.startswith("board."):
         name = text[len("board."):]
@@ -34,7 +38,11 @@ def parse_endpoint(L, board, text):
         col = int(col)
         L.row_y(row)  # validate
         return ("bb", (col, row), L.hole(col, row))
-    raise ValueError(f"cannot parse endpoint {text!r} — use 'board.PIN' or 'bb.COL.ROW'")
+    if parts and "." in text:
+        part_id, name = text.split(".", 1)
+        if part_id in parts and name in parts[part_id]:
+            return ("part", parts[part_id][name])
+    raise ValueError(f"cannot parse endpoint {text!r} — use 'board.PIN', 'bb.COL.ROW' or 'part.TERMINAL'")
 
 
 def _pin_side(L, parsed):
@@ -43,19 +51,26 @@ def _pin_side(L, parsed):
     return "L" if px < L.board_x + L.board_w / 2 else "R"
 
 
-def assign_lanes(L, board, wires):
+def assign_lanes(L, board, wires, parts=None):
     """Plan routing lanes: one per wire, plus side lanes for left-hand pins."""
     lanes = []
     gutter = left = corridor = 0
     for spec in wires:
         pin = None
         for end in (spec["from"], spec["to"]):
-            parsed = parse_endpoint(L, board, end)
+            parsed = parse_endpoint(L, board, end, parts)
+            if parsed[0] == "part":
+                pin = parsed
+                break
             if parsed[0] == "board":
                 pin = parsed
                 break
         if pin is None:
             lanes.append({"side": "C"})
+            continue
+        if pin[0] == "part":
+            lanes.append({"side": "P", "gutter": gutter})
+            gutter += 1
             continue
         side = _pin_side(L, pin)
         if side == "L":
@@ -69,11 +84,11 @@ def assign_lanes(L, board, wires):
     return lanes
 
 
-def wire_holes(L, board, spec):
+def wire_holes(L, board, spec, parts=None):
     """Breadboard holes this wire touches (for column highlighting)."""
     holes = []
     for end in (spec["from"], spec["to"]):
-        parsed = parse_endpoint(L, board, end)
+        parsed = parse_endpoint(L, board, end, parts)
         if parsed[0] == "bb":
             holes.append(parsed[1])
     return holes
@@ -81,6 +96,14 @@ def wire_holes(L, board, spec):
 
 def _channel_y(L, lane):
     return L.channel + CHANNEL_OFFSETS[lane.get("gutter", 0) % len(CHANNEL_OFFSETS)]
+
+
+def _part_to_hole(L, term, hole, lane):
+    """From a part terminal: down to the channel lane, across, then into the hole."""
+    ax, ay = term
+    hx, hy = hole
+    cy = _channel_y(L, lane)
+    return [(ax, ay), (ax, cy), (hx, cy), (hx, hy)]
 
 
 def _board_to_hole(L, pin, hole, lane):
@@ -95,18 +118,18 @@ def _board_to_hole(L, pin, hole, lane):
     return [(px, py), (gx, py), (gx, cy), (hx, cy), (hx, hy)]
 
 
-def route(L, board, spec, lane):
+def route(L, board, spec, lane, parts=None):
     if spec.get("via"):
         pts = []
-        a = parse_endpoint(L, board, spec["from"])
-        b = parse_endpoint(L, board, spec["to"])
+        a = parse_endpoint(L, board, spec["from"], parts)
+        b = parse_endpoint(L, board, spec["to"], parts)
         pts.append(a[2] if a[0] == "bb" else a[1])
         pts.extend([tuple(p) for p in spec["via"]])
         pts.append(b[2] if b[0] == "bb" else b[1])
         return pts
 
-    a = parse_endpoint(L, board, spec["from"])
-    b = parse_endpoint(L, board, spec["to"])
+    a = parse_endpoint(L, board, spec["from"], parts)
+    b = parse_endpoint(L, board, spec["to"], parts)
 
     if a[0] == "board" and b[0] == "bb":
         return _board_to_hole(L, a[1], b[2], lane)
@@ -114,14 +137,26 @@ def route(L, board, spec, lane):
     if a[0] == "bb" and b[0] == "board":
         return list(reversed(_board_to_hole(L, b[1], a[2], lane)))
 
+    if a[0] == "part" and b[0] == "bb":
+        return _part_to_hole(L, a[1], b[2], lane)
+
+    if a[0] == "bb" and b[0] == "part":
+        return list(reversed(_part_to_hole(L, b[1], a[2], lane)))
+
+    if a[0] == "part" and b[0] == "part":
+        ax, ay = a[1]
+        bx2, by2 = b[1]
+        cy = _channel_y(L, lane)
+        return [(ax, ay), (ax, cy), (bx2, cy), (bx2, by2)]
+
     # breadboard to breadboard — hop through the centre channel
     hx1, hy1 = a[2]
     hx2, hy2 = b[2]
     return [(hx1, hy1), (hx1, L.channel), (hx2, L.channel), (hx2, hy2)]
 
 
-def draw_wire(add, L, board, spec, lane):
-    pts = route(L, board, spec, lane)
+def draw_wire(add, L, board, spec, lane, parts=None):
+    pts = route(L, board, spec, lane, parts)
     colour = COLOURS.get(str(spec.get("color", "red")).lower(), spec.get("color", "#e02020"))
     path = " ".join(f"{x},{y}" for x, y in pts)
     add(f'<polyline points="{path}" fill="none" stroke="{colour}" stroke-width="7" '
@@ -129,7 +164,7 @@ def draw_wire(add, L, board, spec, lane):
 
     # plug marker where the wire enters a breadboard hole
     for end in (spec["from"], spec["to"]):
-        parsed = parse_endpoint(L, board, end)
+        parsed = parse_endpoint(L, board, end, parts)
         if parsed[0] == "bb":
             x, y = parsed[2]
             add(f'<circle cx="{x}" cy="{y}" r="6.5" fill="none" stroke="#333" '

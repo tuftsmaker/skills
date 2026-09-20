@@ -1,0 +1,46 @@
+board: freenove-esp32-wrover-ext
+title: Robot drive — two motors, L298N driver and joystick (FNK0046)
+subtitle: The class robot's control circuit on the GPIO extension board
+components:
+  # driver above the breadboard; its OUT terminals are wireable as driver.OUT1..4
+  - {type: l298n, id: driver, at: [0, a]}
+  # steering stick: VRx / VRy are ADC1 pins, SW is its push button
+  - {type: joystick, at: [9, c], pins: [GND, +5V, VRx, VRy, SW]}
+  # left and right TT motors, wired from their breadboard columns to the driver
+  - {type: motor, at: [2, j], label_text: left motor}
+  - {type: motor, at: [8, j], label_text: right motor}
+wires:
+  # joystick
+  - {from: bb.9.c, to: board.L14, color: black, label: joystick GND}
+  - {from: bb.10.c, to: board.L17, color: red, label: joystick +5V — 3V3}
+  - {from: bb.11.c, to: board.GPIO36, color: orange, label: VRx — GPIO 36}
+  - {from: bb.12.c, to: board.GPIO39, color: yellow, label: VRy — GPIO 39}
+  - {from: bb.13.c, to: board.GPIO4, color: green, label: SW — GPIO 4}
+  # driver logic
+  - {from: bb.0.a, to: board.GPIO13, color: orange, label: ENA — GPIO 13 (left speed)}
+  - {from: bb.1.a, to: board.GPIO12, color: blue, label: IN1 — GPIO 12}
+  - {from: bb.2.a, to: board.GPIO14, color: green, label: IN2 — GPIO 14}
+  - {from: bb.3.a, to: board.GPIO18, color: purple, label: IN3 — GPIO 18}
+  - {from: bb.4.a, to: board.GPIO19, color: grey, label: IN4 — GPIO 19}
+  - {from: bb.5.a, to: board.GPIO5, color: yellow, label: ENB — GPIO 5 (right speed)}
+  - {from: bb.6.a, to: board.L14, color: black, label: driver GND}
+  # motor outputs: motor leads plug into two columns; wires run to the driver
+  - {from: driver.OUT1, to: bb.2.j, color: red, label: left motor +}
+  - {from: driver.OUT2, to: bb.3.j, color: black, label: left motor −}
+  - {from: driver.OUT3, to: bb.8.j, color: red, label: right motor +}
+  - {from: driver.OUT4, to: bb.9.j, color: black, label: right motor −}
+steps:
+  - text: "Seat the ESP32 on the extension board, then plug the joystick into columns 9-13, row c."
+  - text: "Joystick: GND, 3V3, then VRx → GPIO 36, VRy → GPIO 39, SW → GPIO 4."
+  - text: "Driver logic: ENA → GPIO 13, IN1 → GPIO 12, IN2 → GPIO 14 (left motor)."
+  - text: "Driver logic: IN3 → GPIO 18, IN4 → GPIO 19, ENB → GPIO 5 (right motor)."
+  - text: "Ground the driver and the joystick to GND; never skip this wire."
+  - text: "Motor leads plug into columns 2-3 (left) and 8-9 (right), row j."
+  - text: "Run wires from those columns to the driver's OUT1/OUT2 and OUT3/OUT4 screws."
+  - text: "9V battery clip → the driver's 12V and GND terminals (not shown here)."
+notes:
+  - "Left motor: OUT1/OUT2. Right motor: OUT3/OUT4. Swap a motor's two wires to reverse it."
+  - "ENA and ENB are PWM: duty controls speed, IN1/IN2 (and IN3/IN4) control direction."
+  - "Code: VRx = ADC(Pin(36)), VRy = ADC(Pin(39)) with ATTN_11DB; SW = Pin(4, Pin.IN, Pin.PULL_UP)."
+  - text: "The driver's 5V pin can power the board when running from the battery — never with USB and the battery connected at the same time."
+    warn: true

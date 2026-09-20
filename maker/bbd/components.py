@@ -924,23 +924,54 @@ def draw_l298n(add, L, spec):
     for k in range(3):
         add(f'<circle cx="{jx1+8+k*11}" cy="{top+162}" r="4" fill="#d9a441"/>')
 
-    # blue screw terminals, two blocks each side
-    for side, labels in ((-1, ("OUT1", "OUT2")), (1, ("OUT3", "OUT4"))):
-        tx = bx1 + 14 if side < 0 else bx1 + bw - 78
-        for k, name in enumerate(labels):
-            ty = top + 56 + k * 68
-            add(f'<rect x="{tx}" y="{ty}" width="64" height="58" rx="4" '
+    # blue screw terminals, one block per output, with a stub out of the board edge
+    for side, names, tx in ((-1, ("OUT1", "OUT2"), bx1 + 14),
+                            (1, ("OUT3", "OUT4"), bx1 + bw - 62)):
+        for k, name in enumerate(names):
+            ty = top + 52 + k * 70
+            exit_x = bx1 - 8 if side < 0 else bx1 + bw + 8
+            add(f'<line x1="{tx+24}" y1="{ty+23}" x2="{exit_x}" y2="{ty+23}" '
+                f'stroke="#8a8a94" stroke-width="4"/>')
+            add(f'<rect x="{tx}" y="{ty}" width="48" height="46" rx="4" '
                 f'fill="#3b8ed0" stroke="#1a4a8a" stroke-width="2"/>')
-            add(f'<rect x="{tx+6}" y="{ty+6}" width="52" height="46" rx="3" fill="#2b6cb0"/>')
-            for j in range(2):
-                sy = ty + 20 + j * 26
-                add(f'<circle cx="{tx+32}" cy="{sy}" r="10" fill="#c9c9d1" stroke="#8a8a94"/>')
-                add(f'<line x1="{tx+24}" y1="{sy}" x2="{tx+40}" y2="{sy}" '
-                    f'stroke="#55555c" stroke-width="2.5"/>')
-            _text(add, tx + 32, ty + 52, name, 11, "#e8f2ff")
+            add(f'<circle cx="{tx+24}" cy="{ty+23}" r="11" fill="#c9c9d1" stroke="#8a8a94"/>')
+            add(f'<line x1="{tx+15}" y1="{ty+23}" x2="{tx+33}" y2="{ty+23}" '
+                f'stroke="#55555c" stroke-width="2.5"/>')
+            lx = tx + 72 if side < 0 else tx - 10
+            add(f'<text x="{lx}" y="{ty+28}" font-size="12" font-weight="700" fill="#fff" '
+                f'text-anchor="{"start" if side < 0 else "end"}">{name}</text>')
 
     _text(add, cx, top + 16, spec.get("label_text", "L298N motor driver"), 15, "#fff")
     _pin_labels(add, L, xs, row, pins)
+
+
+def terminals_l298n(L, spec):
+    """Wireable points for the driver's screw terminals, just off the board edge."""
+    col, row = spec["at"]
+    pins = spec.get("pins") or ["ENA", "IN1", "IN2", "IN3", "IN4", "ENB", "GND", "5V"]
+    xs = [L.col_x(col + i) for i in range(len(pins))]
+    cx = (xs[0] + xs[-1]) / 2
+    _, top, bottom, _ = _module_slot(L, row, 200)
+    bw = xs[-1] - xs[0] + 90
+    bx1 = cx - bw / 2
+    t = {}
+    for side, names in ((-1, ("OUT1", "OUT2")), (1, ("OUT3", "OUT4"))):
+        exit_x = bx1 - 8 if side < 0 else bx1 + bw + 8
+        for k, name in enumerate(names):
+            t[name] = (exit_x, top + 52 + k * 70 + 23)
+    return t
+
+
+def component_terminals(L, spec):
+    kind = spec.get("type")
+    if kind in TERMINALS:
+        return TERMINALS[kind](L, spec)
+    return {}
+
+
+TERMINALS = {
+    "l298n": terminals_l298n,
+}
 
 
 REGISTRY = {
