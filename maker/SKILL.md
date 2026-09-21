@@ -241,6 +241,15 @@ lane router on the class robot (19 wires) it produced longer, wandering paths �
 so it is not the default and should not be used for handouts yet. Making it
 competitive would need rip-up/retry, per-side ordering and tighter zone rules.
 
+## The local gallery
+
+Every render also updates `gallery.html` (and `gallery.json`) in the output
+folder: a self-contained page listing every diagram drawn there, newest first.
+Clicking a picture opens its interactive version; the links beside it offer the
+PNG and the SVG. All links are relative, so the page works straight off the
+filesystem — no server, no accounts, no upload — and it is how a student
+browses what they have made. `--no-gallery` skips it for scripted runs.
+
 ## Breadboard: off by default
 
 Diagrams are drawn **without a breadboard** unless a circuit asks for one:

@@ -501,6 +501,117 @@ def write_html(svg_path, html_path, title):
         f.write(html)
 
 
+GALLERY_CSS = """
+  body { margin: 0; background: #f6f4ef; color: #26262b;
+         font: 16px -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
+  header { padding: 18px 26px; background: #fff; border-bottom: 1px solid #e2ddd3; }
+  header h1 { margin: 0; font-size: 20px; }
+  header p { margin: 4px 0 0; color: #6b6b70; font-size: 14px; }
+  main { display: flex; flex-wrap: wrap; gap: 18px; padding: 22px 26px; }
+  .card { background: #fff; border: 1px solid #e2ddd3; border-radius: 10px; overflow: hidden;
+          width: 420px; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+  .card img { display: block; width: 100%; background: #fdfaf3; border-bottom: 1px solid #eee7da; }
+  .card .body { padding: 12px 14px 14px; }
+  .card h2 { margin: 0 0 6px; font-size: 15px; }
+  .card .meta { color: #6b6b70; font-size: 13px; margin-bottom: 10px; }
+  .card a { display: inline-block; margin-right: 12px; color: #1f4a8a; text-decoration: none;
+            font-weight: 600; font-size: 14px; }
+  .card a:hover { text-decoration: underline; }
+  .empty { color: #6b6b70; padding: 26px; }
+"""
+
+
+def update_gallery(out_dir, base_name, title):
+    """Maintain a local gallery of every diagram rendered into this folder.
+
+    All links are relative files, so the page works straight off the
+    filesystem — no server, no accounts, nothing to host.
+    """
+    import json as _json
+    manifest_path = os.path.join(out_dir, "gallery.json")
+    items = []
+    if os.path.exists(manifest_path):
+        try:
+            items = _json.load(open(manifest_path))
+        except Exception:
+            items = []
+    items = [i for i in items if i.get("name") != base_name]
+    items.insert(0, {"name": os.path.basename(base_name),
+                     "title": title or os.path.basename(base_name), "date": _today()})
+    try:
+        with open(manifest_path, "w") as f:
+            _json.dump(items, f, indent=2)
+    except Exception:
+        return
+
+    cards = []
+    for item in items:
+        name, t = item["name"], item.get("title", item["name"])
+        png = f"{os.path.basename(name)}.png"
+        if not os.path.exists(os.path.join(out_dir, png)):
+            continue
+        html = f"{os.path.basename(name)}.html"
+        svg = f"{os.path.basename(name)}.svg"
+        has_html = os.path.exists(os.path.join(out_dir, html))
+        # the picture itself opens the interactive version when there is one
+        main = html if has_html else png
+        links = ([f'<a href="{html}">Interactive (zoom)</a>'] if has_html else [])
+        links.append(f'<a href="{png}">PNG</a>')
+        if os.path.exists(os.path.join(out_dir, svg)):
+            links.append(f'<a href="{svg}">SVG</a>')
+        cards.append(
+            f'<div class="card"><a href="{main}" title="Open the interactive version">'
+            f'<img src="{png}" alt="{t}"></a>'
+            f'<div class="body"><h2>{t}</h2>'
+            f'<div class="meta">{" ".join(links)} &middot; {item.get("date", "")}</div>'
+            f'</div></div>')
+    body = "".join(cards) or '<p class="empty">No diagrams yet — ask for one.</p>'
+    html = ("<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"utf-8\">"
+            "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">"
+            "<title>My wiring diagrams</title><style>" + GALLERY_CSS + "</style></head><body>"
+            "<header><h1>My wiring diagrams</h1>"
+            "<p>Everything the maker skill has drawn in this folder. "
+            "Click a picture to zoom and trace wires, or use the links for the "
+            "plain PNG and the printable SVG.</p>"
+            "</header><main>" + body + "</main></body></html>")
+    with open(os.path.join(out_dir, "gallery.html"), "w") as f:
+        f.write(html)
+
+
+def _today():
+    import datetime
+    return datetime.date.today().isoformat()
+
+
+def serve_dir(directory, port):
+    """Serve `directory` on loopback if nothing is listening there yet.
+
+    Returns the base URL. Loopback only: nothing outside this machine can
+    reach it, and the links work in the desktop app because they are ordinary
+    http:// URLs (local file links are not clickable in current builds).
+    """
+    import urllib.request
+    base = f"http://127.0.0.1:{port}/"
+    try:
+        urllib.request.urlopen(base, timeout=1)
+        return base                     # something is already serving that port
+    except Exception:
+        pass
+    subprocess.Popen(
+        [sys.executable, "-m", "http.server", str(port), "--bind", "127.0.0.1",
+         "--directory", os.path.abspath(directory)],
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        start_new_session=True)
+    for _ in range(20):
+        try:
+            urllib.request.urlopen(base, timeout=1)
+            return base
+        except Exception:
+            import time as _time
+            _time.sleep(0.15)
+    return base
+
+
 def open_in_browser(path):
     """Hand the file to the platform's default application (macOS: open,
     Windows: start, Linux: xdg-open)."""
@@ -582,6 +693,11 @@ def main():
     ap.add_argument("--no-html", action="store_true", help="skip the zoomable HTML wrapper")
     ap.add_argument("--no-open", action="store_true",
                     help="do not open the diagram in the browser (for batch runs)")
+    ap.add_argument("--no-gallery", action="store_true",
+                    help="do not update the local gallery page")
+    ap.add_argument("--serve", action="store_true",
+                    help="serve the output folder on 127.0.0.1 and print a clickable URL")
+    ap.add_argument("--port", type=int, default=8765, help="port for --serve (default 8765)")
     args = ap.parse_args()
 
     if args.list or not args.circuit:
@@ -603,6 +719,7 @@ def main():
 
     base = args.out or os.path.splitext(args.circuit)[0]
     os.makedirs(os.path.dirname(os.path.abspath(base)), exist_ok=True)
+    base_name = os.path.basename(base) + ".html"
     svg_path = base + ".svg"
     with open(svg_path, "w") as f:
         f.write(svg)
@@ -612,6 +729,14 @@ def main():
     if not args.no_html:
         write_html(svg_path, html_path, spec.get("title"))
         print(f"wrote {html_path}")
+
+    if not args.no_gallery:
+        update_gallery(os.path.dirname(os.path.abspath(base)) or ".", base, spec.get("title"))
+
+    if args.serve:
+        out_dir = os.path.dirname(os.path.abspath(base)) or "."
+        url_base = serve_dir(out_dir, args.port)
+        print(f"clickable: {url_base}{base_name}")
 
     if not args.no_open:
         target = html_path if os.path.exists(html_path) else svg_path
