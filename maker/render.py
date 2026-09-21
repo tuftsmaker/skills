@@ -132,8 +132,13 @@ def build_svg(spec, board):
             "highlight_holes": sorted(holes),
         }})
 
+    grid_paths = None
+    if str(layout_over.get("router", "lanes")).lower() == "grid":
+        from bbd import autoroute
+        grid_paths = autoroute.route_all(L, board, spec, parts)
     for i, spec_wire in enumerate(spec.get("wires") or []):
-        wire_mod.draw_wire(add, L, board, spec_wire, lanes[i], parts)
+        wire_mod.draw_wire(add, L, board, spec_wire, lanes[i], parts,
+                           pts=grid_paths[i] if grid_paths else None)
 
     for spec_comp in spec.get("components") or []:
         comp_mod.draw_component(add, L, spec_comp)

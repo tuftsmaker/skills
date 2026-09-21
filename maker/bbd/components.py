@@ -962,6 +962,64 @@ def terminals_l298n(L, spec):
     return t
 
 
+def component_bounds(L, spec):
+    """Approximate body rectangle (x, y, w, h) for obstacle avoidance, or None."""
+    kind = spec.get("type")
+    col, row = spec.get("at") or spec.get("from") or (0, "a")
+    y = L.row_y(row)
+    if kind == "motor":
+        cx = (L.col_x(col) + L.col_x(col + 1)) / 2
+        _, top, bottom, _ = _module_slot(L, row, 116)
+        cy = (top + bottom) / 2
+        return (cx - 190, cy - 62, 380, 124)
+    if kind == "servo":
+        cx = (L.col_x(col) + L.col_x(col + 2)) / 2
+        _, top, bottom, _ = _module_slot(L, row, 92)
+        return (cx - 100, top - 50, 200, (bottom - top) + 60)
+    if kind == "l298n":
+        pins = spec.get("pins") or ["ENA", "IN1", "IN2", "IN3", "IN4", "ENB", "GND", "5V"]
+        xs = [L.col_x(col + i) for i in range(len(pins))]
+        cx = (xs[0] + xs[-1]) / 2
+        _, top, bottom, _ = _module_slot(L, row, 200)
+        bw = xs[-1] - xs[0] + 90
+        return (cx - bw / 2, top, bw, bottom - top)
+    if kind in ("ic", "display_7seg", "bar_graph"):
+        n = int(spec.get("pins", {"ic": 16, "display_7seg": 10, "bar_graph": 20}[kind])) // 2
+        xs = [L.col_x(col + i) for i in range(n)]
+        top = min(L.row_y("e"), L.row_y("f")) - 8
+        bottom = max(L.row_y("e"), L.row_y("f")) + 8
+        return (xs[0] - 36, top, xs[-1] - xs[0] + 72, bottom - top)
+    if kind == "battery":
+        cx = (L.col_x(col) + L.col_x(col + 1)) / 2
+        _, top, bottom, _ = _module_slot(L, row, 88)
+        return (cx - 64, top - 20, 128, (bottom - top) + 24)
+    if kind == "speaker":
+        cx = (L.col_x(col) + L.col_x(col + 1)) / 2
+        _, top, bottom, _ = _module_slot(L, row, 84)
+        cy = (top + bottom) / 2
+        return (cx - 50, cy - 50, 100, 100)
+    if kind == "module":
+        pins = spec.get("pins") or []
+        h = int(spec.get("height", 110))
+        if not pins:
+            return None
+        x1 = L.col_x(col) - L.dcol * 0.4
+        x2 = L.col_x(col + len(pins) - 1) + L.dcol * 0.4
+        _, top, _, _ = _module_slot(L, row, h)
+        return (x1, top, x2 - x1, h)
+    if kind in ("joystick", "lcd", "ultrasonic"):
+        n = {"joystick": 5, "lcd": 4, "ultrasonic": 4}[kind]
+        pad = {"joystick": 80, "lcd": 0, "ultrasonic": 110}[kind]
+        h = {"joystick": 100, "lcd": 148, "ultrasonic": 96}[kind]
+        w = {"joystick": 420, "lcd": 420, "ultrasonic": 0}[kind]
+        xs = [L.col_x(col + i) for i in range(n)]
+        cx = (xs[0] + xs[-1]) / 2
+        bw = w or (xs[-1] - xs[0] + pad)
+        _, top, _, _ = _module_slot(L, row, h)
+        return (cx - bw / 2, top, bw, h)
+    return None
+
+
 def component_terminals(L, spec):
     kind = spec.get("type")
     if kind in TERMINALS:

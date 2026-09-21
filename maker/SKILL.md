@@ -222,6 +222,22 @@ choices in the examples follow it. Keep these in mind:
 
 The examples in `circuits/` already follow this table — start from the closest one.
 
+## Routing
+
+Wires are routed by the **lane router** (the default): left-hand pins descend
+the left gutter, cross under the board in the corridor and come up the right
+gutter into the centre channel; right-hand pins drop straight into the gutter.
+Cells are shared only where runs do not overlap, which bundles a busy diagram
+into parallel lanes.
+
+There is an experimental **grid router** in `bbd/autoroute.py`, enabled per
+circuit with `layout: {router: grid}`: A* over a 16 px grid, with the board and
+component bodies as obstacles, the breadboard passable at a cost, and each
+finished wire raising the price of the cells it occupies. Measured against the
+lane router on the class robot (19 wires) it produced longer, wandering paths —
+so it is not the default and should not be used for handouts yet. Making it
+competitive would need rip-up/retry, per-side ordering and tighter zone rules.
+
 ## Boards
 
 | board                          | when                                            |

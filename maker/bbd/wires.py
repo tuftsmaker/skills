@@ -160,8 +160,9 @@ def _attr(text):
     return str(text).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
 
 
-def draw_wire(add, L, board, spec, lane, parts=None):
-    pts = route(L, board, spec, lane, parts)
+def draw_wire(add, L, board, spec, lane, parts=None, pts=None):
+    if pts is None:
+        pts = route(L, board, spec, lane, parts)
     name = str(spec.get("color", "red")).lower()
     colour = COLOURS.get(name, spec.get("color", "#e02020"))
     path = " ".join(f"{x},{y}" for x, y in pts)

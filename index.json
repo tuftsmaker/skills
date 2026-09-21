@@ -2,10 +2,11 @@
   "skills": [
     {
       "name": "maker",
-      "version": "051f1d8b0268",
+      "version": "eee0a17bd569",
       "files": [
         "SKILL.md",
         "bbd/__init__.py",
+        "bbd/autoroute.py",
         "bbd/board.py",
         "bbd/breadboard.py",
         "bbd/components.py",
