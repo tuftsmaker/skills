@@ -441,18 +441,16 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     var label = list[0].getAttribute('data-label') || name;
     status.textContent = label + (list.length > 1 ? '  (+' + (list.length - 1) + ' more)' : '');
   }
-  stage.addEventListener('click', function (e) {
-    if (moved) { moved = false; return; }
-    var w = e.target.closest ? e.target.closest('.wire') : null;
-    if (w) { focusWire(w); return; }
-    var l = e.target.closest ? e.target.closest('.legend') : null;
-    if (l) { focusColour(l.getAttribute('data-colour')); return; }
-    focusWire(null);
-  });
-  stage.addEventListener('pointerover', function (e) {
-    if (panel.classList.contains('focus')) return;
-    var w = e.target.closest ? e.target.closest('.wire') : null;
-    status.textContent = w ? (w.getAttribute('data-label') || 'wire') : HINT;
+  function pick(clientX, clientY) {
+    var el = document.elementFromPoint(clientX, clientY);
+    if (!el || !el.closest) return null;
+    return el.closest('.wire') || el.closest('.legend') || null;
+  }
+  stage.addEventListener('pointermove', function (e) {
+    if (down || panel.classList.contains('focus')) return;
+    var el = pick(e.clientX, e.clientY);
+    status.textContent = (el && el.classList.contains('wire'))
+      ? (el.getAttribute('data-label') || 'wire') : HINT;
   });
   document.getElementById('clear').onclick = function () {
     focusWire(null);
@@ -468,14 +466,23 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     down = { x: e.clientX - tx, y: e.clientY - ty, sx: e.clientX, sy: e.clientY };
     moved = false;
     stage.classList.add('dragging');
-    if (stage.setPointerCapture) stage.setPointerCapture(e.pointerId);
+    try { if (stage.setPointerCapture) stage.setPointerCapture(e.pointerId); } catch (err) {}
   });
   stage.addEventListener('pointermove', function (e) {
     if (!down) return;
     if (Math.abs(e.clientX - down.sx) + Math.abs(e.clientY - down.sy) > 4) moved = true;
     tx = e.clientX - down.x; ty = e.clientY - down.y; apply();
   });
-  stage.addEventListener('pointerup', function () { down = null; stage.classList.remove('dragging'); });
+  stage.addEventListener('pointerup', function (e) {
+    var wasDown = down;
+    down = null;
+    stage.classList.remove('dragging');
+    if (!wasDown || moved) return;               // a drag, not a click
+    var el = pick(e.clientX, e.clientY);
+    if (!el) { focusWire(null); return; }
+    if (el.classList.contains('legend')) { focusColour(el.getAttribute('data-colour')); return; }
+    focusWire(el);
+  });
   fit();
 })();
 </script>
