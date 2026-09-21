@@ -8,7 +8,7 @@ title: Class robot — joystick, servo arm, motors and status LED (FNK0046)
 subtitle: Everything on the extension board; stick steers, arm aims, LED reports
 components:
   - {type: l298n, id: driver, at: [2, a]}
-  - {type: joystick, at: [8, e], pins: [GND, +5V, VRx, VRy, SW]}
+  - {type: joystick, id: joy, at: [8, e], pins: [GND, +5V, VRx, VRy, SW]}
   - {type: motor, id: left_motor, at: [2, j], label_text: left motor}
   - {type: motor, id: right_motor, at: [8, j], label_text: right motor}
   - {type: servo, id: servo, at: [11, j], label_text: arm servo}
@@ -16,11 +16,11 @@ components:
   - {type: led, color: red, at: [17, c], label_text: status LED, polarity_notes: false}
 wires:
   # joystick
-  - {from: bb.8.e, to: board.R1, color: black, label: joystick GND}
-  - {from: bb.9.e, to: board.L17, color: red, label: joystick +5V — 3V3}
-  - {from: bb.10.e, to: board.GPIO36, color: orange, label: VRx — GPIO 36}
-  - {from: bb.11.e, to: board.GPIO39, color: yellow, label: VRy — GPIO 39}
-  - {from: bb.12.e, to: board.GPIO4, color: green, label: SW — GPIO 4}
+  - {from: joy.GND, to: board.R1, color: black, label: joystick GND}
+  - {from: joy.+5V, to: board.L17, color: red, label: joystick +5V — 3V3}
+  - {from: joy.VRx, to: board.GPIO36, color: orange, label: VRx — GPIO 36}
+  - {from: joy.VRy, to: board.GPIO39, color: yellow, label: VRy — GPIO 39}
+  - {from: joy.SW, to: board.GPIO4, color: green, label: SW — GPIO 4}
   # status LED (mirrors the onboard LED on GPIO 2)
   - {from: board.GPIO2, to: bb.13.c, color: red, label: status LED — GPIO 2}
   - {from: bb.16.c, to: bb.17.c, color: blue, label: resistor → LED anode}

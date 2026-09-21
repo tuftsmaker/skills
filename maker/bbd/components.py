@@ -806,51 +806,63 @@ def draw_ultrasonic(add, L, spec):
 # --------------------------------------------------------------------------
 # KY-023 joystick (5 pins)
 # --------------------------------------------------------------------------
+JOY_W, JOY_H, JOY_PITCH = 260, 325, 44
+
+
 def holes_joystick(L, spec):
+    # wired with jumpers, never plugged into a breadboard
+    return []
+
+
+def _joystick_geom(L, spec):
     col, row = spec["at"]
-    return [(col + i, row) for i in range(5)]
+    cx = L.col_x(col)
+    y = L.row_y(row)
+    xs = [cx + (i - 2) * JOY_PITCH for i in range(5)]
+    top = y - 14 - JOY_H
+    return xs, cx, y, top, y - 14
+
+
+def terminals_joystick(L, spec):
+    xs, cx, y, top, attach = _joystick_geom(L, spec)
+    names = spec.get("pins") or ["GND", "+5V", "VRx", "VRy", "SW"]
+    return {name: (x, y) for name, x in zip(names, xs)}
 
 
 def draw_joystick(add, L, spec):
-    """Black KY-023: a near-square board dominated by the stick cap, corner
-    mounting holes and the labelled five-pin header along the bottom edge."""
-    col, row = spec["at"]
-    y = L.row_y(row)
-    xs = [L.col_x(col + i) for i in range(5)]
-    cx = (xs[0] + xs[4]) / 2
-    bh = 300
-    _, top, bottom, _ = _module_slot(L, row, bh, pad=14)
-    attach = top if _bottom_half(row) else bottom
-
-    bw = xs[4] - xs[0] + 74
+    """Black KY-023 at the reference part's proportions: the stick cap fills a
+    near-square board with four corner holes and the five-pin header along the
+    bottom edge. Its pins are jumpers, so the pitch is free."""
+    xs, cx, y, top, attach = _joystick_geom(L, spec)
+    bw, bh = JOY_W, JOY_H
     bx1 = cx - bw / 2
+
     for x in xs:
         _lead(add, x, y, x, attach)
 
-    add(f'<rect x="{bx1}" y="{top}" width="{bw}" height="{bh}" rx="8" '
+    add(f'<rect x="{bx1}" y="{top}" width="{bw}" height="{bh}" rx="10" '
         f'fill="#1a1a1a" stroke="#3a3a3f" stroke-width="2.5"/>')
     for mx, my in ((bx1+22, top+22), (bx1+bw-22, top+22),
                    (bx1+22, top+bh-22), (bx1+bw-22, top+bh-22)):
         add(f'<circle cx="{mx}" cy="{my}" r="13" fill="#f2f2f2"/>')
-    _text(add, bx1 + 22, top + bh - 44, spec.get("label_text", "KY-023"), 14, "#e8e8ee",
+    _text(add, bx1 + 46, top + bh - 34, spec.get("label_text", "KY-023"), 15, "#e8e8ee",
           anchor="start")
 
-    # the cap: a dark ring with the rubber dome and a highlight, like the reference
     ccy = top + bh * 0.42
-    r = bh * 0.39
-    add(f'<circle cx="{cx}" cy="{ccy}" r="{r*1.16:.0f}" fill="#111"/>')
+    # the cap must fit inside the board, ring included, like the reference
+    r = min(bh * 0.40, (bw / 2 - 12) / 1.14)
+    add(f'<circle cx="{cx}" cy="{ccy}" r="{r*1.14:.0f}" fill="#111"/>')
     add(f'<circle cx="{cx}" cy="{ccy}" r="{r:.0f}" fill="#2b2b30" stroke="#15151a" stroke-width="2"/>')
-    add(f'<circle cx="{cx}" cy="{ccy}" r="{r*0.78:.0f}" fill="#3a3a3f"/>')
-    add(f'<ellipse cx="{cx-r*0.3:.0f}" cy="{ccy-r*0.34:.0f}" rx="{r*0.3:.0f}" ry="{r*0.18:.0f}" '
+    add(f'<circle cx="{cx}" cy="{ccy}" r="{r*0.8:.0f}" fill="#3a3a3f"/>')
+    add(f'<ellipse cx="{cx-r*0.3:.0f}" cy="{ccy-r*0.36:.0f}" rx="{r*0.32:.0f}" ry="{r*0.19:.0f}" '
         f'fill="#6d6d76" opacity="0.5"/>')
 
-    # header strip with the five pads
-    hy = attach - 24 if not _bottom_half(row) else attach + 4
-    add(f'<rect x="{xs[0]-16}" y="{hy}" width="{xs[4]-xs[0]+32}" height="22" rx="3" fill="#111"/>')
+    hy = attach - 22
+    add(f'<rect x="{xs[0]-20}" y="{hy}" width="{xs[4]-xs[0]+40}" height="20" rx="3" fill="#111"/>')
     for x in xs:
-        add(f'<rect x="{x-8}" y="{hy+4}" width="16" height="14" rx="2" '
+        add(f'<rect x="{x-9}" y="{hy+3}" width="18" height="14" rx="2" '
             f'fill="#d9a441" stroke="#f2f2f2" stroke-width="1.2"/>')
-    _pin_labels(add, L, xs, row, spec.get("pins", ["GND", "+5V", "VRx", "VRy", "SW"]))
+    _pin_labels(add, L, xs, spec["at"][1], spec.get("pins", ["GND", "+5V", "VRx", "VRy", "SW"]))
 
 
 def holes_lcd(L, spec):
@@ -1065,11 +1077,14 @@ def component_bounds(L, spec):
         x2 = L.col_x(col + len(pins) - 1) + L.dcol * 0.4
         _, top, _, _ = _module_slot(L, row, h)
         return (x1, top, x2 - x1, h)
-    if kind in ("joystick", "lcd", "ultrasonic"):
-        n = {"joystick": 5, "lcd": 4, "ultrasonic": 4}[kind]
-        pad = {"joystick": 74, "lcd": 0, "ultrasonic": 110}[kind]
-        h = {"joystick": 300, "lcd": 148, "ultrasonic": 96}[kind]
-        w = {"joystick": 420, "lcd": 420, "ultrasonic": 0}[kind]
+    if kind == "joystick":
+        xs, cx, _, top, _ = _joystick_geom(L, spec)
+        return (cx - JOY_W / 2, top, JOY_W, JOY_H)
+    if kind in ("lcd", "ultrasonic"):
+        n = {"lcd": 4, "ultrasonic": 4}[kind]
+        pad = {"lcd": 0, "ultrasonic": 110}[kind]
+        h = {"lcd": 148, "ultrasonic": 96}[kind]
+        w = {"lcd": 420, "ultrasonic": 0}[kind]
         xs = [L.col_x(col + i) for i in range(n)]
         cx = (xs[0] + xs[-1]) / 2
         bw = w or (xs[-1] - xs[0] + pad)
@@ -1089,6 +1104,7 @@ TERMINALS = {
     "l298n": terminals_l298n,
     "servo": terminals_servo,
     "motor": terminals_motor,
+    "joystick": terminals_joystick,
 }
 
 
