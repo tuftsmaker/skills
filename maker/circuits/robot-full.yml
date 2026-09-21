@@ -1,16 +1,19 @@
 board: freenove-esp32-wrover-ext
 layout:
   notes_position: right
+  width: 2080
   breadboard:
     hidden: true
-title: Class robot — joystick, servo arm, two motors (FNK0046)
-subtitle: Everything on the extension board; stick steers, arm aims
+title: Class robot — joystick, servo arm, motors and status LED (FNK0046)
+subtitle: Everything on the extension board; stick steers, arm aims, LED reports
 components:
   - {type: l298n, id: driver, at: [0, a]}
   - {type: joystick, at: [8, e], pins: [GND, +5V, VRx, VRy, SW]}
   - {type: motor, at: [2, j], label_text: left motor}
   - {type: motor, at: [8, j], label_text: right motor}
   - {type: servo, at: [11, j], label_text: arm servo}
+  - {type: resistor, value: "220", from: [13, c], span: 3}
+  - {type: led, color: red, at: [17, c], label_text: status LED, polarity_notes: false}
 wires:
   # joystick
   - {from: bb.8.e, to: board.R1, color: black, label: joystick GND}
@@ -18,6 +21,10 @@ wires:
   - {from: bb.10.e, to: board.GPIO36, color: orange, label: VRx — GPIO 36}
   - {from: bb.11.e, to: board.GPIO39, color: yellow, label: VRy — GPIO 39}
   - {from: bb.12.e, to: board.GPIO4, color: green, label: SW — GPIO 4}
+  # status LED (mirrors the onboard LED on GPIO 2)
+  - {from: board.GPIO2, to: bb.13.c, color: red, label: status LED — GPIO 2}
+  - {from: bb.16.c, to: bb.17.c, color: blue, label: resistor → LED anode}
+  - {from: bb.18.c, to: board.R1, color: black, label: LED cathode — GND}
   # steering servo
   - {from: bb.11.j, to: board.R7, color: black, label: servo GND}
   - {from: bb.12.j, to: board.L19, color: red, label: servo 5V}
@@ -39,10 +46,12 @@ steps:
   - text: "Driver and joystick first, as robot-drive.yml shows."
   - text: "Servo: brown → GND, red → 5V, orange → GPIO 15."
   - text: "Motor leads: left → OUT1/OUT2, right → OUT3/OUT4."
+  - text: "Status LED: GPIO 2 → 220 Ω → LED, then the cathode to GND."
   - text: "Power the driver from the 9V clip (12V and GND), sharing ground with the ESP32."
   - text: "9V clip → the driver's 12V and GND (not shown)."
 notes:
   - "Drive: OUT1/OUT2 = left motor, OUT3/OUT4 = right. Servo: VRx sets the arm angle."
+  - "The status LED shares GPIO 2 with the onboard LED, so both blink together — a free way to see the code running."
   - "Code: vrx = ADC(Pin(36)); servo = PWM(Pin(15), 50); duty = 26 + int(angle * 102 / 180)."
   - "Mix the two: stick fully sideways = both motors, VRy forward/back, VRx turns."
   - text: "Motors and servo share the battery's ground with the ESP32; power the servo's 5V separately if the board resets."

@@ -168,10 +168,11 @@ def draw_led(add, L, spec):
     if spec.get("label", True):
         add(f'<text x="{cx}" y="{cy-r-14}" font-size="15" font-weight="700" '
             f'fill="{edge}" text-anchor="middle">{spec.get("label_text", "LED")}</text>')
-    add(f'<text x="{x2+30}" y="{y+34}" font-size="12.5" fill="#8a8a8a">'
-        f'flat side = cathode (\u2212)</text>')
-    add(f'<text x="{x1-14}" y="{y+34}" font-size="12.5" font-weight="700" '
-        f'fill="{edge}" text-anchor="end">anode (+)</text>')
+    if spec.get("polarity_notes", True):
+        add(f'<text x="{x2+30}" y="{y+38}" font-size="15" fill="#8a8a8a">'
+            f'flat side = cathode (\u2212)</text>')
+        add(f'<text x="{x1-14}" y="{y+38}" font-size="15" font-weight="700" '
+            f'fill="{edge}" text-anchor="end">anode (+)</text>')
 
 
 # --------------------------------------------------------------------------
