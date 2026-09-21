@@ -867,114 +867,136 @@ def holes_l298n(L, spec):
     return [(col + i, row) for i in range(len(spec.get("pins") or []))]
 
 
-def draw_l298n(add, L, spec):
+DEFAULT_L298N_PINS = ["ENA", "IN1", "IN2", "IN3", "IN4", "ENB"]
+
+
+DEFAULT_L298N_PINS = ["ENA", "IN1", "IN2", "IN3", "IN4", "ENB"]
+L298_W, L298_H = 700, 260
+
+
+def _l298_geom(L, spec):
+    """Shared geometry for drawing and terminals: (bx1, top, bw, bh, xs, cx)."""
     col, row = spec["at"]
-    pins = spec.get("pins") or ["ENA", "IN1", "IN2", "IN3", "IN4", "ENB", "GND", "5V"]
-    y = L.row_y(row)
+    pins = spec.get("pins") or DEFAULT_L298N_PINS
     xs = [L.col_x(col + i) for i in range(len(pins))]
     cx = (xs[0] + xs[-1]) / 2
-    bh = 200
-    _, top, bottom, _ = _module_slot(L, row, bh)
-    attach = top if _bottom_half(row) else bottom
+    _, top, _, _ = _module_slot(L, row, L298_H)
+    bw = max(L298_W, xs[-1] - xs[0] + 200)
+    return L.col_x(col), top, bw, L298_H, xs, cx, pins, (bw and (cx - bw / 2))
+
+
+def draw_l298n(add, L, spec):
+    """The classic red L298N module: heatsink, Multiwatt chip, eight diodes,
+    two capacitors, regulator, output terminals and a 12V/GND/5V block."""
+    col, row = spec["at"]
+    _, top, bw, bh, xs, cx, pins, bx1 = _l298_geom(L, spec)
+    y = L.row_y(row)
+    attach = top if _bottom_half(row) else top + bh
 
     for x in xs:
         _lead(add, x, y, x, attach)
-    bw = xs[-1] - xs[0] + 90
-    bx1 = cx - bw / 2
-    add(f'<rect x="{bx1}" y="{top}" width="{bw}" height="{bh}" rx="8" '
+
+    add(f'<rect x="{bx1}" y="{top}" width="{bw}" height="{bh}" rx="6" '
         f'fill="#b03030" stroke="#7a2020" stroke-width="2.5"/>')
-    # corner mounting holes
-    for mx, my in ((bx1+15, top+15), (bx1+bw-15, top+15),
-                   (bx1+15, top+bh-15), (bx1+bw-15, top+bh-15)):
-        add(f'<circle cx="{mx}" cy="{my}" r="9" fill="#15151a"/>')
-        add(f'<circle cx="{mx}" cy="{my}" r="4" fill="#fdfaf3"/>')
+    for mx, my in ((bx1+22, top+22), (bx1+bw-22, top+22),
+                   (bx1+22, top+bh-22), (bx1+bw-22, top+bh-22)):
+        add(f'<circle cx="{mx}" cy="{my}" r="12" fill="#e8e8ee"/>')
+        add(f'<circle cx="{mx}" cy="{my}" r="6.5" fill="#c9c9d1"/>')
 
-    # big finned heatsink, top centre
-    hs_w, hs_h = 210, 62
-    hx1, hy1 = cx - hs_w / 2, top + 22
-    add(f'<rect x="{hx1}" y="{hy1}" width="{hs_w}" height="{hs_h}" rx="5" '
+    # heatsink, top centre
+    hx1, hy1, hs_w, hs_h = cx - 96, top + 34, 192, 52
+    add(f'<rect x="{hx1}" y="{hy1}" width="{hs_w}" height="{hs_h}" rx="4" '
         f'fill="#2b2b30" stroke="#15151a" stroke-width="2"/>')
-    for i in range(7):
-        fx = hx1 + 16 + i * 30
-        add(f'<line x1="{fx}" y1="{hy1+8}" x2="{fx}" y2="{hy1+hs_h-8}" '
-            f'stroke="#55555c" stroke-width="6"/>')
-    for sx in (hx1 + 24, hx1 + hs_w - 24):
-        add(f'<circle cx="{sx}" cy="{hy1+hs_h-6}" r="5" fill="#c9c9d1"/>')
+    for i in range(5):
+        add(f'<line x1="{hx1+20+i*38}" y1="{hy1+6}" x2="{hx1+20+i*38}" y2="{hy1+hs_h}" '
+            f'stroke="#43434a" stroke-width="16"/>')
+    for dx in (20, hs_w-20):
+        add(f'<circle cx="{hx1+dx}" cy="{hy1+hs_h-9}" r="6.5" fill="#8a8a94"/>')
 
-    # eight rectifier diodes in two columns beside the heatsink
-    for dx in (bx1 + 122, bx1 + bw - 122):
-        for i in range(4):
-            dy = top + 14 + i * 21
-            add(f'<rect x="{dx-10}" y="{dy}" width="20" height="16" rx="3" '
-                f'fill="#1a1a1a" stroke="#000"/>')
-            add(f'<rect x="{dx-10}" y="{dy-5}" width="20" height="6" rx="2" fill="#c9c9d1"/>')
-
-    # the L298N chip itself, with its pin rows
-    ic_w, ic_h = 176, 42
-    ix1, iy1 = cx - ic_w / 2, top + 88
-    for i in range(9):
-        px = ix1 + 12 + i * (ic_w - 24) / 8
-        add(f'<rect x="{px-5}" y="{iy1-9}" width="10" height="12" rx="2" '
-            f'fill="#dcdce4" stroke="#9a9aa4" stroke-width="1"/>')
-        add(f'<rect x="{px-5}" y="{iy1+ic_h-3}" width="10" height="12" rx="2" '
+    # the chip: Multiwatt15, one staggered row of legs, two solder tabs
+    ic_w, ic_h = 176, 30
+    ix1, iy1 = cx - ic_w/2, top + 96
+    for i in range(15):
+        lx = ix1 + 7 + i * (ic_w - 14) / 14
+        legh = 20 if i % 2 else 27
+        add(f'<rect x="{lx-4}" y="{iy1+ic_h}" width="8" height="{legh}" rx="2" '
             f'fill="#dcdce4" stroke="#9a9aa4" stroke-width="1"/>')
     add(f'<rect x="{ix1}" y="{iy1}" width="{ic_w}" height="{ic_h}" rx="3" '
         f'fill="#1a1a1a" stroke="#000"/>')
-    add(f'<circle cx="{ix1+16}" cy="{iy1+12}" r="5" fill="#3a3a3f" stroke="#000" stroke-width="1"/>')
-    _text(add, cx, top + 156, "L298N", 17, "#fff")
+    add(f'<rect x="{ix1}" y="{iy1}" width="{ic_w}" height="7" rx="2" fill="#3a3a3f"/>')
+    for dx in (26, ic_w-26):
+        add(f'<circle cx="{ix1+dx}" cy="{iy1-7}" r="7" fill="#9aa0a6" stroke="#6d6d76"/>')
+    _text(add, cx, top + 190, "L298N", 19, "#fff")
+
+    # eight rectifier diodes, four a side, inside the terminals
+    for dx in (bx1 + 150, bx1 + bw - 150):
+        for i in range(4):
+            dy = top + 40 + i * 24
+            add(f'<rect x="{dx-14}" y="{dy}" width="28" height="15" rx="2" '
+                f'fill="#1a1a1a" stroke="#000"/>')
+            add(f'<rect x="{dx-19}" y="{dy}" width="7" height="15" rx="2" fill="#c9c9d1"/>')
+            add(f'<rect x="{dx+12}" y="{dy}" width="7" height="15" rx="2" fill="#c9c9d1"/>')
 
     # two electrolytic capacitors
-    for dx in (-58, 58):
-        ccx, ccy = cx + dx, top + 158
-        add(f'<circle cx="{ccx}" cy="{ccy}" r="19" fill="#f2f2f2" stroke="#9a9aa4" stroke-width="2"/>')
-        add(f'<path d="M{ccx-13} {ccy-14} A 19 19 0 0 0 {ccx-13} {ccy+14} Z" fill="#3a3a3f"/>')
+    for cxx, cyy in ((cx - 150, top + 186), (cx + 132, top + 196)):
+        add(f'<circle cx="{cxx}" cy="{cyy}" r="21" fill="#e8e8ee" stroke="#9a9aa4" stroke-width="2"/>')
+        add(f'<path d="M{cxx+15} {cyy-15} A 21 21 0 0 1 {cxx+15} {cyy+15} Z" fill="#3a3a3f"/>')
 
-    # voltage regulator and its jumper
-    rx1 = cx - 190
-    add(f'<rect x="{rx1}" y="{top+112}" width="58" height="12" rx="2" fill="#3a3a3f"/>')
-    add(f'<rect x="{rx1+7}" y="{top+120}" width="44" height="34" rx="3" '
-        f'fill="#1a1a1a" stroke="#000"/>')
-    _text(add, rx1 + 29, top + 106, "5VEN", 11, "#fff")
-    jx1 = cx + 150
-    add(f'<rect x="{jx1}" y="{top+150}" width="38" height="24" rx="3" fill="#1a1a1a"/>')
-    for k in range(3):
-        add(f'<circle cx="{jx1+8+k*11}" cy="{top+162}" r="4" fill="#d9a441"/>')
+    # TO-220 regulator with its tab, and the 5VEN jumper
+    rx1 = cx + 168
+    add(f'<rect x="{rx1}" y="{top+126}" width="46" height="36" rx="3" fill="#1a1a1a" stroke="#000"/>')
+    add(f'<rect x="{rx1+8}" y="{top+118}" width="30" height="10" rx="2" fill="#c9c9d1"/>')
+    add(f'<rect x="{cx-262}" y="{top+150}" width="28" height="24" rx="3" fill="#1a1a1a"/>')
+    for k in range(2):
+        add(f'<rect x="{cx-257+k*13}" y="{top+154}" width="11" height="16" rx="2" fill="#d9a441"/>')
+    _text(add, cx - 214, top + 168, "5VEN", 13, "#fff")
 
-    # blue screw terminals, one block per output, with a stub out of the board edge
-    for side, names, tx in ((-1, ("OUT1", "OUT2"), bx1 + 14),
-                            (1, ("OUT3", "OUT4"), bx1 + bw - 62)):
+    # output terminals: OUT1/OUT2 left, OUT3/OUT4 right
+    for side, names in ((-1, ("OUT1", "OUT2")), (1, ("OUT3", "OUT4"))):
+        tx = bx1 + 10 if side < 0 else bx1 + bw - 74
+        exit_x = bx1 - 8 if side < 0 else bx1 + bw + 8
         for k, name in enumerate(names):
-            ty = top + 52 + k * 70
-            exit_x = bx1 - 8 if side < 0 else bx1 + bw + 8
-            add(f'<line x1="{tx+24}" y1="{ty+23}" x2="{exit_x}" y2="{ty+23}" '
+            ty = top + 62 + k * 74
+            add(f'<line x1="{tx+32}" y1="{ty+22}" x2="{exit_x}" y2="{ty+22}" '
                 f'stroke="#8a8a94" stroke-width="4"/>')
-            add(f'<rect x="{tx}" y="{ty}" width="48" height="46" rx="4" '
+            add(f'<rect x="{tx}" y="{ty}" width="64" height="44" rx="4" '
                 f'fill="#3b8ed0" stroke="#1a4a8a" stroke-width="2"/>')
-            add(f'<circle cx="{tx+24}" cy="{ty+23}" r="11" fill="#c9c9d1" stroke="#8a8a94"/>')
-            add(f'<line x1="{tx+15}" y1="{ty+23}" x2="{tx+33}" y2="{ty+23}" '
-                f'stroke="#55555c" stroke-width="2.5"/>')
-            lx = tx + 72 if side < 0 else tx - 10
-            add(f'<text x="{lx}" y="{ty+28}" font-size="12" font-weight="700" fill="#fff" '
-                f'text-anchor="{"start" if side < 0 else "end"}">{name}</text>')
+            add(f'<circle cx="{tx+32}" cy="{ty+22}" r="13" fill="#c9c9d1" stroke="#8a8a94"/>')
+            add(f'<line x1="{tx+20}" y1="{ty+22}" x2="{tx+44}" y2="{ty+22}" '
+                f'stroke="#55555c" stroke-width="3"/>')
+            _text(add, tx+32, ty+60, name, 13, "#fff")
 
-    _text(add, cx, top + 16, spec.get("label_text", "L298N motor driver"), 15, "#fff")
+    # 12V/GND/5V power block
+    px1 = cx - 82
+    add(f'<rect x="{px1}" y="{top+196}" width="164" height="46" rx="4" '
+        f'fill="#3b8ed0" stroke="#1a4a8a" stroke-width="2"/>')
+    for k, name in enumerate(("12V", "GND", "5V")):
+        sx = px1 + 30 + k * 52
+        add(f'<circle cx="{sx}" cy="{top+219}" r="13" fill="#c9c9d1" stroke="#8a8a94"/>')
+        add(f'<line x1="{sx-9}" y1="{top+219}" x2="{sx+9}" y2="{top+219}" '
+            f'stroke="#55555c" stroke-width="3"/>')
+        _text(add, sx, top+236, name, 12, "#fff")
+
+    # logic header along the bottom edge
+    hy = attach - 22 if not _bottom_half(row) else attach + 2
+    add(f'<rect x="{xs[0]-14}" y="{hy}" width="{xs[-1]-xs[0]+28}" height="20" rx="3" fill="#111"/>')
+    for x in xs:
+        add(f'<rect x="{x-7}" y="{hy+4}" width="14" height="12" rx="2" fill="#d9a441"/>')
+    _text(add, cx, top + 26, spec.get("label_text", "L298N motor driver"), 15, "#fff")
     _pin_labels(add, L, xs, row, pins)
 
 
 def terminals_l298n(L, spec):
-    """Wireable points for the driver's screw terminals, just off the board edge."""
-    col, row = spec["at"]
-    pins = spec.get("pins") or ["ENA", "IN1", "IN2", "IN3", "IN4", "ENB", "GND", "5V"]
-    xs = [L.col_x(col + i) for i in range(len(pins))]
-    cx = (xs[0] + xs[-1]) / 2
-    _, top, bottom, _ = _module_slot(L, row, 200)
-    bw = xs[-1] - xs[0] + 90
-    bx1 = cx - bw / 2
+    """OUT1-OUT4 at the screw terminals; 12V/GND/5V on the power block."""
+    _, top, bw, _, _, cx, _, bx1 = _l298_geom(L, spec)
     t = {}
     for side, names in ((-1, ("OUT1", "OUT2")), (1, ("OUT3", "OUT4"))):
         exit_x = bx1 - 8 if side < 0 else bx1 + bw + 8
         for k, name in enumerate(names):
-            t[name] = (exit_x, top + 52 + k * 70 + 23)
+            t[name] = (exit_x, top + 62 + k * 74 + 22)
+    px1 = cx - 82
+    for k, name in enumerate(("12V", "GND", "5V")):
+        t[name] = (px1 + 30 + k * 52, top + 219)
     return t
 
 
@@ -993,12 +1015,12 @@ def component_bounds(L, spec):
         _, top, bottom, _ = _module_slot(L, row, 92)
         return (cx - 100, top - 50, 200, (bottom - top) + 60)
     if kind == "l298n":
-        pins = spec.get("pins") or ["ENA", "IN1", "IN2", "IN3", "IN4", "ENB", "GND", "5V"]
+        pins = spec.get("pins") or DEFAULT_L298N_PINS
         xs = [L.col_x(col + i) for i in range(len(pins))]
         cx = (xs[0] + xs[-1]) / 2
-        _, top, bottom, _ = _module_slot(L, row, 200)
-        bw = xs[-1] - xs[0] + 90
-        return (cx - bw / 2, top, bw, bottom - top)
+        _, top, _, _ = _module_slot(L, row, L298_H)
+        bw = max(L298_W, xs[-1] - xs[0] + 200)
+        return (cx - bw / 2, top, bw, L298_H)
     if kind in ("ic", "display_7seg", "bar_graph"):
         n = int(spec.get("pins", {"ic": 16, "display_7seg": 10, "bar_graph": 20}[kind])) // 2
         xs = [L.col_x(col + i) for i in range(n)]

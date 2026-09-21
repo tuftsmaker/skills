@@ -5,13 +5,13 @@ board: freenove-esp32-wrover
 title: L298N motor driver — Freenove ESP32-WROVER (FNK0046)
 subtitle: Logic pins on the breadboard; motor and battery on the screw terminals
 components:
-  - {type: l298n, at: [1, a]}
+  - {type: l298n, id: driver, at: [1, a]}
 wires:
   - {from: bb.1.a, to: board.GPIO13, color: orange, label: ENA — GPIO 13 (PWM)}
   - {from: bb.2.a, to: board.GPIO12, color: blue, label: IN1 — GPIO 12}
   - {from: bb.3.a, to: board.GPIO14, color: green, label: IN2 — GPIO 14}
-  - {from: bb.7.a, to: board.L14, color: black, label: GND — common ground}
-  - {from: bb.8.a, to: board.L19, color: red, label: 5V — logic power}
+  - {from: driver.GND, to: board.L14, color: black, label: driver GND}
+  - {from: driver.5V, to: board.L19, color: red, label: driver 5V}
 notes:
   - "The TT motor's two wires go to the driver's OUT1/OUT2 screw terminals — never straight to the ESP32."
   - "The 9 V battery clip goes to the 12V and GND terminals. All grounds must be shared."

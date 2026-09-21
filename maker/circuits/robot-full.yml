@@ -36,7 +36,7 @@ wires:
   - {from: bb.3.a, to: board.GPIO18, color: purple, label: IN3 — GPIO 18}
   - {from: bb.4.a, to: board.GPIO19, color: grey, label: IN4 — GPIO 19}
   - {from: bb.5.a, to: board.GPIO5, color: yellow, label: ENB — GPIO 5 (right speed)}
-  - {from: bb.6.a, to: board.R12, color: black, label: driver GND}
+  - {from: driver.GND, to: board.L14, color: black, label: driver GND}
   # motors
   - {from: driver.OUT1, to: bb.2.j, color: red, label: left motor +}
   - {from: driver.OUT2, to: bb.3.j, color: black, label: left motor −}

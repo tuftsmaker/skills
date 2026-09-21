@@ -82,11 +82,15 @@ def assign_lanes(L, board, wires, parts=None):
 
     for spec in wires:
         pin = None
+        board_pin = None
         for end in (spec["from"], spec["to"]):
             parsed = parse_endpoint(L, board, end, parts)
-            if parsed[0] in ("board", "part"):
+            if parsed[0] == "board":
+                board_pin = parsed
+            if parsed[0] in ("board", "part") and pin is None:
                 pin = parsed
-                break
+        if board_pin is not None:
+            pin = board_pin
         if pin is None:
             lanes.append({"side": "C", "idx": len(lanes)})
             continue
@@ -170,6 +174,12 @@ def route(L, board, spec, lane, parts=None):
     if a[0] == "bb" and b[0] == "part":
         return list(reversed(_part_to_hole(L, b[1], a[2], lane)))
 
+    if a[0] == "part" and b[0] == "board":
+        return list(reversed(_board_to_hole(L, b[1], a[1], lane)))
+
+    if a[0] == "board" and b[0] == "part":
+        return _board_to_hole(L, a[1], b[1], lane)
+
     if a[0] == "part" and b[0] == "part":
         ax, ay = a[1]
         bx2, by2 = b[1]
@@ -177,9 +187,11 @@ def route(L, board, spec, lane, parts=None):
         return [(ax, ay), (ax, cy), (bx2, cy), (bx2, by2)]
 
     # breadboard to breadboard — hop through the centre channel
-    hx1, hy1 = a[2]
-    hx2, hy2 = b[2]
-    return [(hx1, hy1), (hx1, L.channel), (hx2, L.channel), (hx2, hy2)]
+    if a[0] == "bb" and b[0] == "bb":
+        hx1, hy1 = a[2]
+        hx2, hy2 = b[2]
+        return [(hx1, hy1), (hx1, L.channel), (hx2, L.channel), (hx2, hy2)]
+    raise ValueError(f"cannot route {spec['from']!r} to {spec['to']!r}")
 
 
 def _attr(text):
