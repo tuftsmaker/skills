@@ -287,6 +287,16 @@ showing the board itself.
 - **Re-render and actually look at the PNG after every edit.** Layout is
   geometry; reasoning about coordinates in your head is unreliable.
 
+## References and credits
+
+The component drawings are our own, but the proportions and details were
+checked against: the kit's own parts list and class photos, the Fritzing
+`fritzing-parts` breadboard library (CC BY-SA 3.0), and the "L298N DC motor
+driver" part by Florian Schäffer from the Fritzing forum. When a diagram is
+published outside class, credit Fritzing for the reference art. Fritzing part
+SVGs are true-scale; our canvas is not, so shapes are adapted rather than
+copied.
+
 ## Adding a board
 
 Copy `boards/freenove-esp32-wrover.yml`, replace `headers.left` /
