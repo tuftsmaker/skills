@@ -66,19 +66,18 @@ Every render also writes `<name>.html`: the SVG inlined in a small page with
 zoom and pan (scroll to zoom, drag to pan, Fit / 1:1 / Print buttons). Because
 it is vector, zooming stays crisp at any level and printing is sharp.
 
-**Showing the zoomable view inside the desktop app.** The app's browser pane
-(enable it once in Settings → General → experimental browser) only accepts
-HTTP(S), so serve the output folder on loopback and open that URL:
+**Opening the zoomable view.** Pass `--open` and the rendered HTML opens in the
+student's default browser (macOS `open`, Windows `start`, Linux `xdg-open`) —
+zoom, pan and print, no settings required:
 
 ```bash
-(cd out && nohup python3 -m http.server 8765 --bind 127.0.0.1 >/dev/null 2>&1 &)
+python3 "$SKILL/render.py" my-circuit.yml -o out/my-circuit --open
 ```
 
-then open `http://127.0.0.1:8765/<name>.html` in a browser tab. The pane's
-`localhost` is the student's own machine, so this works locally for them too.
-Stop the server with `pkill -f "http.server 8765"` when done. A plain markdown
-link to a local file does not open in current desktop builds — mention the
-file path in text as well.
+Use it when a diagram is ready to look at, not in batch runs. In the desktop
+app this is the reliable alternative to the experimental in-app browser pane
+(which only accepts HTTP(S)); a plain markdown link to a local file does not
+open in current builds, so mention the file path in text as well.
 
 Verified desktop behaviour, so do not fight it:
 

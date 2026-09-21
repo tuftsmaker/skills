@@ -501,6 +501,23 @@ def write_html(svg_path, html_path, title):
         f.write(html)
 
 
+def open_in_browser(path):
+    """Hand the file to the platform's default application (macOS: open,
+    Windows: start, Linux: xdg-open)."""
+    import platform as _platform
+    p = os.path.abspath(path)
+    try:
+        if sys.platform == "darwin":
+            subprocess.run(["open", p], check=False)
+        elif os.name == "nt":
+            os.startfile(p)                                   # noqa: S606
+        else:
+            subprocess.run(["xdg-open", p], check=False)
+        return True
+    except Exception:
+        return False
+
+
 def svg_size(path):
     """Read width/height attributes from the SVG header."""
     import re
@@ -563,6 +580,8 @@ def main():
                     help="PNG scale factor (default 1.1 — stays under 2000 px for inline previews)")
     ap.add_argument("--no-png", action="store_true", help="only write the SVG")
     ap.add_argument("--no-html", action="store_true", help="skip the zoomable HTML wrapper")
+    ap.add_argument("--open", action="store_true",
+                    help="open the rendered HTML in the default browser")
     args = ap.parse_args()
 
     if args.list or not args.circuit:
@@ -589,10 +608,17 @@ def main():
         f.write(svg)
     print(f"wrote {svg_path}")
 
+    html_path = base + ".html"
     if not args.no_html:
-        html_path = base + ".html"
         write_html(svg_path, html_path, spec.get("title"))
         print(f"wrote {html_path}")
+
+    if args.open:
+        target = html_path if os.path.exists(html_path) else svg_path
+        if open_in_browser(target):
+            print(f"opened {os.path.basename(target)} in the default browser")
+        else:
+            print(f"could not open a browser; open this file yourself: {os.path.abspath(target)}")
 
     if args.no_png:
         return
