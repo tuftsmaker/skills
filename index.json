@@ -2,7 +2,7 @@
   "skills": [
     {
       "name": "maker",
-      "version": "f73a0f02aba5",
+      "version": "d0f10af1d89d",
       "files": [
         "SKILL.md",
         "bbd/__init__.py",
@@ -32,6 +32,7 @@
         "circuits/potentiometer.yml",
         "circuits/rgb_led.yml",
         "circuits/robot-drive.yml",
+        "circuits/robot-full.yml",
         "circuits/servo-extension-board.yml",
         "circuits/servo.yml",
         "circuits/speaker.yml",

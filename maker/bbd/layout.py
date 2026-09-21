@@ -12,7 +12,7 @@ BOT_ROWS = "fghij"
 class Layout:
     def __init__(self, spec):
         g = spec.get("layout", {}) or {}
-        self.W = int(g.get("width", 1800))
+        self.W = int(g.get("width", 1840))
         self.H = int(g.get("height", 1260))
         self.notes_top = int(g.get("notes_top", 1040))
 
@@ -34,11 +34,11 @@ class Layout:
 
         # ---- breadboard ----
         d = g.get("breadboard", {}) or {}
-        self.bb_x = int(d.get("x", 700))
+        self.bb_x = int(d.get("x", 740))
         self.bb_y = int(d.get("y", 340))
         self.bb_w = int(d.get("w", 1020))
         self.bb_h = int(d.get("h", 570))
-        self.col0 = int(d.get("first_col_x", 760))
+        self.col0 = int(d.get("first_col_x", 800))
         self.dcol = int(d.get("col_pitch", 68))
         self.ncol = int(d.get("cols", 14))
 

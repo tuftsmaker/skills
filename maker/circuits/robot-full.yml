@@ -1,0 +1,47 @@
+board: freenove-esp32-wrover-ext
+layout:
+  notes_position: right
+title: Class robot — joystick, servo arm, two motors (FNK0046)
+subtitle: Everything on the extension board; stick steers, arm aims
+components:
+  - {type: l298n, id: driver, at: [0, a]}
+  - {type: joystick, at: [8, e], pins: [GND, +5V, VRx, VRy, SW]}
+  - {type: motor, at: [2, j], label_text: left motor}
+  - {type: motor, at: [8, j], label_text: right motor}
+  - {type: servo, at: [11, j], label_text: arm servo}
+wires:
+  # joystick
+  - {from: bb.8.e, to: board.R1, color: black, label: joystick GND}
+  - {from: bb.9.e, to: board.L17, color: red, label: joystick +5V — 3V3}
+  - {from: bb.10.e, to: board.GPIO36, color: orange, label: VRx — GPIO 36}
+  - {from: bb.11.e, to: board.GPIO39, color: yellow, label: VRy — GPIO 39}
+  - {from: bb.12.e, to: board.GPIO4, color: green, label: SW — GPIO 4}
+  # steering servo
+  - {from: bb.11.j, to: board.R7, color: black, label: servo GND}
+  - {from: bb.12.j, to: board.L19, color: red, label: servo 5V}
+  - {from: bb.13.j, to: board.GPIO15, color: orange, label: servo signal — GPIO 15}
+  # driver logic
+  - {from: bb.0.a, to: board.GPIO13, color: orange, label: ENA — GPIO 13 (left speed)}
+  - {from: bb.1.a, to: board.GPIO12, color: blue, label: IN1 — GPIO 12}
+  - {from: bb.2.a, to: board.GPIO14, color: green, label: IN2 — GPIO 14}
+  - {from: bb.3.a, to: board.GPIO18, color: purple, label: IN3 — GPIO 18}
+  - {from: bb.4.a, to: board.GPIO19, color: grey, label: IN4 — GPIO 19}
+  - {from: bb.5.a, to: board.GPIO5, color: yellow, label: ENB — GPIO 5 (right speed)}
+  - {from: bb.6.a, to: board.R12, color: black, label: driver GND}
+  # motors
+  - {from: driver.OUT1, to: bb.2.j, color: red, label: left motor +}
+  - {from: driver.OUT2, to: bb.3.j, color: black, label: left motor −}
+  - {from: driver.OUT3, to: bb.8.j, color: red, label: right motor +}
+  - {from: driver.OUT4, to: bb.9.j, color: black, label: right motor −}
+steps:
+  - text: "Driver and joystick first: plug them in as robot-drive.yml shows."
+  - text: "Servo into columns 11-13, row j: brown → GND, red → 5V, orange → GPIO 15."
+  - text: "Motor leads: columns 2-3 (left) and 8-9 (right), row j."
+  - text: "Wire those columns to the driver's OUT1-OUT4 screws."
+  - text: "9V clip → the driver's 12V and GND (not shown)."
+notes:
+  - "Drive: OUT1/OUT2 = left motor, OUT3/OUT4 = right. Servo: VRx sets the arm angle."
+  - "Code: vrx = ADC(Pin(36)); servo = PWM(Pin(15), 50); duty = 26 + int(angle * 102 / 180)."
+  - "Mix the two: stick fully sideways = both motors, VRy forward/back, VRx turns."
+  - text: "Motors and servo share the battery's ground with the ESP32; power the servo's 5V separately if the board resets."
+    warn: true
