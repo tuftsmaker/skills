@@ -378,6 +378,42 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 </header>
 <div id="stage"><div id="panel">{svg}</div></div>
 <script>
+// live reload: when this page is served over http, poll the SVG and swap it in
+// place so re-rendering the diagram updates this tab without losing the view.
+(function () {
+  var name = "{svg_name}";
+  if (!name || !/^https?:/.test(location.protocol)) return;
+  var panel = document.getElementById('panel');
+  var status = document.getElementById('status');
+  var live = panel.querySelector('svg');
+  if (!live) return;
+  var last = null;
+  setInterval(function () {
+    fetch(name, { method: 'HEAD', cache: 'no-store' })
+      .then(function (r) { return r.headers.get('Last-Modified') || ''; })
+      .then(function (stamp) {
+        if (!stamp) return;
+        if (last === null) { last = stamp; return; }
+        if (stamp === last) return;
+        last = stamp;
+        return fetch(name + '?v=' + Date.now(), { cache: 'no-store' })
+          .then(function (r) { return r.text(); })
+          .then(function (text) {
+            var fresh = new DOMParser().parseFromString(text, 'image/svg+xml').querySelector('svg');
+            if (!fresh) return;
+            ['viewBox', 'width', 'height'].forEach(function (a) {
+              if (fresh.getAttribute(a)) live.setAttribute(a, fresh.getAttribute(a));
+            });
+            while (live.firstChild) live.removeChild(live.firstChild);
+            while (fresh.firstChild) live.appendChild(document.adoptNode(fresh.firstChild));
+            status.textContent = 'updated ' + new Date().toLocaleTimeString();
+          });
+      })
+      .catch(function () {});
+  }, 1000);
+})();
+</script>
+<script>
 (function () {
   var stage = document.getElementById('stage');
   var panel = document.getElementById('panel');
@@ -496,7 +532,10 @@ def write_html(svg_path, html_path, title):
     import re as _re
     svg = open(svg_path).read()
     svg = _re.sub(r'<\?xml[^>]*\?>', '', svg)
-    html = HTML_TEMPLATE.replace('{title}', title or 'Wiring diagram').replace('{svg}', svg)
+    html = (HTML_TEMPLATE
+            .replace('{title}', title or 'Wiring diagram')
+            .replace('{svg_name}', os.path.basename(svg_path))
+            .replace('{svg}', svg))
     with open(html_path, 'w') as f:
         f.write(html)
 
@@ -695,9 +734,9 @@ def main():
                     help="do not open the diagram in the browser (for batch runs)")
     ap.add_argument("--no-gallery", action="store_true",
                     help="do not update the local gallery page")
-    ap.add_argument("--serve", action="store_true",
-                    help="serve the output folder on 127.0.0.1 and print a clickable URL")
-    ap.add_argument("--port", type=int, default=8765, help="port for --serve (default 8765)")
+    ap.add_argument("--no-serve", action="store_true",
+                    help="open the file directly instead of serving it (no live reload)")
+    ap.add_argument("--port", type=int, default=8765, help="port for the local server (default 8765)")
     args = ap.parse_args()
 
     if args.list or not args.circuit:
@@ -733,15 +772,19 @@ def main():
     if not args.no_gallery:
         update_gallery(os.path.dirname(os.path.abspath(base)) or ".", base, spec.get("title"))
 
-    if args.serve:
-        out_dir = os.path.dirname(os.path.abspath(base)) or "."
+    out_dir = os.path.dirname(os.path.abspath(base)) or "."
+    url_base = None
+    if not args.no_serve:
         url_base = serve_dir(out_dir, args.port)
-        print(f"clickable: {url_base}{base_name}")
+        print(f"serving:  {url_base}  (links in the browser stay live)")
 
     if not args.no_open:
-        target = html_path if os.path.exists(html_path) else svg_path
+        if url_base:
+            target = f"{url_base}{base_name}"
+        else:
+            target = html_path if os.path.exists(html_path) else svg_path
         if open_in_browser(target):
-            print(f"opened {os.path.basename(target)} in the default browser")
+            print(f"opened {os.path.basename(base_name)} in the default browser")
         else:
             print(f"could not open a browser; open this file yourself: {os.path.abspath(target)}")
 

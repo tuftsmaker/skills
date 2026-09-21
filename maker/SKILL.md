@@ -29,9 +29,13 @@ command -v rsvg-convert qlmanage
 
 ## Run it
 
-Every render opens the diagram in the student's default browser by default
-(zoom, pan, click-to-trace, print). Add `--no-open` for batch runs — rendering
-twenty examples should not open twenty tabs.
+Every render serves the output folder on `127.0.0.1` and opens the diagram in
+the student's default browser (zoom, pan, click-to-trace, print). **The open
+tab is live**: re-rendering the same diagram swaps the new drawing into the
+page within a second, keeping the current zoom and pan — so you can iterate on
+a circuit with the student watching. `--no-serve` opens the file instead (no
+live reload), and `--no-open` skips the browser entirely for batch runs —
+rendering twenty examples should not open twenty tabs.
 
 The skill lives wherever opencode installed it (often
 `~/.cache/opencode/skills/maker`). Resolve that path from this file's
