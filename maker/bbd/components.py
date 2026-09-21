@@ -437,12 +437,14 @@ def draw_ic(add, L, spec):
         _lead(add, x, yf, x, bottom)
     add(f'<rect x="{x1}" y="{top}" width="{x2-x1}" height="{bottom-top}" rx="7" '
         f'fill="{DARK}" stroke="{DARK_EDGE}" stroke-width="2.5"/>')
-    # moulded top band and silver leg stubs, like a real DIP package
+    # moulded top band and prominent silver legs, like a real DIP package
     add(f'<rect x="{x1+8}" y="{top+5}" width="{x2-x1-16}" height="9" rx="4" '
         f'fill="#3a3a3f" opacity="0.9"/>')
     for x in xs:
-        add(f'<rect x="{x-5}" y="{top-5}" width="10" height="7" rx="2" fill="#c9c9d1"/>')
-        add(f'<rect x="{x-5}" y="{bottom-2}" width="10" height="7" rx="2" fill="#c9c9d1"/>')
+        add(f'<rect x="{x-7}" y="{top-8}" width="14" height="11" rx="2" '
+            f'fill="#dcdce4" stroke="#9a9aa4" stroke-width="1"/>')
+        add(f'<rect x="{x-7}" y="{bottom-3}" width="14" height="11" rx="2" '
+            f'fill="#dcdce4" stroke="#9a9aa4" stroke-width="1"/>')
     # pin-1 end notch and dot
     cy = (top + bottom) / 2
     add(f'<path d="M{x1} {cy-13} A 13 13 0 0 1 {x1} {cy+13} Z" fill="{PAPER}"/>')
@@ -912,10 +914,13 @@ def draw_l298n(add, L, spec):
     ix1, iy1 = cx - ic_w / 2, top + 88
     for i in range(9):
         px = ix1 + 12 + i * (ic_w - 24) / 8
-        add(f'<rect x="{px-3}" y="{iy1-6}" width="6" height="8" fill="#c9c9d1"/>')
-        add(f'<rect x="{px-3}" y="{iy1+ic_h-2}" width="6" height="8" fill="#c9c9d1"/>')
+        add(f'<rect x="{px-5}" y="{iy1-9}" width="10" height="12" rx="2" '
+            f'fill="#dcdce4" stroke="#9a9aa4" stroke-width="1"/>')
+        add(f'<rect x="{px-5}" y="{iy1+ic_h-3}" width="10" height="12" rx="2" '
+            f'fill="#dcdce4" stroke="#9a9aa4" stroke-width="1"/>')
     add(f'<rect x="{ix1}" y="{iy1}" width="{ic_w}" height="{ic_h}" rx="3" '
         f'fill="#1a1a1a" stroke="#000"/>')
+    add(f'<circle cx="{ix1+16}" cy="{iy1+12}" r="5" fill="#3a3a3f" stroke="#000" stroke-width="1"/>')
     _text(add, cx, top + 156, "L298N", 17, "#fff")
 
     # two electrolytic capacitors
