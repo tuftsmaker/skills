@@ -812,46 +812,47 @@ def holes_joystick(L, spec):
 
 
 def draw_joystick(add, L, spec):
+    """Black KY-023: a near-square board dominated by the stick cap, corner
+    mounting holes and the labelled five-pin header along the bottom edge."""
     col, row = spec["at"]
     y = L.row_y(row)
     xs = [L.col_x(col + i) for i in range(5)]
     cx = (xs[0] + xs[4]) / 2
-    _, top, bottom, _ = _module_slot(L, row, 100)
+    bh = 300
+    _, top, bottom, _ = _module_slot(L, row, bh, pad=14)
     attach = top if _bottom_half(row) else bottom
 
+    bw = xs[4] - xs[0] + 74
+    bx1 = cx - bw / 2
     for x in xs:
         _lead(add, x, y, x, attach)
-    bw = xs[4] - xs[0] + 80
-    bx1 = cx - bw / 2
-    # black PCB like the real KY-023
-    add(f'<rect x="{bx1}" y="{top}" width="{bw}" height="100" rx="8" '
+
+    add(f'<rect x="{bx1}" y="{top}" width="{bw}" height="{bh}" rx="8" '
         f'fill="#1a1a1a" stroke="#3a3a3f" stroke-width="2.5"/>')
-    for mx in (bx1 + 20, bx1 + bw - 20):
-        add(f'<circle cx="{mx}" cy="{top + 16}" r="5" fill="none" stroke="#55555c" stroke-width="2"/>')
-        add(f'<circle cx="{mx}" cy="{top + 84}" r="5" fill="none" stroke="#55555c" stroke-width="2"/>')
-    # tactile push button beside the stick
-    add(f'<rect x="{bx1+bw-64}" y="{top+58}" width="26" height="26" rx="3" '
-        f'fill="#2b2b30" stroke="#55555c"/>')
-    add(f'<circle cx="{bx1+bw-51}" cy="{top+71}" r="7" fill="#8a8a94"/>')
-    # black pin header with gold pads along the bottom edge
-    hy = attach - 26 if not _bottom_half(row) else attach + 4
+    for mx, my in ((bx1+22, top+22), (bx1+bw-22, top+22),
+                   (bx1+22, top+bh-22), (bx1+bw-22, top+bh-22)):
+        add(f'<circle cx="{mx}" cy="{my}" r="13" fill="#f2f2f2"/>')
+    _text(add, bx1 + 22, top + bh - 44, spec.get("label_text", "KY-023"), 14, "#e8e8ee",
+          anchor="start")
+
+    # the cap: a dark ring with the rubber dome and a highlight, like the reference
+    ccy = top + bh * 0.42
+    r = bh * 0.39
+    add(f'<circle cx="{cx}" cy="{ccy}" r="{r*1.16:.0f}" fill="#111"/>')
+    add(f'<circle cx="{cx}" cy="{ccy}" r="{r:.0f}" fill="#2b2b30" stroke="#15151a" stroke-width="2"/>')
+    add(f'<circle cx="{cx}" cy="{ccy}" r="{r*0.78:.0f}" fill="#3a3a3f"/>')
+    add(f'<ellipse cx="{cx-r*0.3:.0f}" cy="{ccy-r*0.34:.0f}" rx="{r*0.3:.0f}" ry="{r*0.18:.0f}" '
+        f'fill="#6d6d76" opacity="0.5"/>')
+
+    # header strip with the five pads
+    hy = attach - 24 if not _bottom_half(row) else attach + 4
     add(f'<rect x="{xs[0]-16}" y="{hy}" width="{xs[4]-xs[0]+32}" height="22" rx="3" fill="#111"/>')
     for x in xs:
-        add(f'<rect x="{x-7}" y="{hy+4}" width="14" height="14" rx="2" fill="#d9a441"/>')
-    # two-tier rubber stick cap
-    cyy = top + 46
-    add(f'<rect x="{cx-9}" y="{cyy-6}" width="18" height="36" rx="5" fill="#202024"/>')
-    add(f'<circle cx="{cx}" cy="{cyy}" r="36" fill="#2b2b30" stroke="#15151a" stroke-width="2"/>')
-    add(f'<ellipse cx="{cx-12}" cy="{cyy-12}" rx="12" ry="7" fill="#55555c" opacity="0.45"/>')
-    add(f'<circle cx="{cx}" cy="{cyy-26}" r="20" fill="#202024" stroke="#15151a" stroke-width="2"/>')
-    add(f'<ellipse cx="{cx-7}" cy="{cyy-32}" rx="7" ry="4.5" fill="#55555c" opacity="0.45"/>')
-    _text(add, cx, top + 16, spec.get("label_text", "KY-023"), 13, "#e8e8ee")
+        add(f'<rect x="{x-8}" y="{hy+4}" width="16" height="14" rx="2" '
+            f'fill="#d9a441" stroke="#f2f2f2" stroke-width="1.2"/>')
     _pin_labels(add, L, xs, row, spec.get("pins", ["GND", "+5V", "VRx", "VRy", "SW"]))
 
 
-# --------------------------------------------------------------------------
-# LCD1602 with I2C backpack (4 pins)
-# --------------------------------------------------------------------------
 def holes_lcd(L, spec):
     col, row = spec["at"]
     return [(col + i, row) for i in range(4)]
@@ -1066,8 +1067,8 @@ def component_bounds(L, spec):
         return (x1, top, x2 - x1, h)
     if kind in ("joystick", "lcd", "ultrasonic"):
         n = {"joystick": 5, "lcd": 4, "ultrasonic": 4}[kind]
-        pad = {"joystick": 80, "lcd": 0, "ultrasonic": 110}[kind]
-        h = {"joystick": 100, "lcd": 148, "ultrasonic": 96}[kind]
+        pad = {"joystick": 74, "lcd": 0, "ultrasonic": 110}[kind]
+        h = {"joystick": 300, "lcd": 148, "ultrasonic": 96}[kind]
         w = {"joystick": 420, "lcd": 420, "ultrasonic": 0}[kind]
         xs = [L.col_x(col + i) for i in range(n)]
         cx = (xs[0] + xs[-1]) / 2
