@@ -578,21 +578,25 @@ def draw_servo(add, L, spec):
     up = -1 if not _bottom_half(row) else +1
     far = top if up < 0 else bottom
     # translucent blue SG90 case with a pale top and white horn
-    add(f'<rect x="{bx1}" y="{top}" width="{bw}" height="{bh}" rx="10" '
+    add(f'<rect x="{bx1}" y="{top+10}" width="{bw}" height="{bh-10}" rx="10" '
         f'fill="#3a6ea5" stroke="#26496e" stroke-width="2.5"/>')
-    add(f'<rect x="{bx1+8}" y="{top+8}" width="{bw-16}" height="26" rx="6" '
-        f'fill="#cfe0f5" opacity="0.55"/>')
-    add(f'<rect x="{bx1-12}" y="{far-6}" width="{bw+24}" height="12" rx="4" '
-        f'fill="#5b8fc9" opacity="0.9"/>')
+    for fx in (bx1 - 16, bx1 + bw - 12):
+        add(f'<rect x="{fx}" y="{top}" width="28" height="16" rx="3" '
+            f'fill="#5b8fc9" stroke="#26496e" stroke-width="1.5"/>')
+        add(f'<circle cx="{fx+14}" cy="{top+8}" r="4" fill="#26496e"/>')
+    add(f'<circle cx="{cx}" cy="{top+40}" r="24" fill="#cfe0f5" stroke="#26496e" stroke-width="2"/>')
+    add(f'<circle cx="{cx}" cy="{top+40}" r="9" fill="#5b8fc9"/>')
+    add(f'<circle cx="{cx+32}" cy="{top+52}" r="13" fill="#cfe0f5" stroke="#26496e" stroke-width="1.5"/>')
+    add(f'<circle cx="{cx+32}" cy="{top+52}" r="4" fill="#5b8fc9"/>')
     # cable boot where the wires leave the case
     boot_y = attach - (10 if up < 0 else -10)
     add(f'<rect x="{xs[0]-8}" y="{boot_y-8}" width="{xs[2]-xs[0]+16}" height="16" rx="4" '
         f'fill="#202024"/>')
-    horn_y = far + up * 18
-    add(f'<circle cx="{cx}" cy="{horn_y}" r="17" fill="#f2f2f2" stroke="#c9c9d1" stroke-width="2"/>')
-    add(f'<circle cx="{cx}" cy="{horn_y}" r="4" fill="#9a9aa4"/>')
-    add(f'<rect x="{cx-4}" y="{horn_y + up*30}" width="8" height="30" rx="4" '
+    horn_y = far + up * 26
+    add(f'<rect x="{cx-7}" y="{horn_y + (up*34 if up < 0 else 0)}" width="14" height="46" rx="7" '
         f'fill="#f2f2f2" stroke="#c9c9d1" stroke-width="2"/>')
+    add(f'<circle cx="{cx}" cy="{horn_y}" r="15" fill="#f2f2f2" stroke="#c9c9d1" stroke-width="2"/>')
+    add(f'<circle cx="{cx}" cy="{horn_y}" r="4.5" fill="#9a9aa4"/>')
     _text(add, cx, (top + bottom) / 2 + 5, "SG90", 15, "#cfe0f5")
     _pin_labels(add, L, xs, row, names)
 
@@ -753,13 +757,17 @@ def draw_ultrasonic(add, L, spec):
     add(f'<rect x="{xs[0]-14}" y="{attach-26 if not _bottom_half(row) else attach+4}" '
         f'width="{xs[3]-xs[0]+28}" height="20" rx="3" fill="#1a1a1a"/>')
     # two silver mesh transducers
-    for dx, tag in ((-42, "T"), (42, "R")):
+    for dx, tag in ((-44, "T"), (44, "R")):
         cxx, cyy = cx + dx, top + 46
-        add(f'<circle cx="{cxx}" cy="{cyy}" r="28" fill="#c9c9d1" stroke="#8a8a94" stroke-width="2.5"/>')
-        for rr in (22, 16, 10):
-            add(f'<circle cx="{cxx}" cy="{cyy}" r="{rr}" fill="none" stroke="#9aa0a6" stroke-width="1.2"/>')
-        add(f'<circle cx="{cxx}" cy="{cyy}" r="4" fill="#6d6d76"/>')
-        _text(add, cxx, cyy + 44, tag, 12, "#cfe0f5")
+        add(f'<circle cx="{cxx}" cy="{cyy}" r="34" fill="#f2f2f2" stroke="#9a9aa4" stroke-width="2"/>')
+        for i in range(7):
+            for j in range(7):
+                mx, my = cxx - 21 + i*7, cyy - 21 + j*7
+                if (mx-cxx)**2 + (my-cyy)**2 <= 21*21:
+                    add(f'<circle cx="{mx}" cy="{my}" r="1.1" fill="#c9c9d1"/>')
+        add(f'<circle cx="{cxx}" cy="{cyy}" r="15" fill="#d0d0d6" stroke="#9a9aa4" stroke-width="1.5"/>')
+        add(f'<circle cx="{cxx}" cy="{cyy}" r="7" fill="#8a8a94"/>')
+        _text(add, cxx, cyy + 50, tag, 14, "#cfe0f5")
     _text(add, cx, top + 14, spec.get("label_text", "HC-SR04"), 13, "#fff")
     _pin_labels(add, L, xs, row, spec.get("pins", ["VCC", "TRIG", "ECHO", "GND"]))
 
@@ -794,16 +802,18 @@ def draw_joystick(add, L, spec):
     add(f'<rect x="{bx1+bw-64}" y="{top+58}" width="26" height="26" rx="3" '
         f'fill="#2b2b30" stroke="#55555c"/>')
     add(f'<circle cx="{bx1+bw-51}" cy="{top+71}" r="7" fill="#8a8a94"/>')
-    # black pin header along the bottom edge
-    add(f'<rect x="{xs[0]-14}" y="{attach-26 if not _bottom_half(row) else attach+4}" '
-        f'width="{xs[4]-xs[0]+28}" height="20" rx="3" fill="#111"/>')
+    # black pin header with gold pads along the bottom edge
+    hy = attach - 26 if not _bottom_half(row) else attach + 4
+    add(f'<rect x="{xs[0]-16}" y="{hy}" width="{xs[4]-xs[0]+32}" height="22" rx="3" fill="#111"/>')
+    for x in xs:
+        add(f'<rect x="{x-7}" y="{hy+4}" width="14" height="14" rx="2" fill="#d9a441"/>')
     # two-tier rubber stick cap
-    cyy = top + 44
-    add(f'<rect x="{cx-8}" y="{cyy-6}" width="16" height="34" rx="4" fill="#202024"/>')
-    add(f'<circle cx="{cx}" cy="{cyy}" r="30" fill="#2b2b30" stroke="#15151a" stroke-width="2"/>')
-    add(f'<ellipse cx="{cx-10}" cy="{cyy-10}" rx="10" ry="6" fill="#55555c" opacity="0.5"/>')
-    add(f'<circle cx="{cx}" cy="{cyy-22}" r="17" fill="#202024" stroke="#15151a" stroke-width="2"/>')
-    add(f'<ellipse cx="{cx-6}" cy="{cyy-27}" rx="6" ry="4" fill="#55555c" opacity="0.5"/>')
+    cyy = top + 46
+    add(f'<rect x="{cx-9}" y="{cyy-6}" width="18" height="36" rx="5" fill="#202024"/>')
+    add(f'<circle cx="{cx}" cy="{cyy}" r="36" fill="#2b2b30" stroke="#15151a" stroke-width="2"/>')
+    add(f'<ellipse cx="{cx-12}" cy="{cyy-12}" rx="12" ry="7" fill="#55555c" opacity="0.45"/>')
+    add(f'<circle cx="{cx}" cy="{cyy-26}" r="20" fill="#202024" stroke="#15151a" stroke-width="2"/>')
+    add(f'<ellipse cx="{cx-7}" cy="{cyy-32}" rx="7" ry="4.5" fill="#55555c" opacity="0.45"/>')
     _text(add, cx, top + 16, spec.get("label_text", "KY-023"), 13, "#e8e8ee")
     _pin_labels(add, L, xs, row, spec.get("pins", ["GND", "+5V", "VRx", "VRy", "SW"]))
 
