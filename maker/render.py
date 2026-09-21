@@ -325,7 +325,7 @@ def draw_notes_right(add, L, spec, steps, notes):
             y += 8
 
 
-HTML_TEMPLATE = """<!DOCTYPE html>
+HTML_TEMPLATE = r"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
