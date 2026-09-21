@@ -29,13 +29,15 @@ command -v rsvg-convert qlmanage
 
 ## Run it
 
-Every render serves the output folder on `127.0.0.1` and opens the diagram in
-the student's default browser (zoom, pan, click-to-trace, print). **The open
-tab is live**: re-rendering the same diagram swaps the new drawing into the
-page within a second, keeping the current zoom and pan — so you can iterate on
-a circuit with the student watching. `--no-serve` opens the file instead (no
-live reload), and `--no-open` skips the browser entirely for batch runs —
-rendering twenty examples should not open twenty tabs.
+Every render opens the diagram in the student's default browser (zoom, pan,
+click-to-trace, print, print). It is a plain local file: nothing is served,
+nothing keeps running, nothing to clean up. `--no-open` skips the browser for
+batch runs — rendering twenty examples should not open twenty tabs.
+
+Re-rendering a diagram writes a new file; the student reopens it (or simply
+looks at the new PNG inline in the reply). If a folder happens to be served
+over loopback, the page notices its SVG changing and updates itself in place,
+but that is a convenience only — never a requirement.
 
 The skill lives wherever opencode installed it (often
 `~/.cache/opencode/skills/maker`). Resolve that path from this file's

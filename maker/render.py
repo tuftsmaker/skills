@@ -382,7 +382,9 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 // place so re-rendering the diagram updates this tab without losing the view.
 (function () {
   var name = "{svg_name}";
+  // only useful when a local server is watching this folder; never on a website
   if (!name || !/^https?:/.test(location.protocol)) return;
+  if (!/^(127\.0\.0\.1|localhost|\[::1\])$/.test(location.hostname)) return;
   var panel = document.getElementById('panel');
   var status = document.getElementById('status');
   var live = panel.querySelector('svg');
@@ -622,35 +624,6 @@ def _today():
     return datetime.date.today().isoformat()
 
 
-def serve_dir(directory, port):
-    """Serve `directory` on loopback if nothing is listening there yet.
-
-    Returns the base URL. Loopback only: nothing outside this machine can
-    reach it, and the links work in the desktop app because they are ordinary
-    http:// URLs (local file links are not clickable in current builds).
-    """
-    import urllib.request
-    base = f"http://127.0.0.1:{port}/"
-    try:
-        urllib.request.urlopen(base, timeout=1)
-        return base                     # something is already serving that port
-    except Exception:
-        pass
-    subprocess.Popen(
-        [sys.executable, "-m", "http.server", str(port), "--bind", "127.0.0.1",
-         "--directory", os.path.abspath(directory)],
-        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-        start_new_session=True)
-    for _ in range(20):
-        try:
-            urllib.request.urlopen(base, timeout=1)
-            return base
-        except Exception:
-            import time as _time
-            _time.sleep(0.15)
-    return base
-
-
 def open_in_browser(path):
     """Hand the file to the platform's default application (macOS: open,
     Windows: start, Linux: xdg-open)."""
@@ -734,9 +707,6 @@ def main():
                     help="do not open the diagram in the browser (for batch runs)")
     ap.add_argument("--no-gallery", action="store_true",
                     help="do not update the local gallery page")
-    ap.add_argument("--no-serve", action="store_true",
-                    help="open the file directly instead of serving it (no live reload)")
-    ap.add_argument("--port", type=int, default=8765, help="port for the local server (default 8765)")
     args = ap.parse_args()
 
     if args.list or not args.circuit:
@@ -772,19 +742,10 @@ def main():
     if not args.no_gallery:
         update_gallery(os.path.dirname(os.path.abspath(base)) or ".", base, spec.get("title"))
 
-    out_dir = os.path.dirname(os.path.abspath(base)) or "."
-    url_base = None
-    if not args.no_serve:
-        url_base = serve_dir(out_dir, args.port)
-        print(f"serving:  {url_base}  (links in the browser stay live)")
-
     if not args.no_open:
-        if url_base:
-            target = f"{url_base}{base_name}"
-        else:
-            target = html_path if os.path.exists(html_path) else svg_path
+        target = html_path if os.path.exists(html_path) else svg_path
         if open_in_browser(target):
-            print(f"opened {os.path.basename(base_name)} in the default browser")
+            print(f"opened {os.path.basename(target)} in the default browser")
         else:
             print(f"could not open a browser; open this file yourself: {os.path.abspath(target)}")
 
