@@ -63,20 +63,22 @@ def assign_lanes(L, board, wires, parts=None):
     lane_spans = []          # lane_spans[lane] = [(y0, y1), ...]
     left = corridor = 0
 
+    MAX_LANES = 9
+
     def pick(span):
-        if not lane_spans:
-            lane_spans.append([span])
-            return 0
+        # reuse a lane whose existing runs do not overlap this span
         for lane, spans in enumerate(lane_spans):
             if all(span[1] <= a or span[0] >= b for a, b in spans):
                 spans.append(span)
                 return lane
-        # every lane conflicts: take the one with the least overlap
-        best, best_overlap = 0, None
-        for lane, spans in enumerate(lane_spans):
-            overlap = sum(max(0, min(span[1], b) - max(span[0], a)) for a, b in spans)
-            if best_overlap is None or overlap < best_overlap:
-                best, best_overlap = lane, overlap
+        # otherwise take a fresh lane, until they run out
+        if len(lane_spans) < MAX_LANES:
+            lane_spans.append([span])
+            return len(lane_spans) - 1
+        # more wires than lanes: share the one with the least overlap
+        best = min(range(len(lane_spans)),
+                   key=lambda i: sum(max(0, min(span[1], b) - max(span[0], a))
+                                     for a, b in lane_spans[i]))
         lane_spans[best].append(span)
         return best
 

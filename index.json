@@ -2,7 +2,7 @@
   "skills": [
     {
       "name": "maker",
-      "version": "dab3da70e8dd",
+      "version": "60bfc09fd80b",
       "files": [
         "SKILL.md",
         "bbd/__init__.py",
