@@ -1,3 +1,6 @@
+layout:
+  breadboard:
+    hidden: false
 board: freenove-esp32-wrover
 title: RGB LED — Freenove ESP32-WROVER (FNK0046)
 subtitle: Common anode to 3V3 through one 220 Ω resistor

@@ -36,10 +36,10 @@ wires:
   - {from: driver.OUT3, to: bb.8.j, color: red, label: right motor +}
   - {from: driver.OUT4, to: bb.9.j, color: black, label: right motor −}
 steps:
-  - text: "Driver and joystick first: plug them in as robot-drive.yml shows."
-  - text: "Servo into columns 11-13, row j: brown → GND, red → 5V, orange → GPIO 15."
-  - text: "Motor leads: columns 2-3 (left) and 8-9 (right), row j."
-  - text: "Wire those columns to the driver's OUT1-OUT4 screws."
+  - text: "Driver and joystick first, as robot-drive.yml shows."
+  - text: "Servo: brown → GND, red → 5V, orange → GPIO 15."
+  - text: "Motor leads: left → OUT1/OUT2, right → OUT3/OUT4."
+  - text: "Power the driver from the 9V clip (12V and GND), sharing ground with the ESP32."
   - text: "9V clip → the driver's 12V and GND (not shown)."
 notes:
   - "Drive: OUT1/OUT2 = left motor, OUT3/OUT4 = right. Servo: VRx sets the arm angle."

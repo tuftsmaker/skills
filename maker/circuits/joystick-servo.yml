@@ -16,8 +16,8 @@ wires:
   - {from: bb.9.c, to: board.L19, color: red, label: servo red — 5V}
   - {from: bb.10.c, to: board.GPIO15, color: orange, label: servo orange — GPIO 15}
 steps:
-  - text: "Joystick into columns 1-5, row c: GND, 3V3, then VRx, VRy and SW."
-  - text: "Servo into columns 8-10, row c: brown → GND, red → 5V, orange → signal."
+  - text: "Joystick: GND and 3V3, then VRx, VRy and SW to the board."
+  - text: "Servo: brown → GND, red → 5V, orange → its signal pin."
   - text: "Signal goes to GPIO 15 — the pin the class servo code uses."
   - text: "Push the stick sideways and the arm follows VRx."
 notes:

@@ -32,13 +32,13 @@ wires:
   - {from: driver.OUT3, to: bb.8.j, color: red, label: right motor +}
   - {from: driver.OUT4, to: bb.9.j, color: black, label: right motor −}
 steps:
-  - text: "ESP32 on the extension board; joystick into columns 9-13, row c."
+  - text: "ESP32 on the extension board; wire the joystick to the board."
   - text: "Joystick: GND, 3V3, VRx → 36, VRy → 39, SW → 4."
   - text: "Driver: ENA → 13, IN1 → 12, IN2 → 14 (left motor)."
   - text: "Driver: IN3 → 18, IN4 → 19, ENB → 5 (right motor)."
   - text: "GND from both the driver and the joystick."
-  - text: "Motor leads: columns 2-3 (left) and 8-9 (right), row j."
-  - text: "Wire those columns to OUT1/OUT2 and OUT3/OUT4."
+  - text: "Motor leads: left → OUT1/OUT2, right → OUT3/OUT4."
+  - text: "Keep motor wires clear of logic wires; swap a pair to reverse a motor."
   - text: "9V clip → the driver's 12V and GND (not shown)."
 notes:
   - "Left motor: OUT1/OUT2. Right motor: OUT3/OUT4. Swap a motor's two wires to reverse it."

@@ -52,36 +52,62 @@ def _pin_side(L, parsed):
 
 
 def assign_lanes(L, board, wires, parts=None):
-    """Plan routing lanes: one per wire, plus side lanes for left-hand pins."""
+    """Plan gutter lanes by packing vertical spans.
+
+    Two wires may share a lane when their vertical runs do not overlap, so a
+    19-wire circuit still fits the gutter instead of spilling into the
+    breadboard. Left-hand wires are given their own left lane and corridor
+    lane, in order.
+    """
     lanes = []
-    gutter = left = corridor = 0
+    lane_spans = []          # lane_spans[lane] = [(y0, y1), ...]
+    left = corridor = 0
+
+    def pick(span):
+        if not lane_spans:
+            lane_spans.append([span])
+            return 0
+        for lane, spans in enumerate(lane_spans):
+            if all(span[1] <= a or span[0] >= b for a, b in spans):
+                spans.append(span)
+                return lane
+        # every lane conflicts: take the one with the least overlap
+        best, best_overlap = 0, None
+        for lane, spans in enumerate(lane_spans):
+            overlap = sum(max(0, min(span[1], b) - max(span[0], a)) for a, b in spans)
+            if best_overlap is None or overlap < best_overlap:
+                best, best_overlap = lane, overlap
+        lane_spans[best].append(span)
+        return best
+
     for spec in wires:
         pin = None
         for end in (spec["from"], spec["to"]):
             parsed = parse_endpoint(L, board, end, parts)
-            if parsed[0] == "part":
-                pin = parsed
-                break
-            if parsed[0] == "board":
+            if parsed[0] in ("board", "part"):
                 pin = parsed
                 break
         if pin is None:
             lanes.append({"side": "C", "idx": len(lanes)})
             continue
+
         if pin[0] == "part":
-            lanes.append({"side": "P", "gutter": gutter, "idx": len(lanes)})
-            gutter += 1
+            span = (min(pin[1][1], L.channel), max(pin[1][1], L.channel))
+            lanes.append({"side": "P", "gutter": pick(span), "idx": len(lanes)})
             continue
+
         side = _pin_side(L, pin)
         if side == "L":
-            lanes.append({"side": "L", "gutter": gutter, "left": left, "corridor": corridor,
-                          "idx": len(lanes)})
-            gutter += 1
+            corridor_y = L.corridor_y(corridor)
+            span = (L.channel, corridor_y)
+            lanes.append({"side": "L", "gutter": pick(span), "left": left,
+                          "corridor": corridor, "idx": len(lanes)})
             left += 1
             corridor += 1
         else:
-            lanes.append({"side": "R", "gutter": gutter, "idx": len(lanes)})
-            gutter += 1
+            py = pin[1][1]
+            span = (min(py, L.channel), max(py, L.channel))
+            lanes.append({"side": "R", "gutter": pick(span), "idx": len(lanes)})
     return lanes
 
 

@@ -1,3 +1,6 @@
+layout:
+  breadboard:
+    hidden: false
 board: freenove-esp32-wrover
 title: L298N motor driver — Freenove ESP32-WROVER (FNK0046)
 subtitle: Logic pins on the breadboard; motor and battery on the screw terminals

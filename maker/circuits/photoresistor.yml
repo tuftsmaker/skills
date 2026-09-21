@@ -1,3 +1,6 @@
+layout:
+  breadboard:
+    hidden: false
 board: freenove-esp32-wrover
 title: Photoresistor (LDR) — Freenove ESP32-WROVER (FNK0046)
 subtitle: Light level as a voltage divider on GPIO 35

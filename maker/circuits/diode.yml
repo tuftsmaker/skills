@@ -1,3 +1,6 @@
+layout:
+  breadboard:
+    hidden: false
 board: freenove-esp32-wrover
 title: Rectifier diode — Freenove ESP32-WROVER (FNK0046)
 subtitle: A one-way valve in series with the LED

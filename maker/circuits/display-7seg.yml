@@ -1,3 +1,6 @@
+layout:
+  breadboard:
+    hidden: false
 board: freenove-esp32-wrover
 title: 7-segment display — Freenove ESP32-WROVER (FNK0046)
 subtitle: Ten pins, common cathode — driven through the 74HC595

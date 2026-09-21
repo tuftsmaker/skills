@@ -1,3 +1,6 @@
+layout:
+  breadboard:
+    hidden: false
 board: freenove-esp32-wrover
 title: 74HC595 shift register — Freenove ESP32-WROVER (FNK0046)
 subtitle: Three GPIOs drive eight outputs

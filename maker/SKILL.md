@@ -238,6 +238,30 @@ lane router on the class robot (19 wires) it produced longer, wandering paths �
 so it is not the default and should not be used for handouts yet. Making it
 competitive would need rip-up/retry, per-side ordering and tighter zone rules.
 
+## Breadboard: off by default
+
+Diagrams are drawn **without a breadboard** unless a circuit asks for one:
+the extension board's pads and each component's pins connect directly by
+jumper wires. That keeps busy diagrams readable — see `robot-full.yml`, where
+19 wires would otherwise be tangled through a hole grid.
+
+Add the breadboard back when the lesson is about *placing parts on it* (LEDs,
+resistors, buttons, DIP packages, displays):
+
+```yaml
+layout:
+  breadboard:
+    hidden: false
+```
+
+The examples that teach breadboard placement — `led`, `button`, `buzzer`,
+`rgb_led`, `potentiometer`, `photoresistor`, `thermistor`, `diode`,
+`doorbell`, `ic-74hc595`, `bar-graph`, `display-7seg`, `motor-driver` — set
+this flag. Everything else (modules with cables: joystick, LCD, ultrasonic,
+servo, motors, battery, speaker) leaves it off. Even when hidden, the column
+and row coordinates still position components, and the net highlighting is
+simply skipped.
+
 ## Boards
 
 | board                          | when                                            |
