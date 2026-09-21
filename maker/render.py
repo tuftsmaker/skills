@@ -569,6 +569,7 @@ def update_gallery(out_dir, base_name, title):
     filesystem — no server, no accounts, nothing to host.
     """
     import json as _json
+    base_name = os.path.basename(base_name)
     manifest_path = os.path.join(out_dir, "gallery.json")
     items = []
     if os.path.exists(manifest_path):
@@ -577,8 +578,8 @@ def update_gallery(out_dir, base_name, title):
         except Exception:
             items = []
     items = [i for i in items if i.get("name") != base_name]
-    items.insert(0, {"name": os.path.basename(base_name),
-                     "title": title or os.path.basename(base_name), "date": _today()})
+    items.insert(0, {"name": base_name,
+                     "title": title or base_name, "date": _today()})
     try:
         with open(manifest_path, "w") as f:
             _json.dump(items, f, indent=2)
@@ -739,9 +740,6 @@ def main():
         write_html(svg_path, html_path, spec.get("title"))
         print(f"wrote {html_path}")
 
-    if not args.no_gallery:
-        update_gallery(os.path.dirname(os.path.abspath(base)) or ".", base, spec.get("title"))
-
     if not args.no_open:
         target = html_path if os.path.exists(html_path) else svg_path
         if open_in_browser(target):
@@ -749,14 +747,16 @@ def main():
         else:
             print(f"could not open a browser; open this file yourself: {os.path.abspath(target)}")
 
-    if args.no_png:
-        return
-    png_path = base + ".png"
-    note = rasterise(svg_path, png_path, args.scale)
-    if note:
-        print("note: " + note)
-    elif os.path.exists(png_path):
-        print(f"wrote {png_path}")
+    if not args.no_png:
+        png_path = base + ".png"
+        note = rasterise(svg_path, png_path, args.scale)
+        if note:
+            print("note: " + note)
+        elif os.path.exists(png_path):
+            print(f"wrote {png_path}")
+
+    if not args.no_gallery:
+        update_gallery(os.path.dirname(os.path.abspath(base)) or ".", base, spec.get("title"))
 
 
 if __name__ == "__main__":
