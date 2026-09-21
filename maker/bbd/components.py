@@ -104,7 +104,8 @@ def _pin_labels(add, L, xs, row, names):
     y = L.row_y(row)
     ty = y - 8 if _bottom_half(row) else y + 17
     for x, name in zip(xs, names):
-        add(f'<text x="{x - 32}" y="{ty}" font-size="17" fill="#444" '
+        # sit clear of both this wire and the previous one
+        add(f'<text x="{x - 26}" y="{ty}" font-size="16" fill="#444" '
             f'text-anchor="middle">{name}</text>')
 
 
@@ -557,7 +558,7 @@ def draw_module(add, L, spec):
 # --------------------------------------------------------------------------
 # servo (3 wires: brown GND, red 5V, orange signal)
 # --------------------------------------------------------------------------
-SERVO_PIN_PITCH = 30
+SERVO_PIN_PITCH = 42
 
 
 def holes_servo(L, spec):

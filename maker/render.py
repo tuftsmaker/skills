@@ -580,8 +580,8 @@ def main():
                     help="PNG scale factor (default 1.1 — stays under 2000 px for inline previews)")
     ap.add_argument("--no-png", action="store_true", help="only write the SVG")
     ap.add_argument("--no-html", action="store_true", help="skip the zoomable HTML wrapper")
-    ap.add_argument("--open", action="store_true",
-                    help="open the rendered HTML in the default browser")
+    ap.add_argument("--no-open", action="store_true",
+                    help="do not open the diagram in the browser (for batch runs)")
     args = ap.parse_args()
 
     if args.list or not args.circuit:
@@ -613,7 +613,7 @@ def main():
         write_html(svg_path, html_path, spec.get("title"))
         print(f"wrote {html_path}")
 
-    if args.open:
+    if not args.no_open:
         target = html_path if os.path.exists(html_path) else svg_path
         if open_in_browser(target):
             print(f"opened {os.path.basename(target)} in the default browser")

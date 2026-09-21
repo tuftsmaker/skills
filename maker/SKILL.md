@@ -29,6 +29,10 @@ command -v rsvg-convert qlmanage
 
 ## Run it
 
+Every render opens the diagram in the student's default browser by default
+(zoom, pan, click-to-trace, print). Add `--no-open` for batch runs — rendering
+twenty examples should not open twenty tabs.
+
 The skill lives wherever opencode installed it (often
 `~/.cache/opencode/skills/maker`). Resolve that path from this file's
 location — do not assume the current directory:
@@ -66,18 +70,18 @@ Every render also writes `<name>.html`: the SVG inlined in a small page with
 zoom and pan (scroll to zoom, drag to pan, Fit / 1:1 / Print buttons). Because
 it is vector, zooming stays crisp at any level and printing is sharp.
 
-**Opening the zoomable view.** Pass `--open` and the rendered HTML opens in the
-student's default browser (macOS `open`, Windows `start`, Linux `xdg-open`) —
-zoom, pan and print, no settings required:
+**Opening the zoomable view.** Rendering opens it automatically: the HTML goes
+to the default browser (macOS `open`, Windows `start`, Linux `xdg-open`) — zoom,
+pan and print, no settings or local server required:
 
 ```bash
-python3 "$SKILL/render.py" my-circuit.yml -o out/my-circuit --open
+python3 "$SKILL/render.py" my-circuit.yml -o out/my-circuit            # opens it
+python3 "$SKILL/render.py" my-circuit.yml -o out/my-circuit --no-open  # batch
 ```
 
-Use it when a diagram is ready to look at, not in batch runs. In the desktop
-app this is the reliable alternative to the experimental in-app browser pane
-(which only accepts HTTP(S)); a plain markdown link to a local file does not
-open in current builds, so mention the file path in text as well.
+This is the reliable route in the desktop app: a plain markdown link to a local
+file does not open in current builds, and the in-app browser pane needs an
+experimental setting, so also mention the file path in text.
 
 Verified desktop behaviour, so do not fight it:
 
