@@ -7,11 +7,11 @@ layout:
 title: Class robot — joystick, servo arm, motors and status LED (FNK0046)
 subtitle: Everything on the extension board; stick steers, arm aims, LED reports
 components:
-  - {type: l298n, id: driver, at: [0, a]}
+  - {type: l298n, id: driver, at: [2, a]}
   - {type: joystick, at: [8, e], pins: [GND, +5V, VRx, VRy, SW]}
-  - {type: motor, at: [2, j], label_text: left motor}
-  - {type: motor, at: [8, j], label_text: right motor}
-  - {type: servo, at: [11, j], label_text: arm servo}
+  - {type: motor, id: left_motor, at: [2, j], label_text: left motor}
+  - {type: motor, id: right_motor, at: [8, j], label_text: right motor}
+  - {type: servo, id: servo, at: [11, j], label_text: arm servo}
   - {type: resistor, value: "220", from: [13, c], span: 3}
   - {type: led, color: red, at: [17, c], label_text: status LED, polarity_notes: false}
 wires:
@@ -26,22 +26,22 @@ wires:
   - {from: bb.16.c, to: bb.17.c, color: blue, label: resistor → LED anode}
   - {from: bb.18.c, to: board.R1, color: black, label: LED cathode — GND}
   # steering servo
-  - {from: bb.11.j, to: board.R7, color: black, label: servo GND}
-  - {from: bb.12.j, to: board.L19, color: red, label: servo 5V}
-  - {from: bb.13.j, to: board.GPIO15, color: orange, label: servo signal — GPIO 15}
+  - {from: servo.GND, to: board.R7, color: black, label: servo GND}
+  - {from: servo.5V, to: board.L19, color: red, label: servo 5V}
+  - {from: servo.SIG, to: board.GPIO15, color: orange, label: servo signal — GPIO 15}
   # driver logic
-  - {from: bb.0.a, to: board.GPIO13, color: orange, label: ENA — GPIO 13 (left speed)}
-  - {from: bb.1.a, to: board.GPIO12, color: blue, label: IN1 — GPIO 12}
-  - {from: bb.2.a, to: board.GPIO14, color: green, label: IN2 — GPIO 14}
-  - {from: bb.3.a, to: board.GPIO18, color: purple, label: IN3 — GPIO 18}
-  - {from: bb.4.a, to: board.GPIO19, color: grey, label: IN4 — GPIO 19}
-  - {from: bb.5.a, to: board.GPIO5, color: yellow, label: ENB — GPIO 5 (right speed)}
+  - {from: driver.ENA, to: board.GPIO13, color: orange, label: ENA — GPIO 13 (left speed)}
+  - {from: driver.IN1, to: board.GPIO12, color: blue, label: IN1 — GPIO 12}
+  - {from: driver.IN2, to: board.GPIO14, color: green, label: IN2 — GPIO 14}
+  - {from: driver.IN3, to: board.GPIO18, color: purple, label: IN3 — GPIO 18}
+  - {from: driver.IN4, to: board.GPIO19, color: grey, label: IN4 — GPIO 19}
+  - {from: driver.ENB, to: board.GPIO5, color: yellow, label: ENB — GPIO 5 (right speed)}
   - {from: driver.GND, to: board.L14, color: black, label: driver GND}
   # motors
-  - {from: driver.OUT1, to: bb.2.j, color: red, label: left motor +}
-  - {from: driver.OUT2, to: bb.3.j, color: black, label: left motor −}
-  - {from: driver.OUT3, to: bb.8.j, color: red, label: right motor +}
-  - {from: driver.OUT4, to: bb.9.j, color: black, label: right motor −}
+  - {from: driver.OUT1, to: left_motor.M+, color: red, label: left motor +}
+  - {from: driver.OUT2, to: left_motor.M-, color: black, label: left motor −}
+  - {from: driver.OUT3, to: right_motor.M+, color: red, label: right motor +}
+  - {from: driver.OUT4, to: right_motor.M-, color: black, label: right motor −}
 steps:
   - text: "Driver and joystick first, as robot-drive.yml shows."
   - text: "Servo: brown → GND, red → 5V, orange → GPIO 15."

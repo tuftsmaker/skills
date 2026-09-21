@@ -5,16 +5,16 @@ title: Joystick steering a servo — Freenove ESP32-WROVER (FNK0046)
 subtitle: VRx sets the angle; the stick's button recentres it
 components:
   - {type: joystick, at: [1, c], pins: [GND, +5V, VRx, VRy, SW]}
-  - {type: servo, at: [8, c]}
+  - {type: servo, id: servo, at: [8, c]}
 wires:
   - {from: bb.1.c, to: board.L14, color: black, label: joystick GND}
   - {from: bb.2.c, to: board.L17, color: red, label: joystick +5V — 3V3}
   - {from: bb.3.c, to: board.GPIO36, color: orange, label: VRx — GPIO 36}
   - {from: bb.4.c, to: board.GPIO39, color: yellow, label: VRy — GPIO 39}
   - {from: bb.5.c, to: board.GPIO14, color: green, label: SW — GPIO 14}
-  - {from: bb.8.c, to: board.L14, color: black, label: servo brown — GND}
-  - {from: bb.9.c, to: board.L19, color: red, label: servo red — 5V}
-  - {from: bb.10.c, to: board.GPIO15, color: orange, label: servo orange — GPIO 15}
+  - {from: servo.GND, to: board.L14, color: black, label: servo brown — GND}
+  - {from: servo.5V, to: board.L19, color: red, label: servo red — 5V}
+  - {from: servo.SIG, to: board.GPIO15, color: orange, label: servo orange — GPIO 15}
 steps:
   - text: "Joystick: GND and 3V3, then VRx, VRy and SW to the board."
   - text: "Servo: brown → GND, red → 5V, orange → its signal pin."

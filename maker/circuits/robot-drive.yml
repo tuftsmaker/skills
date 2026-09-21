@@ -5,12 +5,12 @@ title: Robot drive — two motors, L298N driver and joystick (FNK0046)
 subtitle: The class robot's control circuit on the GPIO extension board
 components:
   # driver above the breadboard; its OUT terminals are wireable as driver.OUT1..4
-  - {type: l298n, id: driver, at: [0, a]}
+  - {type: l298n, id: driver, at: [2, a]}
   # steering stick: VRx / VRy are ADC1 pins, SW is its push button
   - {type: joystick, at: [9, c], pins: [GND, +5V, VRx, VRy, SW]}
   # left and right TT motors, wired from their breadboard columns to the driver
-  - {type: motor, at: [2, j], label_text: left motor}
-  - {type: motor, at: [8, j], label_text: right motor}
+  - {type: motor, id: left_motor, at: [2, j], label_text: left motor}
+  - {type: motor, id: right_motor, at: [8, j], label_text: right motor}
 wires:
   # joystick
   - {from: bb.9.c, to: board.L14, color: black, label: joystick GND}
@@ -19,18 +19,18 @@ wires:
   - {from: bb.12.c, to: board.GPIO39, color: yellow, label: VRy — GPIO 39}
   - {from: bb.13.c, to: board.GPIO4, color: green, label: SW — GPIO 4}
   # driver logic
-  - {from: bb.0.a, to: board.GPIO13, color: orange, label: ENA — GPIO 13 (left speed)}
-  - {from: bb.1.a, to: board.GPIO12, color: blue, label: IN1 — GPIO 12}
-  - {from: bb.2.a, to: board.GPIO14, color: green, label: IN2 — GPIO 14}
-  - {from: bb.3.a, to: board.GPIO18, color: purple, label: IN3 — GPIO 18}
-  - {from: bb.4.a, to: board.GPIO19, color: grey, label: IN4 — GPIO 19}
-  - {from: bb.5.a, to: board.GPIO5, color: yellow, label: ENB — GPIO 5 (right speed)}
+  - {from: driver.ENA, to: board.GPIO13, color: orange, label: ENA — GPIO 13 (left speed)}
+  - {from: driver.IN1, to: board.GPIO12, color: blue, label: IN1 — GPIO 12}
+  - {from: driver.IN2, to: board.GPIO14, color: green, label: IN2 — GPIO 14}
+  - {from: driver.IN3, to: board.GPIO18, color: purple, label: IN3 — GPIO 18}
+  - {from: driver.IN4, to: board.GPIO19, color: grey, label: IN4 — GPIO 19}
+  - {from: driver.ENB, to: board.GPIO5, color: yellow, label: ENB — GPIO 5 (right speed)}
   - {from: driver.GND, to: board.L14, color: black, label: driver GND}
   # motor outputs: motor leads plug into two columns; wires run to the driver
-  - {from: driver.OUT1, to: bb.2.j, color: red, label: left motor +}
-  - {from: driver.OUT2, to: bb.3.j, color: black, label: left motor −}
-  - {from: driver.OUT3, to: bb.8.j, color: red, label: right motor +}
-  - {from: driver.OUT4, to: bb.9.j, color: black, label: right motor −}
+  - {from: driver.OUT1, to: left_motor.M+, color: red, label: left motor +}
+  - {from: driver.OUT2, to: left_motor.M-, color: black, label: left motor −}
+  - {from: driver.OUT3, to: right_motor.M+, color: red, label: right motor +}
+  - {from: driver.OUT4, to: right_motor.M-, color: black, label: right motor −}
 steps:
   - text: "ESP32 on the extension board; wire the joystick to the board."
   - text: "Joystick: GND, 3V3, VRx → 36, VRy → 39, SW → 4."

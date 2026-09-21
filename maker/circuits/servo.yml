@@ -2,11 +2,11 @@ board: freenove-esp32-wrover
 title: SG90 servo — Freenove ESP32-WROVER (FNK0046)
 subtitle: Signal on GPIO 15, power from 5V
 components:
-  - {type: servo, at: [3, c]}
+  - {type: servo, id: servo, at: [3, c]}
 wires:
-  - {from: bb.3.c, to: board.L14, color: black, label: brown — GND}
-  - {from: bb.4.c, to: board.L19, color: red, label: red — 5V}
-  - {from: bb.5.c, to: board.GPIO15, color: orange, label: orange — GPIO 15}
+  - {from: servo.GND, to: board.L14, color: black, label: brown — GND}
+  - {from: servo.5V, to: board.L19, color: red, label: red — 5V}
+  - {from: servo.SIG, to: board.GPIO15, color: orange, label: orange — GPIO 15}
 notes:
   - "The servo expects 5 V — the brown (or black) wire is ground, the middle is power, the orange is signal."
   - "In MicroPython: PWM(Pin(15), 50) and duty 26-128 maps to 0-180°."
