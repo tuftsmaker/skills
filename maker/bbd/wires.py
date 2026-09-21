@@ -66,20 +66,21 @@ def assign_lanes(L, board, wires, parts=None):
                 pin = parsed
                 break
         if pin is None:
-            lanes.append({"side": "C"})
+            lanes.append({"side": "C", "idx": len(lanes)})
             continue
         if pin[0] == "part":
-            lanes.append({"side": "P", "gutter": gutter})
+            lanes.append({"side": "P", "gutter": gutter, "idx": len(lanes)})
             gutter += 1
             continue
         side = _pin_side(L, pin)
         if side == "L":
-            lanes.append({"side": "L", "gutter": gutter, "left": left, "corridor": corridor})
+            lanes.append({"side": "L", "gutter": gutter, "left": left, "corridor": corridor,
+                          "idx": len(lanes)})
             gutter += 1
             left += 1
             corridor += 1
         else:
-            lanes.append({"side": "R", "gutter": gutter})
+            lanes.append({"side": "R", "gutter": gutter, "idx": len(lanes)})
             gutter += 1
     return lanes
 
@@ -155,11 +156,18 @@ def route(L, board, spec, lane, parts=None):
     return [(hx1, hy1), (hx1, L.channel), (hx2, L.channel), (hx2, hy2)]
 
 
+def _attr(text):
+    return str(text).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
+
+
 def draw_wire(add, L, board, spec, lane, parts=None):
     pts = route(L, board, spec, lane, parts)
-    colour = COLOURS.get(str(spec.get("color", "red")).lower(), spec.get("color", "#e02020"))
+    name = str(spec.get("color", "red")).lower()
+    colour = COLOURS.get(name, spec.get("color", "#e02020"))
     path = " ".join(f"{x},{y}" for x, y in pts)
-    add(f'<polyline points="{path}" fill="none" stroke="{colour}" stroke-width="7" '
+    add(f'<polyline class="wire" data-wire="{lane.get("idx", "")}" '
+        f'data-colour="{_attr(name)}" data-label="{_attr(spec.get("label", ""))}" '
+        f'points="{path}" fill="none" stroke="{colour}" stroke-width="7" '
         f'stroke-linejoin="round" stroke-linecap="round" opacity="0.95"/>')
 
     # plug marker where the wire enters a breadboard hole

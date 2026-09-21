@@ -1,6 +1,8 @@
 board: freenove-esp32-wrover-ext
 layout:
   notes_position: right
+  breadboard:
+    hidden: true
 title: Class robot — joystick, servo arm, two motors (FNK0046)
 subtitle: Everything on the extension board; stick steers, arm aims
 components:

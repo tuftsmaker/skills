@@ -42,6 +42,7 @@ class Layout:
         self.dcol = int(d.get("col_pitch", 68))
         self.ncol = int(d.get("cols", 14))
 
+        self.bb_hidden = bool(d.get("hidden", False))
         rp = int(d.get("row_pitch", 32))
         top0 = int(d.get("first_row_y", 470))
         # Rows a-e, then a true 0.3" centre channel (3 row pitches), then f-j, so

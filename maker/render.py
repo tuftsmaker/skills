@@ -126,10 +126,11 @@ def build_svg(spec, board):
     else:
         holes = used
 
-    bb_mod.draw_breadboard(add, L, {**spec, "breadboard": {
-        **(spec.get("breadboard") or {}),
-        "highlight_holes": sorted(holes),
-    }})
+    if not L.bb_hidden:
+        bb_mod.draw_breadboard(add, L, {**spec, "breadboard": {
+            **(spec.get("breadboard") or {}),
+            "highlight_holes": sorted(holes),
+        }})
 
     for i, spec_wire in enumerate(spec.get("wires") or []):
         wire_mod.draw_wire(add, L, board, spec_wire, lanes[i], parts)
@@ -188,7 +189,8 @@ def legend_layout(L, spec, steps):
                     f"{c} wire")
         items.append(("wire", (c, text), 34 + 9.6 * len(text) + 64))
     items.append(("pin", None, 215))
-    items.append(("net", None, 400))
+    if not L.bb_hidden:
+        items.append(("net", None, 400))
     if any(s.get("at") for s in steps):
         items.append(("badge", None, 200))
 
@@ -219,7 +221,8 @@ def draw_notes(add, L, spec, steps, notes):
         if kind == "wire":
             c, text = payload
             hexc = wire_mod.COLOURS.get(c, c)
-            add(f'<rect x="{x}" y="{y-17}" width="26" height="16" rx="4" fill="{hexc}"/>')
+            add(f'<rect class="legend" data-colour="{esc(c)}" x="{x}" y="{y-17}" '
+                f'width="26" height="16" rx="4" fill="{hexc}"/>')
             add(f'<text x="{x+34}" y="{y-2}" font-size="18" fill="#444">{esc(text)}</text>')
         elif kind == "pin":
             add(f'<circle cx="{x+13}" cy="{y-9}" r="9" fill="{PIN_GOLD}"/>')
@@ -277,7 +280,8 @@ def draw_notes_right(add, L, spec, steps, notes):
         if kind == "wire":
             c, text = payload
             hexc = wire_mod.COLOURS.get(c, c)
-            add(f'<rect x="{x0}" y="{y-17}" width="26" height="16" rx="4" fill="{hexc}"/>')
+            add(f'<rect class="legend" data-colour="{esc(c)}" x="{x0}" y="{y-17}" '
+                f'width="26" height="16" rx="4" fill="{hexc}"/>')
             add(f'<text x="{x0+34}" y="{y-2}" font-size="18" fill="#444">{esc(text)}</text>')
             y += 32
         elif kind == "pin":
@@ -327,29 +331,40 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   body { display: flex; flex-direction: column;
          font: 15px -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
   header { display: flex; gap: 8px; align-items: center; padding: 10px 14px;
-           background: #fff; border-bottom: 1px solid #e2ddd3; flex: 0 0 auto; }
+           background: #fff; border-bottom: 1px solid #e2ddd3; flex: 0 0 auto; flex-wrap: wrap; }
   header .name { font-weight: 600; margin-right: auto; }
-  header .hint { color: #6b6b70; font-size: 13px; }
+  #status { min-width: 220px; color: #1f4a8a; font-weight: 600; }
   button { font: inherit; padding: 4px 12px; border: 1px solid #cfc9bb;
            border-radius: 8px; background: #fff; cursor: pointer; }
   button:hover { background: #f0ede6; }
+  button.active { background: #1f4a8a; color: #fff; border-color: #1f4a8a; }
   #stage { flex: 1 1 auto; overflow: hidden; position: relative; cursor: grab;
            touch-action: none; }
   #stage.dragging { cursor: grabbing; }
   #panel { position: absolute; top: 0; left: 0; transform-origin: 0 0; will-change: transform; }
   #panel svg { display: block; background: #fdfaf3; box-shadow: 0 2px 16px rgba(0,0,0,.12); }
+  .wire { cursor: pointer; }
+  #panel.focus .wire { opacity: .12; }
+  #panel.focus .wire.on { opacity: 1; stroke-width: 10; }
+  #panel.flow .wire.on, #panel.flow:not(.focus) .wire {
+    stroke-dasharray: 16 12; animation: dash 1.1s linear infinite; }
+  @keyframes dash { to { stroke-dashoffset: -28; } }
+  .legend { cursor: pointer; }
   @media print {
     header { display: none; }
     #stage { overflow: visible; }
     #panel { position: static; transform: none !important; }
     #panel svg { width: 100%; height: auto; box-shadow: none; }
+    #panel .wire { opacity: 1 !important; stroke-width: 7 !important; animation: none !important; }
   }
 </style>
 </head>
 <body>
 <header>
   <span class="name">{title}</span>
-  <span class="hint">scroll = zoom &middot; drag = pan &middot; double-click = fit</span>
+  <span id="status">click a wire to trace it</span>
+  <button id="flow" title="Animate the current path">Flow</button>
+  <button id="clear" title="Clear the trace">Clear</button>
   <button id="zoomout">&minus;</button>
   <button id="zoomin">+</button>
   <button id="fit">Fit</button>
@@ -362,7 +377,10 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   var stage = document.getElementById('stage');
   var panel = document.getElementById('panel');
   var svg = panel.querySelector('svg');
-  var scale = 1, tx = 0, ty = 0;
+  var status = document.getElementById('status');
+  var HINT = 'click a wire to trace it';
+  var scale = 1, tx = 0, ty = 0, moved = false, down = null;
+
   function size() {
     var vb = svg.viewBox && svg.viewBox.baseVal;
     return { w: (vb && vb.width) || svg.getBoundingClientRect().width,
@@ -394,17 +412,65 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   document.getElementById('print').onclick = function () { window.print(); };
   window.addEventListener('beforeprint', function () { panel.style.transform = 'none'; });
   window.addEventListener('afterprint', fit);
-  var drag = null;
+  window.addEventListener('resize', fit);
+
+  // --- wire tracing ---------------------------------------------------------
+  function clearFocus() {
+    panel.classList.remove('focus');
+    var on = panel.querySelectorAll('.wire.on');
+    for (var i = 0; i < on.length; i++) on[i].classList.remove('on');
+  }
+  function focusWire(el) {
+    clearFocus();
+    if (!el) { status.textContent = HINT; return; }
+    el.classList.add('on');
+    panel.classList.add('focus');
+    status.textContent = el.getAttribute('data-label') || 'wire';
+  }
+  function focusColour(name) {
+    clearFocus();
+    var list = panel.querySelectorAll('.wire[data-colour="' + name + '"]');
+    if (!list.length) { status.textContent = HINT; return; }
+    panel.classList.add('focus');
+    for (var i = 0; i < list.length; i++) list[i].classList.add('on');
+    var label = list[0].getAttribute('data-label') || name;
+    status.textContent = label + (list.length > 1 ? '  (+' + (list.length - 1) + ' more)' : '');
+  }
+  stage.addEventListener('click', function (e) {
+    if (moved) { moved = false; return; }
+    var w = e.target.closest ? e.target.closest('.wire') : null;
+    if (w) { focusWire(w); return; }
+    var l = e.target.closest ? e.target.closest('.legend') : null;
+    if (l) { focusColour(l.getAttribute('data-colour')); return; }
+    focusWire(null);
+  });
+  stage.addEventListener('pointerover', function (e) {
+    if (panel.classList.contains('focus')) return;
+    var w = e.target.closest ? e.target.closest('.wire') : null;
+    status.textContent = w ? (w.getAttribute('data-label') || 'wire') : HINT;
+  });
+  document.getElementById('clear').onclick = function () {
+    focusWire(null);
+    panel.classList.remove('flow');
+    document.getElementById('flow').classList.remove('active');
+  };
+  document.getElementById('flow').onclick = function () {
+    panel.classList.toggle('flow');
+    this.classList.toggle('active');
+  };
+
   stage.addEventListener('pointerdown', function (e) {
-    drag = { x: e.clientX - tx, y: e.clientY - ty };
+    down = { x: e.clientX - tx, y: e.clientY - ty, sx: e.clientX, sy: e.clientY };
+    moved = false;
     stage.classList.add('dragging');
     if (stage.setPointerCapture) stage.setPointerCapture(e.pointerId);
   });
   stage.addEventListener('pointermove', function (e) {
-    if (!drag) return; tx = e.clientX - drag.x; ty = e.clientY - drag.y; apply();
+    if (!down) return;
+    if (Math.abs(e.clientX - down.sx) + Math.abs(e.clientY - down.sy) > 4) moved = true;
+    tx = e.clientX - down.x; ty = e.clientY - down.y; apply();
   });
-  stage.addEventListener('pointerup', function () { drag = null; stage.classList.remove('dragging'); });
-  window.addEventListener('resize', fit);
+  stage.addEventListener('pointerup', function () { down = null; stage.classList.remove('dragging'); });
   fit();
 })();
 </script>
