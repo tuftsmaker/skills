@@ -12,13 +12,13 @@ BOT_ROWS = "fghij"
 class Layout:
     def __init__(self, spec):
         g = spec.get("layout", {}) or {}
-        self.W = int(g.get("width", 1840))
+        self.W = int(g.get("width", 1940))
         self.H = int(g.get("height", 1260))
         self.notes_top = int(g.get("notes_top", 1040))
 
         # ---- ESP32 board (bare, or seated on the GPIO extension board) ----
         b = g.get("board", {}) or {}
-        self.board_x = int(b.get("x", 150))
+        self.board_x = int(b.get("x", 240))
         self.board_y = int(b.get("y", 120))
         self.board_w = int(b.get("w", 380))
         self.board_h = int(b.get("h", 800))
