@@ -587,6 +587,151 @@ def manifest_selfcheck(ctx, required=True):
     )
 
 
+# ------------------------------------------------------------ laser SVG
+#
+# The DXF checks above cannot see colour — a DXF has none. The file that goes
+# to the laser is the SVG, and *its* checks are where colour lives: red
+# hairlines cut, black (or nothing) is an etch, anything else rasters.
+#
+# Both producers of that file are accepted: the checker's own --svg converter
+# writes inline styles on each path, and Inkscape keeps them there too, so the
+# checks walk the document and resolve style through ancestors the way SVG
+# does, skipping <defs> (not drawn).
+
+_SVG_DRAW = {"path", "rect", "circle", "ellipse", "line", "polyline",
+             "polygon", "text"}
+_SVG_RED = {"#ff0000", "red"}
+_SVG_BLACK = {"#000000", "black"}
+# An unfilled element is correct, not a defect: a cut path must have no fill at
+# all (the guide's "set the fill to No paint"), so `fill:none` is what every
+# good cut line carries. Omitting it from the allowed set failed the checker's
+# own --svg output.
+_SVG_NO_FILL = {"none", "", "transparent"}
+
+
+def _svg_submission(ctx):
+    """(path, parsed root) for the submitted laser-ready SVG."""
+    import xml.etree.ElementTree as ET
+
+    path = ctx.submission.find("part-laser-ready.svg", "laser-ready.svg")
+    if path is None:
+        return None, None
+    try:
+        return path, ET.parse(path).getroot()
+    except (ET.ParseError, OSError):
+        return path, None
+
+
+def _svg_local(tag) -> str:
+    return tag.rsplit("}", 1)[-1] if isinstance(tag, str) else ""
+
+
+def _svg_style(el) -> dict:
+    """An element's own style declarations plus presentation attributes."""
+    out = {}
+    for decl in (el.get("style") or "").split(";"):
+        if ":" in decl:
+            key, value = decl.split(":", 1)
+            out[key.strip().lower()] = value.strip().lower()
+    for key in ("stroke", "fill", "stroke-width", "stroke-opacity"):
+        if el.get(key):
+            out.setdefault(key, el.get(key).strip().lower())
+    return out
+
+
+def svg_parses(ctx):
+    path, root = _svg_submission(ctx)
+    if path is None:
+        return failed(
+            "No part-laser-ready.svg in the submission.",
+            "The laser reads SVG, not DXF. In Inkscape: File → Save As… → Inkscape SVG.",
+        )
+    if root is None:
+        return failed(
+            f"{path.name} is not valid SVG/XML.",
+            "Open it in Inkscape and save it again (File → Save As… → Inkscape SVG).",
+        )
+    local = _svg_local(root.tag)
+    if local != "svg":
+        return failed(f"{path.name} is not an SVG (the root element is <{local}>).")
+    width, height = root.get("width", ""), root.get("height", "")
+    if not (width.endswith("mm") and height.endswith("mm")):
+        return failed(
+            f"The page is not in millimetres (width={width!r}, height={height!r}).",
+            "The laser imports millimetres; a px page comes out the wrong size. "
+            "In Inkscape, check File → Document Properties, set the display units to mm, "
+            "and save again. (The checker's --svg output is already in mm.)",
+        )
+    return passed(f"{path.name} reads as SVG, {width} × {height}")
+
+
+def svg_laser_ready(ctx):
+    """Every cut is a red hairline and nothing is filled but black.
+
+    Fills may be black (an etch — UCP rasters black) or absent; anything else
+    would raster too. Strokes may be absent, or #ff0000 and hairline. Opacity
+    must be a full 1: a semi-transparent line is a different colour to the laser.
+    """
+    path, root = _svg_submission(ctx)
+    if path is None:
+        return failed("No part-laser-ready.svg in the submission.")
+    if root is None:
+        return failed(f"{path.name} is not valid SVG/XML.")
+
+    problems, cuts = [], 0
+
+    def walk(el, stroke, fill, hairline, opacity, in_defs):
+        nonlocal cuts
+        tag = _svg_local(el.tag)
+        if not tag:
+            return
+        if tag == "defs":
+            in_defs = True
+        style = _svg_style(el)
+        stroke = style.get("stroke", stroke)
+        fill = style.get("fill", fill)
+        opacity = style.get("stroke-opacity", opacity)
+        if style.get("-inkscape-stroke") == "hairline":
+            hairline = True
+        if tag in _SVG_DRAW and not in_defs:
+            name = el.get("id") or tag
+            if stroke and stroke != "none":
+                if stroke not in _SVG_RED:
+                    problems.append(f"{name} is stroked {stroke}, not #ff0000")
+                else:
+                    cuts += 1
+                    if not hairline:
+                        problems.append(
+                            f"{name} is not hairline (stroke-width "
+                            f"{style.get('stroke-width', 'unset')})")
+                    if opacity and opacity not in ("1", "1.0", "100%"):
+                        problems.append(f"{name} is {opacity} opaque")
+            if fill and fill not in _SVG_BLACK and fill not in _SVG_NO_FILL:
+                problems.append(
+                    f"{name} is filled {fill}; fills must be none or black")
+        for child in el:
+            walk(child, stroke, fill, hairline, opacity, in_defs)
+
+    walk(root, "none", "", False, "", False)
+
+    if problems:
+        sample = "; ".join(problems[:4])
+        more = f" (+{len(problems) - 4} more)" if len(problems) > 4 else ""
+        return failed(
+            f"{len(problems)} element(s) are not laser-ready: {sample}{more}.",
+            "Cuts: pure red #ff0000, width Hairline (Inkscape: Fill and Stroke → "
+            "Stroke style). Etches: black fill, no stroke. "
+            "The checker's --svg run does both for you.",
+        )
+    if cuts == 0:
+        return failed(
+            "Nothing in the file is a red cut line.",
+            "The laser only cuts red. Set your outline's stroke to #ff0000, or let "
+            "the checker write the file for you (add --svg to the check command).",
+        )
+    return passed(f"{cuts} red hairline cut path(s); nothing filled that is not black")
+
+
 # ---------------------------------------------------------------- human
 
 

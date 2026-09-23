@@ -3,9 +3,8 @@ id: unit-laser-ready
 title: Laser-Ready File
 order: 0
 summary: |
-  Eight tasks that take you from a blank Onshape document to a DXF you can hand
-  to the laser cutter at Nolop. Each task is a short video, one file, and a
-  signoff.
+  Nine tasks that take you from a blank Onshape document to a file the laser at
+  Nolop can cut. Each task is a short video, one file, and a signoff.
 requirement: |
   Every task file must pass its checks, and a TA signs each one. Then a TA or
   instructor signs the qualification as a whole, after you cut one of these
@@ -19,12 +18,13 @@ tasks:
   - cad-06-mirror
   - cad-07-trim-tool
   - cad-08-laser-joints
+  - cad-09-laser-ready
 supervised:
   title: Supervised cut
   detail: |
-    Bring one of your DXF files to Nolop and cut it with a TA or staff member
-    present. This is the only part of the qualification that cannot be checked
-    from a file.
+    Bring one of your prepared files — the SVG from the last task — to Nolop and
+    cut it with a TA or staff member present. This is the only part of the
+    qualification that cannot be checked from a file.
 safety: |
   This qualification says your file is ready for the laser. It does not
   authorize you to run the laser — that is Nolop's own training and checkout,
