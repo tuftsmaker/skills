@@ -1,0 +1,54 @@
+kind: unit
+id: unit-working-circuit
+title: Working Circuit
+order: 2
+status: planned
+summary: |
+  A breadboard circuit that is wired correctly and runs the code you wrote.
+  The ESP32 kit, the sensors, and MicroPython — checked against the class's own
+  wiring reference rather than a photograph.
+requirement: |
+  Every task file must pass its checks, and a TA signs each one. The final step
+  is a powered circuit demonstrated in class, because "it runs" is not
+  something a file can prove.
+why: |
+  Week 5 is where students first wire the kit, and the failure that costs the
+  most time is a wiring mistake that looks fine in a photo. This repo already
+  knows what correct wiring looks like — skills/maker/circuits/ holds 25
+  machine-readable circuits with real pin references — so a student's pin map
+  can be checked against it instead of eyeballed.
+planned_tasks:
+  - id: elec-01-first-blink
+    title: Light an LED from a pin
+    video: (to record) the board, the breadboard, one resistor, one LED
+    evidence: blink.py plus the pin you used
+    checks: the pin exists on the board and is an output; the circuit matches circuits/led.yml
+  - id: elec-02-read-an-input
+    title: Read a button or a sensor
+    video: (to record) inputs, pull-ups, why a floating pin misbehaves
+    evidence: the script plus the pin map
+    checks: the pin can read; no output-only pin used as an input; imports resolve
+  - id: elec-03-drive-an-actuator
+    title: Drive a servo or a motor
+    video: (to record) PWM, and why a motor never wires straight to a pin
+    evidence: the script and the wiring map
+    checks: the driver path matches circuits/motor-driver.yml or servo.yml; no actuator on a bare pin
+  - id: elec-04-your-own-circuit
+    title: Build a circuit of your own
+    video: (to record) from the prompt to a working circuit, the class's AI-assisted flow
+    evidence: the script, the pin map, and a photo of the build
+    checks: every pin valid and used once; the script compiles; the photo shows the build (a person)
+supervised:
+  title: Power it up
+  detail: |
+    Plug in and run your circuit with a TA present. Code and pin maps can be
+    checked offline; that it actually lights up cannot.
+safety: |
+  This track says your circuit is wired correctly. It does not authorize
+  soldering or powering equipment unattended — those remain Nolop's call.
+needs: |
+  The pin data is the real work. boards/*.yml lists pin *positions* but nothing
+  electrical: there is no record of which pins are input-only, which are
+  strapping pins that misbehave at boot, or which are the two the camera uses.
+  Adding that metadata is required for these checks — and it improves the
+  wiring-diagram skill students already use, so it is worth doing once.

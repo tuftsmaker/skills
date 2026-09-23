@@ -1,0 +1,51 @@
+kind: unit
+id: unit-connected-device
+title: Connected Device
+order: 3
+status: planned
+summary: |
+  A device on the network: it joins WiFi, exposes data, and calls an API — the
+  AI-and-connectivity half of the course, from Week 6 through Week 11.
+requirement: |
+  Every task file must pass its checks, and a TA signs each one. The final step
+  is a demonstrated round trip in class: the device answers, or reaches the API,
+  while someone watches.
+why: |
+  Weeks 6, 10 and 11 build a smart light, then sensing and visualisation, then
+  AI-backed devices. It is the least file-checkable part of the course and the
+  part students find hardest to know when they are finished — which makes
+  written criteria more valuable here, not less.
+planned_tasks:
+  - id: net-01-join-the-network
+    title: Get the device on the network
+    video: (to record) credentials, the MAC address, the class registration step
+    evidence: the script plus the device's address
+    checks: the code connects and retries rather than assuming success
+  - id: net-02-serve-a-page
+    title: Serve a page from the device
+    video: (to record) the ESP32 as a web server
+    evidence: the script and a screenshot of the page on a phone
+    checks: the handler is a real route; the page renders without a client library
+  - id: net-03-read-a-sensor
+    title: Show a reading from the world
+    video: (to record) sensor to data to a readable value
+    evidence: the script and a screenshot showing a live value
+    checks: the sensor's pin is an input; the value is scaled to real units
+  - id: net-04-call-an-api
+    title: Reach an outside API
+    video: (to record) keys, requests, and what to do when the call fails
+    evidence: the script, and a note on where the key lives
+    checks: no key hardcoded in the script; the call has a failure path
+supervised:
+  title: Demonstrate the round trip
+  detail: |
+    Show it working with a TA present: the device answers, or the API responds.
+    Most of this track's evidence is a demo rather than a file, and that is
+    deliberate.
+safety: |
+  This track is about code and configuration, and authorizes nothing physical.
+needs: |
+  Accept that the strongest evidence here is a demonstration, not a file. The
+  code checks are real but narrow — no hardcoded keys, a failure path, a
+  sensible pin — and a TA watching a round trip is what actually settles it.
+  Expect this track to lean harder on the human step than the other three.

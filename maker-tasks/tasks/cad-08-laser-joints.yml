@@ -1,0 +1,57 @@
+id: cad-08-laser-joints
+title: Creating Laser Cut Joints
+unit: laser-ready-file
+order: 8
+video: onshape-tips/videos/laser-cut-joints.mp4
+poster: onshape-tips/posters/laser-cut-joints.png
+time: "0:51"
+goal: |
+  Cut fingers on one edge and matching slots on the other, sized from the
+  thickness you measured with calipers rather than the number on the label.
+spec: |
+  A 100 × 60 mm piece with slot-and-finger joints on the left and right edges.
+  Every joint is as wide as the material you measured.
+submitted: |
+  part.dxf
+  manifest.md
+submit:
+  - name: part.dxf
+    required: true
+    note: the piece with its joints
+  - name: manifest.md
+    required: true
+    note: include the thickness you measured — the joints are checked against it
+prereqs: [cad-01-first-sketch]
+signoff: ta
+criteria:
+  - id: present
+    title: The two files are there
+    check: checks.file_present
+    args: { name: part.dxf }
+  - id: parses
+    title: part.dxf opens as a DXF
+    check: checks.dxf_parses
+  - id: closed
+    title: Every path is closed
+    check: checks.dxf_all_paths_closed
+  - id: single
+    title: The drawing is one shape
+    check: checks.dxf_single_profile
+  - id: joints
+    title: The joints match the thickness you measured
+    check: checks.dxf_joints_match_thickness
+    args: { tol: 0.2, min_joints: 1 }
+  - id: thickness
+    title: The measured thickness is recorded
+    check: checks.manifest_material_thickness
+    args: { expected: 3.0 }
+  - id: bed
+    title: It fits the laser bed
+    check: checks.dxf_bounds_mm
+  - id: link
+    title: Onshape link recorded — a person opens it to see the joint dimensions
+    check: checks.manifest_source_link
+    args: { field: onshape_url }
+  - id: selfcheck
+    title: You ran the checker on this file
+    check: checks.manifest_selfcheck

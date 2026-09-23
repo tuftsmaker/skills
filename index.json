@@ -44,7 +44,7 @@
     },
     {
       "name": "maker-tasks",
-      "version": "e9d7134059be",
+      "version": "09523ad2cf10",
       "files": [
         "SKILL.md",
         "check/check_submission.py",
@@ -60,7 +60,12 @@
         "tasks/cad-04-center-a-hole.yml",
         "tasks/cad-05-corner-hole.yml",
         "tasks/cad-06-mirror.yml",
-        "tasks/unit-laser-ready.yml"
+        "tasks/cad-07-trim-tool.yml",
+        "tasks/cad-08-laser-joints.yml",
+        "tasks/unit-connected-device.yml",
+        "tasks/unit-laser-ready.yml",
+        "tasks/unit-print-ready.yml",
+        "tasks/unit-working-circuit.yml"
       ]
     }
   ]

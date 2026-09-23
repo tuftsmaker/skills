@@ -232,7 +232,19 @@ def _run_criterion(crit: dict, ctx: Context) -> CriterionResult:
 
 def run_unit(task: dict, submissions) -> Report:
     """A qualification: every task in it must be signed off. `submissions` is a
-    mapping of task id -> report (or None)."""
+    mapping of task id -> report (or None).
+
+    A track with `status: planned` has no tasks yet by design, so running it is
+    a mistake rather than a result: say so plainly.
+    """
+    if task.get("status") == "planned":
+        report = Report(task=task["id"], title=task.get("title", task["id"]), student=None)
+        report.notes.append(
+            "this track is planned, not built: its tasks do not exist yet, so there "
+            "is nothing to sign off."
+        )
+        return report
+
     results = []
     missing = []
     for task_id in task.get("tasks", []):

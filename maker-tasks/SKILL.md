@@ -11,7 +11,8 @@ criteria — and the same criteria are checked here, on your own machine, before
 you submit. Nothing is sent anywhere when you run this.
 
 The tasks live at <https://tuftsmaker.github.io/ENT-164/tasks/>, which opens with
-a map of the whole qualification — six tasks and the order they unlock in.
+a map of the whole qualification, and the four tracks the course is building
+out. One track is open now; the others are written down but not yet available.
 
 ## Run the check
 
@@ -67,8 +68,10 @@ tells you the zip to upload in Canvas.
 | `cad-04-center-a-hole` | find the centre with construction lines, hole there | `part.dxf` |
 | `cad-05-corner-hole` | anchor the hole 20 mm from a corner | `part.dxf` |
 | `cad-06-mirror` | draw half, mirror it, keep both halves identical | `part.dxf` |
+| `cad-07-trim-tool` | combine an arc with a rectangle using the trim tool | `part.dxf` |
+| `cad-08-laser-joints` | cut fingers and slots sized from measured material | `part.dxf` |
 
-The six together are the **Laser-Ready File** qualification. The last step is a
+The eight together are the **Laser-Ready File** track (a qualification). The last step is a
 supervised cut at Nolop: a TA watches you cut one of your own files.
 
 ## Reading the report

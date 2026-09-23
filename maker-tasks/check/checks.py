@@ -590,6 +590,205 @@ def manifest_selfcheck(ctx, required=True):
 # ---------------------------------------------------------------- human
 
 
+def dxf_has_curve(ctx, min_curves=1):
+    """The outline contains a real curve, not only straight lines.
+
+    Onshape exports a sketch arc as an ARC entity, so this reads the entity
+    kinds of the outer profile rather than guessing from the tessellation.
+    """
+    if ctx.drawing is None:
+        return failed("No DXF to check.")
+    profs = ctx.drawing.profiles()
+    circles = [p for p in profs if p.is_round]
+    outer = _outer_profile(profs, circles)
+    if outer is None:
+        return failed("Could not identify the outer outline.")
+    kinds = {}
+    for idx in outer.source:
+        if 0 <= idx < len(ctx.drawing.entities):
+            kind = ctx.drawing.entities[idx].kind
+            kinds[kind] = kinds.get(kind, 0) + 1
+    curves = sum(n for k, n in kinds.items() if k in ("ARC", "SPLINE", "ELLIPSE"))
+    if curves >= min_curves:
+        return passed(f"the outline contains {curves} curve(s)", kinds=kinds)
+    return failed(
+        "the outline is made of straight lines only — there is no curve in it.",
+        "The arc has to be part of the outline, not floating beside it. Draw it "
+        "corner to corner and then trim away the straight edge it replaces.",
+        kinds=kinds,
+    )
+
+
+def dxf_joints_match_thickness(ctx, tol=0.2, min_joints=1):
+    """Finger joints are sized from the material thickness, measured not guessed.
+
+    A finger or slot is an edge of the outline that lies between two inside
+    (reflex) corners; its length is the joint width. Everything about the joint
+    comes down to that number, so it is compared with the thickness the student
+    wrote in the manifest — which is what they measured with calipers.
+    """
+    if ctx.drawing is None:
+        return failed("No DXF to check.")
+    profs = ctx.drawing.profiles()
+    circles = [p for p in profs if p.is_round]
+    outer = _outer_profile(profs, circles)
+    if outer is None:
+        return failed("Could not identify the outer outline.")
+
+    joints = _reflex_pairs(outer.points)
+    if len(joints) < min_joints:
+        return failed(
+            "the outline has no slots or fingers in it — it is a plain shape.",
+            "Cut notches out of one edge and add matching tabs to the other so the "
+            "two pieces press together. In Onshape, dimension the notch width and "
+            "leave the rest of the shape as it is.",
+            joints=len(joints),
+        )
+
+    stated = (ctx.manifest or {}).get("material_thickness")
+    if not stated:
+        return failed(
+            "manifest.md does not say what thickness you measured.",
+            "Measure the sheet with calipers and write it down: material_thickness: 3.15",
+        )
+    try:
+        import re as _re
+
+        thickness = float(_re.sub(r"[^0-9.]", "", stated))
+    except ValueError:
+        return needs_review(f"could not read a thickness from '{stated}'", value=stated)
+
+    widths = [round(w, 2) for w, _i in joints]
+    closest = min(widths, key=lambda w: abs(w - thickness))
+    if abs(closest - thickness) <= tol:
+        return passed(
+            f"joint width {closest:.2f} mm matches the {thickness:.2f} mm you measured",
+            joints=widths,
+            thickness=thickness,
+        )
+    return failed(
+        f"the joints are {closest:.2f} mm wide, but you measured {thickness:.2f} mm "
+        f"material.",
+        f"Type the joint width as {thickness:.2f} — the number you measured, not the "
+        "label on the sheet. If the pieces rattle, take a tenth of a millimetre off "
+        "and cut a test again.",
+        joints=widths,
+        thickness=thickness,
+    )
+
+
+def _reflex_pairs(points):
+    """Edges whose two endpoints are both inside corners, with their lengths.
+
+    On a finger-jointed outline every slot floor and every tab face is exactly
+    that: an edge between two reflex corners. Its length is the joint width.
+    """
+    pts = _dedupe_ring(points)
+    n = len(pts)
+    if n < 4:
+        return []
+    area = 0.0
+    for i in range(n):
+        x1, y1 = pts[i]
+        x2, y2 = pts[(i + 1) % n]
+        area += x1 * y2 - x2 * y1
+    ccw = area > 0
+
+    def reflex(i):
+        a, b, c = pts[i - 1], pts[i], pts[(i + 1) % n]
+        v1 = (b[0] - a[0], b[1] - a[1])
+        v2 = (c[0] - b[0], c[1] - b[1])
+        cross = v1[0] * v2[1] - v1[1] * v2[0]
+        if abs(cross) < 1e-9:
+            return False  # collinear: not a corner at all
+        return (cross < 0) if ccw else (cross > 0)
+
+    out = []
+    for i in range(n):
+        j = (i + 1) % n
+        if reflex(i) and reflex(j):
+            out.append((dist(pts[i], pts[j]), (i, j)))
+    return out
+
+
+def _dedupe_ring(points):
+    out = []
+    for p in points:
+        if not out or dist(out[-1], p) > 1e-6:
+            out.append(p)
+    while len(out) > 1 and dist(out[0], out[-1]) <= 1e-6:
+        out.pop()
+    return out
+
+
+def dxf_single_profile(ctx):
+    """Exactly one closed shape, with nothing left over.
+
+    Two closed shapes means the trim did not finish. So does one shape plus
+    leftover geometry: an arc whose ends land on the corners leaves vertices
+    where three segments meet, and the laser would cut along it.
+    """
+    if ctx.drawing is None:
+        return failed("No DXF to check.")
+    profs = ctx.drawing.profiles()
+    if not profs:
+        return failed(
+            "there is no closed shape in the drawing.",
+            "Close the outline: every corner has to be joined. In Onshape look for "
+            "a shaded region — an open profile shows as white.",
+        )
+    if len(profs) > 1:
+        return failed(
+            f"there are {len(profs)} closed shapes; the drawing should be one.",
+            "The shapes are still separate, so the laser would cut the edge you meant "
+            "to remove and the piece would fall in two. Use the Trim tool on the "
+            "straight edge the arc replaced.",
+            profiles=len(profs),
+        )
+
+    # One profile — but is everything else part of it?
+    used = set(profs[0].source)
+    leftovers = [e for e in ctx.drawing.entities if e.index not in used]
+    if leftovers:
+        kinds = ", ".join(sorted({e.kind for e in leftovers}))
+        return failed(
+            f"the drawing has one closed shape, plus {len(leftovers)} leftover "
+            f"line(s) or curve(s) ({kinds}) that are not part of it.",
+            "That extra geometry is what the Trim tool is for: the laser cuts every "
+            "line it is given. Click the leftover line with the Trim tool (the "
+            "scissors) to remove it.",
+            profiles=1,
+            leftovers=len(leftovers),
+        )
+    return passed("the drawing is one closed shape, and nothing else")
+
+
+def dxf_width_between(ctx, min_width=None, max_width=None, height=None, tol=0.3):
+    """The overall width, bounded — enough to tell a bulge out from a bulge in."""
+    if ctx.drawing is None:
+        return failed("No DXF to check.")
+    bounds = ctx.drawing.bounds()
+    if bounds is None:
+        return failed("The DXF has no geometry.")
+    w, h = bounds[2] - bounds[0], bounds[3] - bounds[1]
+    problems = []
+    if min_width is not None and w < min_width - tol:
+        problems.append(f"width is {w:.1f} mm, expected at least {min_width:.0f}")
+    if max_width is not None and w > max_width + tol:
+        problems.append(f"width is {w:.1f} mm, expected at most {max_width:.0f}")
+    if height is not None and abs(h - height) > tol:
+        problems.append(f"height is {h:.1f} mm, expected {height:.0f}")
+    if not problems:
+        return passed(f"drawing measures {w:.2f} × {h:.2f} mm", width=round(w, 3), height=round(h, 3))
+    return failed(
+        "; ".join(problems) + ".",
+        "The curve bulges outward from the straight edge it replaced — check the "
+        "dimensions you set and which way the arc was pulled.",
+        width=round(w, 3),
+        height=round(h, 3),
+    )
+
+
 def human_photo(ctx, what):
     if not ctx.submission.has("photo.jpg") and not any(
         n.endswith((".jpg", ".jpeg", ".png", ".heic", ".webp")) for n in ctx.submission.files

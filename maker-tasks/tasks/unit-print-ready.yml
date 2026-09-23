@@ -1,0 +1,53 @@
+kind: unit
+id: unit-print-ready
+title: Print-Ready Model
+order: 1
+status: planned
+summary: |
+  A 3D model that slices cleanly and prints without falling apart. The 3D
+  counterpart to Laser-Ready File: CAD to STL to a sliced job the printer at
+  Nolop accepts.
+requirement: |
+  Every task file must pass its checks, and a TA signs each one. The final step
+  is a supervised print at Nolop — the file being ready does not mean the
+  machine is yours to run.
+why: |
+  Week 4 teaches the digital-to-physical workflow in three dimensions, and the
+  class already asks students to design and print an object. Those submissions
+  are currently judged by eye; this track makes the criteria explicit and checks
+  what can be checked on the mesh.
+planned_tasks:
+  - id: print-01-model-a-part
+    title: Model a part from a sketch
+    video: (to record) sketch → pad/extrude in Onshape
+    evidence: part.step or a share link; a screenshot of the model tree
+    checks: units are mm; the body is a single solid; nominal dimensions match the task
+  - id: print-02-walls-and-fit
+    title: Walls thick enough to survive
+    video: (to record) wall thickness, holes for a bolt, clearance
+    evidence: part.stl
+    checks: minimum wall ≥ 2 perimeters at a stated nozzle; hole diameters within tolerance
+  - id: print-03-export-and-slice
+    title: Export the STL and slice it
+    video: (to record) export from Onshape → PrusaSlicer → the settings class uses
+    evidence: part.stl plus the .3mf/gcode, or screenshots of the slice
+    checks: mesh is watertight and manifold; fits the printer envelope; flat face on the bed
+  - id: print-04-supports-and-orientation
+    title: Orient it so it prints
+    video: (to record) bridging, overhangs, why orientation is a decision
+    evidence: the sliced file plus a one-line note on the chosen orientation
+    checks: no unsupported overhang beyond the stated limit; the chosen face is on the bed
+supervised:
+  title: Supervised print
+  detail: |
+    Print one of your own models at Nolop with a TA or staff member present.
+    The same shape as the laser track: the file being ready is one thing,
+    running the machine is another.
+safety: |
+  This track says your model will print. It does not authorize you to operate
+  the printers — that is Nolop's own training, separate on purpose.
+needs: |
+  Two things this track needs that the laser one did not: task videos (none of
+  the existing tips cover 3D), and a mesh validator. `trimesh` handles
+  watertightness and volume in pure Python; wall thickness needs sampling and is
+  the hard check. Budget the validator as the real work, not the videos.

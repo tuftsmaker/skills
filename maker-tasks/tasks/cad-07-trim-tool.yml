@@ -1,0 +1,55 @@
+id: cad-07-trim-tool
+title: Combining Shapes with the Trim Tool
+unit: laser-ready-file
+order: 7
+video: onshape-tips/videos/trim-tool.mp4
+poster: onshape-tips/posters/trim-tool.png
+time: "0:54"
+goal: |
+  Replace a straight edge with an arc and trim away the line it replaced, so the
+  drawing is one shape rather than two overlapping ones.
+spec: |
+  A 100 × 60 mm rectangle whose right edge has been replaced by a curve bulging
+  outward. One closed shape, no leftover line.
+submitted: |
+  part.dxf
+  manifest.md
+submit:
+  - name: part.dxf
+    required: true
+    note: the combined shape — one profile, with the curve worked into the outline
+  - name: manifest.md
+    required: true
+prereqs: [cad-01-first-sketch]
+signoff: ta
+criteria:
+  - id: present
+    title: The two files are there
+    check: checks.file_present
+    args: { name: part.dxf }
+  - id: parses
+    title: part.dxf opens as a DXF
+    check: checks.dxf_parses
+  - id: closed
+    title: Every path is closed
+    check: checks.dxf_all_paths_closed
+  - id: single
+    title: The drawing is one shape, not two
+    check: checks.dxf_single_profile
+  - id: curved
+    title: The outline contains a real curve
+    check: checks.dxf_has_curve
+  - id: bounds
+    title: The curve bulges outward from the rectangle
+    check: checks.dxf_width_between
+    args: { min_width: 100, max_width: 140, height: 60 }
+  - id: bed
+    title: It fits the laser bed
+    check: checks.dxf_bounds_mm
+  - id: link
+    title: Onshape link recorded — a person opens it to see the trim
+    check: checks.manifest_source_link
+    args: { field: onshape_url }
+  - id: selfcheck
+    title: You ran the checker on this file
+    check: checks.manifest_selfcheck

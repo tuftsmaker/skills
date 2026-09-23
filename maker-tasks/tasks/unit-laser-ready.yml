@@ -3,7 +3,7 @@ id: unit-laser-ready
 title: Laser-Ready File
 order: 0
 summary: |
-  Six tasks that take you from a blank Onshape document to a DXF you can hand
+  Eight tasks that take you from a blank Onshape document to a DXF you can hand
   to the laser cutter at Nolop. Each task is a short video, one file, and a
   signoff.
 requirement: |
@@ -17,6 +17,8 @@ tasks:
   - cad-04-center-a-hole
   - cad-05-corner-hole
   - cad-06-mirror
+  - cad-07-trim-tool
+  - cad-08-laser-joints
 supervised:
   title: Supervised cut
   detail: |
