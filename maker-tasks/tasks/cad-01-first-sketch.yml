@@ -1,0 +1,58 @@
+id: cad-01-first-sketch
+title: A Basic Rectangle as My First Sketch
+unit: laser-ready-file
+order: 1
+video: onshape-tips/videos/basic-rectangle.mp4
+poster: onshape-tips/posters/basic-rectangle.png
+poster_steps: [3, 4]
+time: 2:24
+goal: |
+  Draw a rectangle in the Top plane, set both dimensions, and export the sketch
+  as a DXF — the file the laser cutter reads.
+spec: |
+  One rectangle, 100 mm × 60 mm.
+submitted: |
+  part.dxf
+  manifest.md
+submit:
+  - name: part.dxf
+    required: true
+    note: the sketch, exported from Onshape (right-click the committed sketch → Export as DXF/DWG)
+  - name: manifest.md
+    required: true
+    note: a few lines saying who made it, the Onshape link, and your self-check result
+prereqs: []
+signoff: ta
+criteria:
+  - id: present
+    title: The two files are there
+    check: checks.file_present
+    args: { name: part.dxf }
+    fail: Add part.dxf to your submission folder.
+  - id: parses
+    title: part.dxf opens as a DXF
+    check: checks.dxf_parses
+  - id: units
+    title: Units are millimetres
+    check: checks.dxf_units_detect
+  - id: closed
+    title: The outline is closed
+    check: checks.dxf_all_paths_closed
+  - id: shape
+    title: It is a rectangle (four straight sides, square corners)
+    check: checks.dxf_aspect
+    args: { width: 100, height: 60, tol: 0.15 }
+  - id: dims
+    title: It measures 100 × 60 mm
+    check: checks.dxf_outer_dims
+    args: { width: 100, height: 60, tol: 0.25 }
+  - id: bed
+    title: It fits the laser bed
+    check: checks.dxf_bounds_mm
+  - id: link
+    title: Onshape link recorded
+    check: checks.manifest_source_link
+    args: { field: onshape_url }
+  - id: selfcheck
+    title: You ran the checker on this file
+    check: checks.manifest_selfcheck

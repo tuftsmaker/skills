@@ -1,0 +1,63 @@
+id: cad-04-center-a-hole
+title: Placing a Circle in the Center of a Rectangle
+unit: laser-ready-file
+order: 4
+video: onshape-tips/videos/circle-in-the-center.mp4
+poster: onshape-tips/posters/circle-in-the-center.png
+time: 1:48
+goal: |
+  Find the exact centre of the rectangle with construction lines, and put the
+  hole there. Construction lines are guides — they are never cut.
+spec: |
+  A 100 × 60 mm rectangle with one 10 mm diameter hole, exactly in the centre.
+submitted: |
+  part.dxf
+  manifest.md
+submit:
+  - name: part.dxf
+    required: true
+    note: export after the construction lines are done — Onshape leaves them out of the DXF, which is the point of them
+  - name: manifest.md
+    required: true
+prereqs: [cad-03-cut-a-hole]
+signoff: ta
+criteria:
+  - id: present
+    title: The two files are there
+    check: checks.file_present
+    args: { name: part.dxf }
+  - id: parses
+    title: part.dxf opens as a DXF
+    check: checks.dxf_parses
+  - id: closed
+    title: Every path is closed
+    check: checks.dxf_all_paths_closed
+  - id: profiles
+    title: There are two closed shapes
+    check: checks.dxf_profiles
+    args: { min_count: 2, max_count: 2 }
+  - id: hole-count
+    title: Exactly one hole
+    check: checks.dxf_circle_count
+    args: { count: 1 }
+  - id: hole-size
+    title: The hole is 10 mm across
+    check: checks.dxf_circle_diameter
+    args: { diameter: 10, tol: 0.2 }
+  - id: hole-centred
+    title: The hole is exactly in the centre
+    check: checks.dxf_circle_centred
+    args: { tol: 0.3 }
+  - id: no-guides
+    title: No construction lines reached the file
+    check: checks.dxf_no_construction_lines
+  - id: bed
+    title: It fits the laser bed
+    check: checks.dxf_bounds_mm
+  - id: link
+    title: Onshape link recorded — a person opens it to see the construction lines
+    check: checks.manifest_source_link
+    args: { field: onshape_url }
+  - id: selfcheck
+    title: You ran the checker on this file
+    check: checks.manifest_selfcheck

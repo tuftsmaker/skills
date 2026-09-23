@@ -1,0 +1,63 @@
+id: cad-05-corner-hole
+title: Adding a Circle at a Corner
+unit: laser-ready-file
+order: 5
+video: onshape-tips/videos/circle-on-a-corner.mp4
+poster: onshape-tips/posters/circle-on-a-corner.png
+time: 1:12
+goal: |
+  Anchor a hole to a corner instead of the middle, using a construction line
+  and dimensions from the two edges that meet there.
+spec: |
+  A 100 × 60 mm rectangle with one 10 mm diameter hole whose centre is 20 mm
+  from each of the two edges meeting the top-right corner.
+submitted: |
+  part.dxf
+  manifest.md
+submit:
+  - name: part.dxf
+    required: true
+  - name: manifest.md
+    required: true
+prereqs: [cad-04-center-a-hole]
+signoff: ta
+criteria:
+  - id: present
+    title: The two files are there
+    check: checks.file_present
+    args: { name: part.dxf }
+  - id: parses
+    title: part.dxf opens as a DXF
+    check: checks.dxf_parses
+  - id: closed
+    title: Every path is closed
+    check: checks.dxf_all_paths_closed
+  - id: profiles
+    title: There are two closed shapes
+    check: checks.dxf_profiles
+    args: { min_count: 2, max_count: 2 }
+  - id: hole-count
+    title: Exactly one hole
+    check: checks.dxf_circle_count
+    args: { count: 1 }
+  - id: hole-size
+    title: The hole is 10 mm across
+    check: checks.dxf_circle_diameter
+    args: { diameter: 10, tol: 0.2 }
+  - id: hole-corner
+    title: The hole centre is 20 mm from the corner edges
+    check: checks.dxf_circle_position
+    args: { from_edges: [20, 20], tol: 0.5 }
+  - id: hole-inside
+    title: There is material all round the hole
+    check: checks.dxf_min_web
+  - id: bed
+    title: It fits the laser bed
+    check: checks.dxf_bounds_mm
+  - id: link
+    title: Onshape link recorded
+    check: checks.manifest_source_link
+    args: { field: onshape_url }
+  - id: selfcheck
+    title: You ran the checker on this file
+    check: checks.manifest_selfcheck

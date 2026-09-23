@@ -1,0 +1,52 @@
+id: cad-06-mirror
+title: Mirroring Entities
+unit: laser-ready-file
+order: 6
+video: onshape-tips/videos/mirroring-entities.mp4
+poster: onshape-tips/posters/mirroring-entities.png
+time: 1:05
+goal: |
+  Draw half of a symmetric shape and mirror it across a centre line, so both
+  halves stay identical when a dimension changes.
+spec: |
+  A symmetric shape across the vertical centre line, 70 mm wide and 60 mm
+  tall, with the mirror line down the middle.
+submitted: |
+  part.dxf
+  manifest.md
+submit:
+  - name: part.dxf
+    required: true
+  - name: manifest.md
+    required: true
+prereqs: [cad-01-first-sketch]
+signoff: ta
+criteria:
+  - id: present
+    title: The two files are there
+    check: checks.file_present
+    args: { name: part.dxf }
+  - id: parses
+    title: part.dxf opens as a DXF
+    check: checks.dxf_parses
+  - id: closed
+    title: Every path is closed
+    check: checks.dxf_all_paths_closed
+  - id: dims
+    title: It measures 70 × 60 mm
+    check: checks.dxf_outer_dims
+    args: { width: 70, height: 60, tol: 0.25 }
+  - id: symmetric
+    title: The two halves mirror each other
+    check: checks.dxf_symmetry
+    args: { axis: x, tol: 0.25 }
+  - id: bed
+    title: It fits the laser bed
+    check: checks.dxf_bounds_mm
+  - id: link
+    title: Onshape link recorded — a person opens it to see the mirror feature
+    check: checks.manifest_source_link
+    args: { field: onshape_url }
+  - id: selfcheck
+    title: You ran the checker on this file
+    check: checks.manifest_selfcheck

@@ -1,0 +1,64 @@
+id: cad-03-cut-a-hole
+title: Adding a Circle to Cut a Hole
+unit: laser-ready-file
+order: 3
+video: onshape-tips/videos/circle-to-cut-a-hole.mp4
+poster: onshape-tips/posters/circle-to-cut-a-hole.png
+time: 0:34
+goal: |
+  Add a circular hole to the rectangle. A circle that is fully inside the
+  outline is a hole; the cutter removes it.
+spec: |
+  A 100 × 60 mm rectangle with one 10 mm diameter hole, placed 20 mm from the
+  left edge and 20 mm up from the bottom edge.
+submitted: |
+  part.dxf
+  manifest.md
+submit:
+  - name: part.dxf
+    required: true
+    note: the rectangle with its hole
+  - name: manifest.md
+    required: true
+prereqs: [cad-01-first-sketch]
+signoff: ta
+criteria:
+  - id: present
+    title: The two files are there
+    check: checks.file_present
+    args: { name: part.dxf }
+  - id: parses
+    title: part.dxf opens as a DXF
+    check: checks.dxf_parses
+  - id: closed
+    title: Every path is closed
+    check: checks.dxf_all_paths_closed
+  - id: profiles
+    title: There are two closed shapes — the outline and the hole
+    check: checks.dxf_profiles
+    args: { min_count: 2, max_count: 2 }
+  - id: hole-count
+    title: Exactly one hole
+    check: checks.dxf_circle_count
+    args: { count: 1 }
+  - id: hole-size
+    title: The hole is 10 mm across
+    check: checks.dxf_circle_diameter
+    args: { diameter: 10, tol: 0.2 }
+  - id: hole-place
+    title: The hole sits 20 mm from the edges
+    check: checks.dxf_circle_position
+    args: { from_edges: [20, 20], tol: 0.5 }
+  - id: hole-inside
+    title: There is material all round the hole
+    check: checks.dxf_min_web
+  - id: bed
+    title: It fits the laser bed
+    check: checks.dxf_bounds_mm
+  - id: link
+    title: Onshape link recorded
+    check: checks.manifest_source_link
+    args: { field: onshape_url }
+  - id: selfcheck
+    title: You ran the checker on this file
+    check: checks.manifest_selfcheck

@@ -1,0 +1,53 @@
+id: cad-02-update-dimension
+title: Updating a Dimension
+unit: laser-ready-file
+order: 2
+video: onshape-tips/videos/updating-dimensions.mp4
+poster: onshape-tips/posters/updating-dimensions.png
+time: 0:30
+goal: |
+  Change the rectangle's width from 100 mm to 80 mm by editing the dimension,
+  then export it again. The shape must rebuild itself rather than being redrawn.
+spec: |
+  One rectangle, 80 mm × 60 mm, exported after the dimension change.
+submitted: |
+  part.dxf
+  manifest.md
+submit:
+  - name: part.dxf
+    required: true
+    note: the same sketch, re-exported after you changed the dimension
+  - name: manifest.md
+    required: true
+    note: include the Onshape link and the two widths (before, after)
+prereqs: [cad-01-first-sketch]
+signoff: ta
+criteria:
+  - id: present
+    title: The two files are there
+    check: checks.file_present
+    args: { name: part.dxf }
+  - id: parses
+    title: part.dxf opens as a DXF
+    check: checks.dxf_parses
+  - id: closed
+    title: The outline is closed
+    check: checks.dxf_all_paths_closed
+  - id: dims
+    title: It now measures 80 × 60 mm
+    check: checks.dxf_outer_dims
+    args: { width: 80, height: 60, tol: 0.25 }
+  - id: bed
+    title: It fits the laser bed
+    check: checks.dxf_bounds_mm
+  - id: link
+    title: Onshape link recorded — a person opens it to confirm the dimension is driven
+    check: checks.manifest_source_link
+    args: { field: onshape_url }
+  - id: before
+    title: The before/after widths are recorded
+    check: checks.manifest_field
+    args: { field: width_before, present: true, hint: "Add: width_before: 100" }
+  - id: selfcheck
+    title: You ran the checker on this file
+    check: checks.manifest_selfcheck

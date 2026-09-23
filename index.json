@@ -41,6 +41,27 @@
         "circuits/ultrasonic.yml",
         "render.py"
       ]
+    },
+    {
+      "name": "maker-tasks",
+      "version": "ce78e517b409",
+      "files": [
+        "SKILL.md",
+        "check/check_submission.py",
+        "check/checks.py",
+        "check/cli.py",
+        "check/dxf_reader.py",
+        "check/geom.py",
+        "check/report.py",
+        "check/runner.py",
+        "tasks/cad-01-first-sketch.yml",
+        "tasks/cad-02-update-dimension.yml",
+        "tasks/cad-03-cut-a-hole.yml",
+        "tasks/cad-04-center-a-hole.yml",
+        "tasks/cad-05-corner-hole.yml",
+        "tasks/cad-06-mirror.yml",
+        "tasks/unit-laser-ready.yml"
+      ]
     }
   ]
 }
