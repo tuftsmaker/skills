@@ -4,7 +4,7 @@ unit: laser-ready-file
 order: 5
 video: onshape-tips/videos/circle-on-a-corner.mp4
 poster: onshape-tips/posters/circle-on-a-corner.png
-time: 1:12
+time: "1:12"
 goal: |
   Anchor a hole to a corner instead of the middle, using a construction line
   and dimensions from the two edges that meet there.

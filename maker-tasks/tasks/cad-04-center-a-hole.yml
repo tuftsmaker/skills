@@ -4,7 +4,7 @@ unit: laser-ready-file
 order: 4
 video: onshape-tips/videos/circle-in-the-center.mp4
 poster: onshape-tips/posters/circle-in-the-center.png
-time: 1:48
+time: "1:48"
 goal: |
   Find the exact centre of the rectangle with construction lines, and put the
   hole there. Construction lines are guides — they are never cut.

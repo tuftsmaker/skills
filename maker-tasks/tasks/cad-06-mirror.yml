@@ -4,7 +4,7 @@ unit: laser-ready-file
 order: 6
 video: onshape-tips/videos/mirroring-entities.mp4
 poster: onshape-tips/posters/mirroring-entities.png
-time: 1:05
+time: "1:05"
 goal: |
   Draw half of a symmetric shape and mirror it across a centre line, so both
   halves stay identical when a dimension changes.

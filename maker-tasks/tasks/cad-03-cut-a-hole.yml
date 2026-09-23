@@ -4,7 +4,7 @@ unit: laser-ready-file
 order: 3
 video: onshape-tips/videos/circle-to-cut-a-hole.mp4
 poster: onshape-tips/posters/circle-to-cut-a-hole.png
-time: 0:34
+time: "0:34"
 goal: |
   Add a circular hole to the rectangle. A circle that is fully inside the
   outline is a hole; the cutter removes it.

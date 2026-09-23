@@ -5,7 +5,7 @@ order: 1
 video: onshape-tips/videos/basic-rectangle.mp4
 poster: onshape-tips/posters/basic-rectangle.png
 poster_steps: [3, 4]
-time: 2:24
+time: "2:24"
 goal: |
   Draw a rectangle in the Top plane, set both dimensions, and export the sketch
   as a DXF — the file the laser cutter reads.

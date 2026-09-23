@@ -10,7 +10,8 @@ you make, and a file you hand in. A TA signs the task off against written
 criteria — and the same criteria are checked here, on your own machine, before
 you submit. Nothing is sent anywhere when you run this.
 
-The tasks live at <https://tuftsmaker.github.io/ENT-164/tasks/>.
+The tasks live at <https://tuftsmaker.github.io/ENT-164/tasks/>, which opens with
+a map of the whole qualification — six tasks and the order they unlock in.
 
 ## Run the check
 

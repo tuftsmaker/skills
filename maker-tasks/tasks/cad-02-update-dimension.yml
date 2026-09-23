@@ -4,7 +4,7 @@ unit: laser-ready-file
 order: 2
 video: onshape-tips/videos/updating-dimensions.mp4
 poster: onshape-tips/posters/updating-dimensions.png
-time: 0:30
+time: "0:30"
 goal: |
   Change the rectangle's width from 100 mm to 80 mm by editing the dimension,
   then export it again. The shape must rebuild itself rather than being redrawn.
