@@ -42,6 +42,15 @@ class Entity:
     centre: tuple | None = None
     is_circle: bool = False
     handle: str | None = None
+    # Arcs keep their parameters as well as their tessellation: the checks work
+    # from the points, but writing a real SVG arc (rather than a many-point
+    # polyline) needs the centre, radius and angles. None on every other kind.
+    a0: float | None = None  # start angle, degrees, CCW from +X
+    a1: float | None = None  # end angle, degrees
+    # A polyline vertex can carry a "bulge" (code 42), meaning the segment to the
+    # next vertex is an arc, not a straight line. Onshape never emits it; set
+    # here so callers can warn instead of silently drawing a straight chord.
+    bulges: bool = False
 
 
 @dataclass
@@ -275,6 +284,23 @@ def _floats(values):
     return vals
 
 
+def _has_bulge(codes) -> bool:
+    """True when any polyline vertex carries a non-zero bulge (code 42).
+
+    A bulge turns the segment to the next vertex into an arc; the reader
+    tessellates vertices only, so this is what lets a caller say "drawn as
+    straight lines" instead of quietly changing the shape. Onshape's own exports
+    have none, so this normally stays False.
+    """
+    for raw in codes.get("42", []):
+        try:
+            if abs(float(raw)) > 1e-9:
+                return True
+        except ValueError:
+            continue
+    return False
+
+
 def _build_entity(kind, body, index):
     c = _codes(body)
     layer = (c.get("8") or ["0"])[0]
@@ -291,14 +317,16 @@ def _build_entity(kind, body, index):
         flags = int((c.get("70") or ["0"])[0])
         closed = bool(flags & 1)
         pts = list(zip(xs, ys))
-        return Entity("LWPOLYLINE", index, layer, closed, pts, handle=handle)
+        return Entity("LWPOLYLINE", index, layer, closed, pts, handle=handle,
+                      bulges=_has_bulge(c))
 
     if kind == "POLYLINE":
         flags = int((c.get("70") or ["0"])[0])
         closed = bool(flags & 1)
         xs, ys = _floats(c.get("10", [])), _floats(c.get("20", []))
         pts = list(zip(xs, ys))
-        return Entity("POLYLINE", index, layer, closed, pts, handle=handle)
+        return Entity("POLYLINE", index, layer, closed, pts, handle=handle,
+                      bulges=_has_bulge(c))
 
     if kind == "CIRCLE":
         xs, ys = _floats(c.get("10", [])), _floats(c.get("20", []))
@@ -329,7 +357,11 @@ def _build_entity(kind, body, index):
             layer,
             False,
             tessellate_arc(xs[0], ys[0], rs[0], a0[0], a1[0]),
+            radius=rs[0],
+            centre=(xs[0], ys[0]),
             handle=handle,
+            a0=a0[0],
+            a1=a1[0],
         )
 
     if kind == "SPLINE":

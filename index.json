@@ -44,7 +44,7 @@
     },
     {
       "name": "maker-tasks",
-      "version": "09523ad2cf10",
+      "version": "5fe4891eff78",
       "files": [
         "SKILL.md",
         "check/check_submission.py",
@@ -52,6 +52,7 @@
         "check/cli.py",
         "check/dxf_reader.py",
         "check/geom.py",
+        "check/laser_svg.py",
         "check/report.py",
         "check/runner.py",
         "tasks/cad-01-first-sketch.yml",
@@ -63,6 +64,7 @@
         "tasks/cad-07-trim-tool.yml",
         "tasks/cad-08-laser-joints.yml",
         "tasks/unit-connected-device.yml",
+        "tasks/unit-intelligent-device.yml",
         "tasks/unit-laser-ready.yml",
         "tasks/unit-print-ready.yml",
         "tasks/unit-working-circuit.yml"

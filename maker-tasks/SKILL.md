@@ -1,6 +1,6 @@
 ---
 name: maker-tasks
-description: Self-check a maker task submission before handing it in for signoff. Use when a student asks whether their DXF is laser-ready, wants to check a task file against the task's criteria, needs to build the submission folder (DXF + manifest.md) for a CAD/laser task, or asks what is left to fix in a sketch they exported from Onshape.
+description: Self-check a maker task submission before handing it in for signoff, and turn a DXF into a laser-ready SVG. Use when a student asks whether their DXF is laser-ready, wants to check a task file against the task's criteria, needs to build the submission folder (DXF + manifest.md) for a CAD/laser task, asks what is left to fix in a sketch they exported from Onshape, or wants the red-hairline SVG the laser cutter reads.
 ---
 
 # Maker skill tasks — check your own work first
@@ -11,13 +11,18 @@ criteria — and the same criteria are checked here, on your own machine, before
 you submit. Nothing is sent anywhere when you run this.
 
 The tasks live at <https://tuftsmaker.github.io/ENT-164/tasks/>, which opens with
-a map of the whole qualification, and the four tracks the course is building
+a map of the whole qualification, and the five tracks the course is building
 out. One track is open now; the others are written down but not yet available.
 
 ## Run the check
 
+The checker is part of this skill, so there is nothing to install. Resolve the
+skill's own folder from this file's location (opencode puts it somewhere like
+`~/.cache/opencode/skills/maker-tasks`) — do not assume the current directory:
+
 ```bash
-python3 tools/skill-tasks/check/cli.py --task cad-03-cut-a-hole part.dxf
+SKILL="<directory containing this SKILL.md>"
+python3 "$SKILL/check/cli.py" --task cad-03-cut-a-hole part.dxf
 ```
 
 The report tells you one of three things for each criterion:
@@ -29,6 +34,42 @@ The report tells you one of three things for each criterion:
 Fix everything marked `[FIX]`, then hand in. A submission with a `[?]` is fine —
 that is the part a TA looks at.
 
+## Take it to the laser: the red hairline SVG
+
+The checker says the file is *ready*. To hand something to the laser you also
+need the file with the **colours it reads**: add `--svg` and the same run writes
+one.
+
+```bash
+SKILL="<directory containing this SKILL.md>"
+python3 "$SKILL/check/cli.py" --task cad-01-first-sketch part.dxf --svg
+```
+
+You get `part-laser-ready.svg` beside your DXF. Its cut lines are:
+
+- **pure red `#ff0000`** — UCP cuts red, scores blue, rasters everything else
+  (RGB 255, 0, 0 exactly, not dark red and not 90% opaque)
+- **no fill** — a filled shape would be engraved instead of cut
+- **hairline** — the laser follows the centre of a line; a thick one gives it
+  nothing useful to follow and can make it fire twice
+
+```bash
+python3 "$SKILL/check/cli.py" --task cad-01-first-sketch part.dxf --svg out/part.svg
+python3 "$SKILL/check/cli.py" --task cad-01-first-sketch part.dxf --svg --svg-margin 5
+python3 "$SKILL/check/laser_svg.py" part.dxf     # the converter alone
+```
+
+Sizes are millimetres and the page is the part plus any margin, so the drawing
+imports at its true size. This needs nothing installed: no Inkscape, no Python
+packages. It writes the SVG whether or not every criterion passed — but if
+anything is marked `[FIX]`, fix it in Onshape, re-export, and run it again, so
+the SVG is not made from a file you are about to change.
+
+You can still do exactly this by hand in Inkscape — that is what
+[the laser-cutting guide](https://tuftsmaker.github.io/ENT-164/laser-cutting/)
+walks through — and opening the SVG there is the way to check it, adjust it, or
+add etched text. This just gets the colours and the hairline right for you.
+
 ## What you hand in
 
 Each task expects a small folder. Two files, every time:
@@ -37,6 +78,10 @@ Each task expects a small folder. Two files, every time:
 part.dxf        your sketch, exported from Onshape
 manifest.md     a few plain lines about the file
 ```
+
+The laser-ready SVG is what you *take to Nolop*; it is not one of the two files
+the submission is checked against, so keep it beside them rather than in the
+folder if you like.
 
 `manifest.md` looks like this — copy the field names exactly:
 
@@ -51,8 +96,7 @@ self_check: ready to submit
 Build the folder, check it, and zip it in one go:
 
 ```bash
-# from the repo, with your file next to the manifest
-python3 tools/skill-tasks/check/check_submission.py --task cad-01-first-sketch ~/ent164/cad-01
+python3 "$SKILL/check/check_submission.py" --task cad-01-first-sketch ~/ent164/cad-01
 ```
 
 That checks the folder, writes the report into it as `check-report.txt`, and
@@ -100,7 +144,8 @@ The checkers look at what actually reaches the laser:
 
 ## Where things are
 
-- Task list and videos: `tasks/` on the class site, or `tools/skill-tasks/tasks/*.yml` in the repo
-- The criteria themselves: `<repo>/tools/skill-tasks/tasks/cad-NN-*.yml`
-- The checks: `<repo>/tools/skill-tasks/check/`
+- This skill's own folder: wherever opencode installed it — `$SKILL` above
+- Task list and videos: `tasks/` on the class site
+- The criteria for each task: `tasks/cad-NN-*.yml` inside this skill
+- The checks and the SVG converter: `check/` inside this skill
 - The videos: the **Onshape tips** page, `onshape-tips/index.html`
