@@ -24,7 +24,23 @@ TASKS_DIR = Path(__file__).resolve().parent.parent / "tasks"  # shipped with the
 
 
 class TaskError(Exception):
-    pass
+    """A task or submission could not be read or checked."""
+
+
+class MissingDependency(TaskError):
+    """A required third-party module is not installed.
+
+    A `TaskError` so the CLI and the grader already report it in their own
+    words, but `list_tasks` deliberately re-raises it instead of skipping: it
+    is the difference between "PyYAML is missing" and "there are no tasks", and
+    the second one silently builds an empty catalog from nothing.
+    """
+
+
+YAML_HINT = (
+    "this checker needs pyyaml: python3 -m pip install -r requirements.txt "
+    "(or: python3 -m pip install --user pyyaml)"
+)
 
 
 def load_task(task_id) -> dict:
@@ -44,9 +60,9 @@ def load_task(task_id) -> dict:
 
         task = yaml.safe_load(text)
     except ImportError:
-        raise TaskError(
-            "these task files are YAML and need pyyaml: python3 -m pip install --user pyyaml"
-        )
+        # Not a TaskError's usual meaning: the task exists and is fine, the
+        # environment is not. Say so where it cannot be mistaken for one.
+        raise MissingDependency(YAML_HINT) from None
     task.setdefault("id", path.stem)
     return task
 
@@ -56,6 +72,11 @@ def list_tasks() -> list:
     for p in sorted(TASKS_DIR.glob("*.yml")):
         try:
             out.append(load_task(p.stem))
+        except MissingDependency:
+            # Re-raise: without this, a missing dependency reduces the catalog
+            # to zero tasks, and every caller then reports success over an
+            # empty set.
+            raise
         except TaskError:
             continue
     return out
