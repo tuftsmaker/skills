@@ -4,48 +4,64 @@ title: Connected Device
 order: 3
 status: planned
 summary: |
-  A device on the network: it joins WiFi, exposes data, and calls an API — the
-  AI-and-connectivity half of the course, from Week 6 through Week 11.
+  A device you control from your phone. The board runs a web server, serves a
+  page, and every control on that page does something real — the Week 6 build,
+  where the interface is the point.
 requirement: |
   Every task file must pass its checks, and a TA signs each one. The final step
-  is a demonstrated round trip in class: the device answers, or reaches the API,
-  while someone watches.
+  is opening the page on a phone and using it, with a TA watching: an interface
+  that works is something you operate, not something you submit.
 why: |
-  Weeks 6, 10 and 11 build a smart light, then sensing and visualisation, then
-  AI-backed devices. It is the least file-checkable part of the course and the
-  part students find hardest to know when they are finished — which makes
-  written criteria more valuable here, not less.
+  Week 6 is where students meet the idea that a device can *have* an interface —
+  the board runs a web server, the page gets an address, the phone renders it,
+  and a tap round-trips back to the hardware. That is a genuinely new mental
+  model (no separate computer, no app to install), and it is also the thing
+  students most often get "working" without it actually controlling anything.
+  This track makes the interface the deliverable, one piece at a time.
 planned_tasks:
-  - id: net-01-join-the-network
+  - id: ui-01-connect-the-device
     title: Get the device on the network
     video: (to record) credentials, the MAC address, the class registration step
-    evidence: the script plus the device's address
-    checks: the code connects and retries rather than assuming success
-  - id: net-02-serve-a-page
+    evidence: the script plus the address the device reports
+    checks: the code connects and retries rather than assuming success; it prints its
+      address so you can find it; credentials are read from config, not hardcoded
+  - id: ui-02-serve-a-page
     title: Serve a page from the device
-    video: (to record) the ESP32 as a web server
+    video: (to record) the web server that lives on the board
     evidence: the script and a screenshot of the page on a phone
-    checks: the handler is a real route; the page renders without a client library
-  - id: net-03-read-a-sensor
-    title: Show a reading from the world
-    video: (to record) sensor to data to a readable value
-    evidence: the script and a screenshot showing a live value
-    checks: the sensor's pin is an input; the value is scaled to real units
-  - id: net-04-call-an-api
-    title: Reach an outside API
-    video: (to record) keys, requests, and what to do when the call fails
-    evidence: the script, and a note on where the key lives
-    checks: no key hardcoded in the script; the call has a failure path
+    checks: the handler is a real route rather than a bare response; the page renders in a
+      phone browser with no client library; it still loads after a reboot
+  - id: ui-03-control-something
+    title: Make a control that changes the hardware
+    video: (to record) a button on the page, and what it does to the board
+    evidence: the script plus a short clip of the control being used
+    checks: the route behind the control changes device state rather than only returning a
+      message; the change is visible on the hardware itself, not just in the browser
+  - id: ui-04-show-live-state
+    title: Show the device's state as it changes
+    video: (to record) reading a sensor back into the page
+    evidence: the script and a screenshot of two different readings
+    checks: the value is refreshed rather than fetched once at boot; it is scaled to real
+      units; the page reflects a change you make by hand
+  - id: ui-05-your-own-panel
+    title: Build the panel you actually want
+    video: (to record) putting the pieces together into one interface
+    evidence: the script and a screenshot of the finished panel
+    checks: every control has a visible effect; the layout survives a phone screen; the page
+      has a defined state while the device is busy
 supervised:
-  title: Demonstrate the round trip
+  title: Use it on a phone
   detail: |
-    Show it working with a TA present: the device answers, or the API responds.
-    Most of this track's evidence is a demo rather than a file, and that is
-    deliberate.
+    Open your device's page on your own phone and operate it with a TA present:
+    press the controls, watch the hardware respond, and show what the page does
+    when the device is unreachable. The interface working is the signoff.
 safety: |
-  This track is about code and configuration, and authorizes nothing physical.
+  This track is code and configuration on the board. It authorizes nothing
+  physical — the soldering and the machines stay with Nolop's own checkout.
 needs: |
-  Accept that the strongest evidence here is a demonstration, not a file. The
-  code checks are real but narrow — no hardcoded keys, a failure path, a
-  sensible pin — and a TA watching a round trip is what actually settles it.
-  Expect this track to lean harder on the human step than the other three.
+  The checks here are structural and stop short of the real question, which is
+  whether the interface is any good: whether a control does something you can
+  see, whether the page is usable on a phone, whether it degrades when the
+  device is asleep. A person judging the demo settles that, so this track leans
+  on the supervised step more than the machine-backed ones. Reaching out to APIs
+  and models from the page is the Intelligent Device track, not this one.

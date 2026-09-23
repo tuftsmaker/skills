@@ -1,0 +1,68 @@
+kind: unit
+id: unit-intelligent-device
+title: Intelligent Device
+order: 4
+status: planned
+summary: |
+  A device that reaches outside itself: it calls a cloud API, puts a model behind
+  a button, and keeps working when the network or the model does not. The
+  Week 11 material — APIs and AI on real hardware.
+requirement: |
+  Every task file must pass its checks, and a TA signs each one. The final step
+  is a live demonstration: the device answers, or the model responds, with a TA
+  watching. A network call cannot be verified from a file after the fact.
+why: |
+  Week 11 is where the course asks for the hardest thing it covers — a device
+  whose behaviour depends on services it does not control. The class walks
+  through exactly that build (the poetic light): recording that would not save,
+  an SD card that struggled, a firmware switch, a model that ran out of context.
+  Every one of those was a real failure a student would meet, and none of them
+  are covered by "does it compile". This track is where the engineering practice
+  of working with AI gets written down instead of left to luck.
+planned_tasks:
+  - id: ai-01-call-a-service
+    title: Call a cloud service and use the answer
+    video: (to record) the request, the key, the response, and the shape of a failure
+    evidence: the script plus the parsed value shown on the device
+    checks: the key is read from config, never written in the script; the request has a
+      timeout and a failure path; the response is parsed rather than printed raw
+  - id: ai-02-put-a-model-behind-it
+    title: Put an AI model behind a button
+    video: (to record) the request to the model, and what comes back
+    evidence: the script and a demo of the device responding to a prompt
+    checks: the call is parameterised rather than hardcoded; the model's reply is handled as
+      text the device can act on; a missing or malformed reply does not hang the device
+  - id: ai-03-survive-the-failure
+    title: Keep working when the call fails
+    video: (to record) timeouts, retries, and what the device does while it waits
+    evidence: the script plus a note on what the device shows when the service is down
+    checks: every network call is bounded by a timeout; the device has a defined state for
+      "waiting", "failed" and "answered"; no infinite retry loop
+  - id: ai-04-keep-secrets-out
+    title: Keep the keys out of the code
+    video: (to record) where a key lives on a microcontroller, and why not in the script
+    evidence: the script and a note on where the key is stored
+    checks: no key, token or password literal anywhere in the submitted code; the script
+      reads from a config that is not itself submitted
+  - id: ai-05-tell-the-story
+    title: Document what you built and what it cost you
+    video: (to record) the build conversation, decisions, and what had to be given up
+    evidence: the running conversation link, and a written account of the failures
+    checks: a person reads it — the process, the dead ends, the trade-offs accepted
+supervised:
+  title: Demonstrate the round trip
+  detail: |
+    Show the device working with a TA present: the service responds, the model
+    answers, and the device does something visible about it. Then show what
+    happens when the network is off, because that is half the engineering.
+safety: |
+  This track is code, configuration and services. It authorizes nothing physical
+  and involves no machine — the hardware work belongs to Working Circuit.
+needs: |
+  Two honest limits. First, most of this track cannot be checked after the fact:
+  whether the API answered, whether the model was any good, is a demonstration,
+  so a TA has to be there. The checks catch the structure — no hardcoded keys,
+  bounded calls, a defined failure state — and a person judges the rest.
+  Second, it needs somewhere for a device to keep a key that is not the source
+  file. That pattern is worth settling before the videos are recorded, because
+  students will otherwise learn to paste keys into their code.
