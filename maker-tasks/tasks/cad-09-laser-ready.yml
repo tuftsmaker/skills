@@ -24,7 +24,7 @@ submit:
     note: the file the laser reads
   - name: manifest.md
     required: true
-    note: which DXF it came from, and how you prepared it
+    note: which DXF it came from — opencode writes this file for you
 prereqs: [cad-08-laser-joints]
 signoff: ta
 criteria:
@@ -44,9 +44,6 @@ criteria:
     args:
       field: source_dxf
       hint: "Add a line: source_dxf: part.dxf — which task it came from helps the TA find your Onshape document."
-  - id: selfcheck
-    title: You ran the checker on this file
-    check: checks.manifest_selfcheck
   - id: look
     title: A person opens it and it is the right part
     human: true

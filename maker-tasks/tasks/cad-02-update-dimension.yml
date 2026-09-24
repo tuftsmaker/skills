@@ -19,7 +19,7 @@ submit:
     note: the same sketch, re-exported after you changed the dimension
   - name: manifest.md
     required: true
-    note: include the Onshape link and the two widths (before, after)
+    note: your Onshape share link — opencode writes this file for you
 prereqs: [cad-01-first-sketch]
 signoff: ta
 criteria:
@@ -44,10 +44,3 @@ criteria:
     title: Onshape link recorded — a person opens it to confirm the dimension is driven
     check: checks.manifest_source_link
     args: { field: onshape_url }
-  - id: before
-    title: The before/after widths are recorded
-    check: checks.manifest_field
-    args: { field: width_before, present: true, hint: "Add: width_before: 100" }
-  - id: selfcheck
-    title: You ran the checker on this file
-    check: checks.manifest_selfcheck

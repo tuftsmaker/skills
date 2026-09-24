@@ -44,7 +44,7 @@
     },
     {
       "name": "maker-tasks",
-      "version": "f37e9250761c",
+      "version": "6507073e61e9",
       "files": [
         "SKILL.md",
         "check/check_submission.py",

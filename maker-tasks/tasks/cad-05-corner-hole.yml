@@ -19,6 +19,7 @@ submit:
     required: true
   - name: manifest.md
     required: true
+    note: your Onshape share link — opencode writes this file for you
 prereqs: [cad-04-center-a-hole]
 signoff: ta
 criteria:
@@ -58,6 +59,3 @@ criteria:
     title: Onshape link recorded
     check: checks.manifest_source_link
     args: { field: onshape_url }
-  - id: selfcheck
-    title: You ran the checker on this file
-    check: checks.manifest_selfcheck

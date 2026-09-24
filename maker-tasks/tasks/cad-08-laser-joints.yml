@@ -20,7 +20,7 @@ submit:
     note: the piece with its joints
   - name: manifest.md
     required: true
-    note: include the thickness you measured — the joints are checked against it
+    note: your Onshape share link and the thickness you measured — opencode writes this file for you
 prereqs: [cad-01-first-sketch]
 signoff: ta
 criteria:
@@ -52,6 +52,3 @@ criteria:
     title: Onshape link recorded — a person opens it to see the joint dimensions
     check: checks.manifest_source_link
     args: { field: onshape_url }
-  - id: selfcheck
-    title: You ran the checker on this file
-    check: checks.manifest_selfcheck

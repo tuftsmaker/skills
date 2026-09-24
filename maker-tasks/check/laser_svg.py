@@ -316,7 +316,8 @@ def convert(dxf_path, out_path=None, margin=0.0):
         f"{dxf_path.stem}-laser-ready.svg")
     if out.parent != Path(""):
         out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(svg)
+    with open(out, "w", encoding="utf-8", newline="\n") as fh:
+        fh.write(svg)
     report["skipped"] = dict(drawing.skipped)
     report["coincident"] = coincident_paths(entities)
     return out, report, notes

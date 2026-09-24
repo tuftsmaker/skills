@@ -20,6 +20,7 @@ submit:
     note: the rectangle with its hole
   - name: manifest.md
     required: true
+    note: your Onshape share link — opencode writes this file for you
 prereqs: [cad-01-first-sketch]
 signoff: ta
 criteria:
@@ -59,6 +60,3 @@ criteria:
     title: Onshape link recorded
     check: checks.manifest_source_link
     args: { field: onshape_url }
-  - id: selfcheck
-    title: You ran the checker on this file
-    check: checks.manifest_selfcheck

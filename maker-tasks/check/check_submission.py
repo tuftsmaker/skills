@@ -26,20 +26,46 @@ sys.path.insert(0, str(HERE))
 import runner  # noqa: E402
 
 
+def manifest_fields(task: dict) -> list:
+    """The manifest lines this task's checks read, in task order.
+
+    Derived from the criteria so a task can never ask for a line nothing reads:
+    the three manifest checks below are the only places the checker looks in the
+    manifest, and this mirrors them.
+    """
+    fields = []
+    for crit in task.get("criteria", []):
+        check = (crit.get("check") or "").split(".")[-1]
+        args = crit.get("args") or {}
+        field = None
+        if check == "manifest_source_link":
+            field = args.get("field", "onshape_url")
+        elif check == "manifest_material_thickness":
+            field = "material_thickness"
+        elif check == "manifest_field" and args.get("present", True):
+            field = args.get("field")
+        if field and field not in fields:
+            fields.append(field)
+    return fields
+
+
 def build_folder(folder: Path, task: dict, student: str | None, onshape_url: str | None) -> None:
-    """Write a starter manifest.md beside the DXF if the student has not."""
+    """Write a starter manifest.md with just the lines this task checks."""
     manifest = folder / "manifest.md"
     if manifest.exists():
         return
-    lines = [f"student: {student or 'Your Name'}"]
-    if onshape_url:
-        lines.append(f"onshape_url: {onshape_url}")
-    else:
-        lines.append("onshape_url: ")
-    lines.append("material_thickness: ")
-    lines.append("self_check: ")
+    fields = manifest_fields(task)
+    lines = [f"student: {student}"] if student else []
+    for field in fields:
+        value = onshape_url if field == "onshape_url" and onshape_url else ""
+        lines.append(f"{field}: {value}")
+    if not lines:
+        return
     manifest.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    print(f"wrote a starter manifest at {manifest} — fill in the blank lines and run this again.")
+    print(
+        f"wrote a starter manifest at {manifest} — opencode: fill in "
+        f"{', '.join(fields) or 'the blank lines'}, then run this again."
+    )
 
 
 def make_zip(folder: Path, task: dict, student: str | None) -> Path:

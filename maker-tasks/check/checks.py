@@ -524,8 +524,8 @@ def manifest_source_link(ctx, field="onshape_url"):
     if not value:
         return failed(
             "manifest.md does not give the Onshape link.",
-            "In Onshape, click Share, set the link to 'can view', and paste it in: "
-            "onshape_url: https://cad.onshape.com/documents/...",
+            "In Onshape, click Share, set the link to 'can view', and add one line to "
+            "manifest.md: onshape_url: https://cad.onshape.com/documents/...",
         )
     if "onshape.com/documents/" not in value:
         return needs_review(
@@ -535,55 +535,6 @@ def manifest_source_link(ctx, field="onshape_url"):
     return needs_review(
         "link recorded — a person opens it to confirm the sketch is yours and committed.",
         value=value,
-    )
-
-
-def manifest_selfcheck(ctx, required=True):
-    """Did the student run the checker on their own file before submitting?
-
-    A claim in the manifest only counts when the run it belongs to agrees with
-    it: a folder that says "ready" while this run found problems is out of date,
-    and saying so is more useful than believing it.
-    """
-    other_failures = [c for c in ctx.other_results if c.status == "fail"]
-    value = (ctx.manifest or {}).get("self_check")
-
-    if value and "ready" in value.lower():
-        if other_failures:
-            return failed(
-                "manifest.md says the file is ready, but it is not: "
-                + "; ".join(c.title for c in other_failures)
-                + ".",
-                "The manifest is out of date. Fix the flagged items, then run the checker "
-                "again — it rewrites check-report.txt and the zip for you.",
-            )
-        return passed(f"self-check recorded: {value}", value=value)
-
-    report = ctx.submission.find("check-report.txt")
-    if report is not None:
-        text = report.read_text(encoding="utf-8", errors="replace")
-        if "Not ready yet" in text and not other_failures:
-            return failed(
-                "The checker's report in your folder says the file is not ready yet.",
-                "Fix what the report lists, run the checker again, and re-zip. The report "
-                "is overwritten each time you run it.",
-            )
-        if "Ready to submit" in text and not other_failures:
-            return passed("the checker's report is in the folder")
-    elif ctx.other_results and not other_failures:
-        # No stored report: a run with nothing else to fix is itself the check.
-        return passed("checked just now, with nothing else to fix")
-
-    if not required:
-        return passed("self-check not recorded")
-    if other_failures:
-        return passed("fix the items above, then run the checker again", value=None)
-    return failed(
-        "There is no sign that you ran the checker.",
-        "Run it on your own folder before you submit:\n"
-        "  python3 check/check_submission.py --task "
-        f"{ctx.task.get('id','<task>')} . --zip\n"
-        "That writes check-report.txt next to your file, and builds the zip.",
     )
 
 

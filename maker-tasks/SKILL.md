@@ -76,21 +76,29 @@ Each task expects a small folder. Two files, every time:
 
 ```
 part.dxf        your sketch, exported from Onshape
-manifest.md     a few plain lines about the file
+manifest.md     one or two lines — opencode writes them for you
 ```
 
 The laser-ready SVG is what you *take to Nolop*; it is not one of the two files
 the submission is checked against, so keep it beside them rather than in the
 folder if you like.
 
-`manifest.md` looks like this — copy the field names exactly:
+**Do not make the student hand-write `manifest.md`.** Ask for what the task
+reads, then write the file. For every task that is the Onshape share link
+(Share → set to "can view" → copy); two tasks add one more line:
+
+- `cad-08-laser-joints` — also the thickness they measured with calipers:
+  `material_thickness: 3.15`
+- `cad-09-laser-ready` — instead of the link, which DXF it came from:
+  `source_dxf: part.dxf`
+
+Never invent a link or copy one from somewhere else; if the student has not
+given one, ask. Missing lines come back as `[FIX]` with the line to add.
+
+For most tasks the whole file is one line:
 
 ```
-student: Your Name
 onshape_url: https://cad.onshape.com/documents/.../w/.../e/...
-material_thickness: 3.15
-width_before: 100
-self_check: ready to submit
 ```
 
 Build the folder, check it, and zip it in one go:
@@ -99,8 +107,9 @@ Build the folder, check it, and zip it in one go:
 python3 "$SKILL/check/check_submission.py" --task cad-01-first-sketch ~/ent164/cad-01
 ```
 
-That checks the folder, writes the report into it as `check-report.txt`, and
-tells you the zip to upload in Canvas.
+If `manifest.md` is missing, that command writes a starter with just the lines
+this task reads. It checks the folder, writes the report into it as
+`check-report.txt`, and tells you the zip to upload in Canvas.
 
 ## The tasks
 
@@ -114,8 +123,9 @@ tells you the zip to upload in Canvas.
 | `cad-06-mirror` | draw half, mirror it, keep both halves identical | `part.dxf` |
 | `cad-07-trim-tool` | combine an arc with a rectangle using the trim tool | `part.dxf` |
 | `cad-08-laser-joints` | cut fingers and slots sized from measured material | `part.dxf` |
+| `cad-09-laser-ready` | prepare a part for the laser: red hairlines, mm page | `part-laser-ready.svg` |
 
-The eight together are the **Laser-Ready File** track (a qualification). The last step is a
+The nine together are the **Laser-Ready File** track (a qualification). The last step is a
 supervised cut at Nolop: a TA watches you cut one of your own files.
 
 ## Reading the report

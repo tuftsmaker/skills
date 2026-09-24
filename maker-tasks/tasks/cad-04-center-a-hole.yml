@@ -19,6 +19,7 @@ submit:
     note: export after the construction lines are done — Onshape leaves them out of the DXF, which is the point of them
   - name: manifest.md
     required: true
+    note: your Onshape share link — opencode writes this file for you
 prereqs: [cad-03-cut-a-hole]
 signoff: ta
 criteria:
@@ -58,6 +59,3 @@ criteria:
     title: Onshape link recorded — a person opens it to see the construction lines
     check: checks.manifest_source_link
     args: { field: onshape_url }
-  - id: selfcheck
-    title: You ran the checker on this file
-    check: checks.manifest_selfcheck

@@ -192,10 +192,7 @@ def run(task, submission_path) -> Report:
     ctx = build_context(task, submission)
 
     results = []
-    # The self-check criterion judges the rest of the run, so it goes last and
-    # is handed what every other criterion found.
-    ordered = sorted(task.get("criteria", []), key=lambda c: c.get("check", "").endswith("manifest_selfcheck"))
-    for crit in ordered:
+    for crit in task.get("criteria", []):
         ctx.other_results = results
         results.append(_run_criterion(crit, ctx))
 
