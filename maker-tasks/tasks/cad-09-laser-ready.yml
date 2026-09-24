@@ -4,7 +4,7 @@ unit: laser-ready-file
 order: 9
 video: laser-cutting/videos/preparing-a-dxf-in-inkscape.mp4
 poster: laser-cutting/posters/preparing-a-dxf-in-inkscape.png
-time: "3:15"
+time: "3:27"
 makes: One prepared SVG
 goal: |
   Take one of your parts and make the file the laser actually reads: pure-red
