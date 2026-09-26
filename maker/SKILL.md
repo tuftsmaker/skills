@@ -217,8 +217,9 @@ is ignored. 3- and 4-lead parts occupy consecutive columns starting at `at`.
 
 ## MicroPython rules
 
-The class runs MicroPython (Thonny + the kit's Python tutorial), and the pin
-choices in the examples follow it. Keep these in mind:
+The class runs MicroPython, and the pin choices in the examples follow the
+class's setup. Students install firmware and upload code directly through
+opencode — no separate editor is involved. Keep these in mind:
 
 - **Analog inputs only on ADC1: GPIO 32-39.** ADC2 does not work while Wi-Fi is on. GPIO 34-39 are input-only (no output, no pull-up).
 - **Buttons**: use `Pin.PULL_UP` in code and wire the button between the pin and GND — no resistor needed.
