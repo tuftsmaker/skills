@@ -194,7 +194,7 @@ Defined in `bbd/components.py`. Footprints follow the real kit parts.
 | `photoresistor`   | `at`                     | LDR, 2 legs one column apart                        |
 | `thermistor`      | `at`                     | 2 legs one column apart                             |
 | `button`          | `at`                     | 4 legs, 0.3" wide, 2 rows tall                      |
-| `buzzer`          | `at`                     | 2 pins, one column apart                            |
+| `buzzer`          | `at`                     | 2 pins, one column apart; `kind: active\|passive`   |
 | `speaker`         | `at`                     | 2 wires (red/black), body above the board           |
 | `potentiometer`   | `at`                     | 3 legs; `pins: [left, wiper, right]` to label them  |
 | `transistor`      | `at`                     | TO-92, 3 legs; `kind: npn\|pnp`, `pins: [E, B, C]`  |
@@ -202,7 +202,7 @@ Defined in `bbd/components.py`. Footprints follow the real kit parts.
 | `ic`              | `at`                     | DIP straddling the channel; `pins: 16`, `label_text`, `pin_labels: true` |
 | `display_7seg`    | `at`                     | 10 pins (5+5) straddling; `pins: 10`                |
 | `bar_graph`       | `at`                     | 20 pins (10+10) straddling; `pins: 20`              |
-| `servo`           | `at`                     | 3 wires (brown/red/orange)                          |
+| `servo`           | `at`                     | 3 wires (brown/red/orange); `horn: single\|cross` (default single) |
 | `motor`           | `at`                     | TT gearbox + wheel, 2 wires                         |
 | `battery`         | `at`                     | 9V clip, 2 wires                                    |
 | `ultrasonic`      | `at`                     | HC-SR04, 4 pins; `pins:` to relabel                 |
@@ -210,6 +210,14 @@ Defined in `bbd/components.py`. Footprints follow the real kit parts.
 | `lcd`             | `at`                     | LCD1602 + I2C backpack, 4 pins                      |
 | `l298n`           | `at`                     | motor driver board, 8 pins; `pins:` to relabel      |
 | `module`          | `at`, `pins`, `label_text` | generic labelled sensor board                     |
+
+Cabled parts (`servo`, `ultrasonic`, `joystick`, `lcd`, `motor`, `speaker`,
+`battery`, `l298n`) are drawn at their **real proportions** and wire to the
+breadboard or board with jumpers. They are never stretched to land their own
+pins on breadboard holes — the `at: [col, row]` positions the body, the pins
+sit at their true pitch, and the wires take up the difference. The ultrasonic
+and servo geometry is measured off the true-scale Fritzing parts
+(fritzing-parts, CC BY-SA 3.0).
 
 DIP parts (`ic`, `display_7seg`, `bar_graph`) always straddle the centre
 channel: pins land in row `e` and row `f`, so `at: [col, e]` and the row part
@@ -274,12 +282,12 @@ layout:
 ```
 
 The examples that teach breadboard placement — `led`, `button`, `buzzer`,
-`rgb_led`, `potentiometer`, `photoresistor`, `thermistor`, `diode`,
-`doorbell`, `ic-74hc595`, `bar-graph`, `display-7seg`, `motor-driver` — set
-this flag. Everything else (modules with cables: joystick, LCD, ultrasonic,
-servo, motors, battery, speaker) leaves it off. Even when hidden, the column
-and row coordinates still position components, and the net highlighting is
-simply skipped.
+`passive-buzzer`, `pnp-transistor`, `rgb_led`, `potentiometer`,
+`photoresistor`, `thermistor`, `diode`, `doorbell`, `ic-74hc595`,
+`bar-graph`, `display-7seg`, `motor-driver` — set this flag. Everything else
+(modules with cables: joystick, LCD, ultrasonic, servo, motors, battery,
+speaker) leaves it off. Even when hidden, the column and row coordinates still
+position components, and the net highlighting is simply skipped.
 
 ## Boards
 

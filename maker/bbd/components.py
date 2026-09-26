@@ -109,6 +109,17 @@ def _pin_labels(add, L, xs, row, names):
             f'text-anchor="middle">{name}</text>')
 
 
+def _pin_labels_vertical(add, xs, y, names, size=14, fill="#444"):
+    """Pin names running up the wire, as modules like the HC-SR04 print them.
+
+    A cabled part has no breadboard hole to label, and horizontal names run
+    into the neighbouring wires, so these sit alongside each lead.
+    """
+    for x, name in zip(xs, names):
+        add(f'<text x="{x}" y="{y}" font-size="{size}" fill="{fill}" '
+            f'text-anchor="end" transform="rotate(-90 {x} {y})">{name}</text>')
+
+
 # --------------------------------------------------------------------------
 # resistor
 # --------------------------------------------------------------------------
@@ -226,17 +237,30 @@ def draw_buzzer(add, L, spec):
     x1, x2 = L.col_x(col), L.col_x(col + 1)
     cx, cy = (x1 + x2) / 2, y - 42
     r = max(24, L.dcol * 0.42)
+    passive = str(spec.get("kind", "active")).lower() == "passive"
 
     add(f'<line x1="{x1}" y1="{y}" x2="{x1}" y2="{cy+r*0.4}" stroke="#9a9a9a" stroke-width="3.5"/>')
     add(f'<line x1="{x2}" y1="{y}" x2="{x2}" y2="{cy+r*0.4}" stroke="#9a9a9a" stroke-width="3.5"/>')
     add(f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="#2b2b30" stroke="#15151a" stroke-width="2.5"/>')
-    # top label ring, like the real buzzers
-    add(f'<circle cx="{cx}" cy="{cy}" r="{r*0.62}" fill="#dcdce4" opacity="0.85"/>')
-    add(f'<circle cx="{cx}" cy="{cy}" r="{r*0.18}" fill="#2b2b30"/>')
-    add(f'<text x="{cx+r+8}" y="{cy-r+6}" font-size="12.5" fill="#8a8a8a">+</text>')
+    if passive:
+        # the passive part is open at the top: the pole piece and coil show
+        add(f'<circle cx="{cx}" cy="{cy}" r="{r*0.72}" fill="#1b1b1f"/>')
+        add(f'<circle cx="{cx}" cy="{cy}" r="{r*0.30}" fill="#4a4a52"/>')
+        add(f'<circle cx="{cx}" cy="{cy}" r="{r*0.12}" fill="#15151a"/>')
+        for i in range(12):
+            rad = math.radians(i * 30)
+            add(f'<circle cx="{cx + math.cos(rad)*r*0.55:.1f}" '
+                f'cy="{cy + math.sin(rad)*r*0.55:.1f}" r="2.2" fill="#8a6a3a" opacity="0.85"/>')
+    else:
+        # the active part is sealed, with its label ring on top
+        add(f'<circle cx="{cx}" cy="{cy}" r="{r*0.62}" fill="#dcdce4" opacity="0.85"/>')
+        add(f'<circle cx="{cx}" cy="{cy}" r="{r*0.18}" fill="#2b2b30"/>')
+    add(f'<text x="{cx-r-8}" y="{cy-r+6}" font-size="12.5" fill="#8a8a8a" '
+        f'text-anchor="end">+</text>')
     if spec.get("label", True):
+        default = "passive buzzer" if passive else "active buzzer"
         add(f'<text x="{cx}" y="{cy-r-12}" font-size="15" font-weight="700" fill="#2b2b30" '
-            f'text-anchor="middle">{spec.get("label_text", "buzzer")}</text>')
+            f'text-anchor="middle">{spec.get("label_text", default)}</text>')
 
 
 # --------------------------------------------------------------------------
@@ -558,7 +582,17 @@ def draw_module(add, L, spec):
 # --------------------------------------------------------------------------
 # servo (3 wires: brown GND, red 5V, orange signal)
 # --------------------------------------------------------------------------
-SERVO_PIN_PITCH = 42
+# Top view, proportions from the real SG90 (22.8 x 12.6 x 22.5 mm case,
+# 32.5 mm over the ears) and from the true-scale Fritzing part (fritzing-parts
+# / e-radionica, CC BY-SA 3.0). Drawn as the translucent blue case with its
+# gear housing, mounting ears and screw holes.
+#
+# `horn:` picks the output horn: `single` (the blade arm the class mounts for
+# steering) or `cross` (the four-arm horn from the kit). Default single.
+SERVO_W = 168
+SERVO_H = round(SERVO_W * 12.6 / 22.8)          # 93 px, the case proper
+SERVO_EAR = 26                                  # mounting ear width, each side
+SERVO_PIN_PITCH = 34                            # the 3-wire lead spacing
 
 
 def holes_servo(L, spec):
@@ -570,7 +604,7 @@ def _servo_geom(L, spec):
     col, row = spec["at"]
     cx = L.col_x(col)
     y = L.row_y(row)
-    _, top, bottom, _ = _module_slot(L, row, 92)
+    _, top, bottom, _ = _module_slot(L, row, SERVO_H)
     xs = [cx + (i - 1) * SERVO_PIN_PITCH for i in range(3)]
     return xs, cx, y, top, bottom
 
@@ -584,38 +618,69 @@ def draw_servo(add, L, spec):
     col, row = spec["at"]
     xs, cx, y, top, bottom = _servo_geom(L, spec)
     attach = top if _bottom_half(row) else bottom
+    cy = (top + bottom) / 2
+    x1, x2 = cx - SERVO_W / 2, cx + SERVO_W / 2
+    gx = cx + SERVO_W * 0.13                    # output-shaft position
 
     colours = ["#7a4a1e", WIRE_RED, "#e07a1f"]
     names = ["GND", "5V", "SIG"]
     for x, c in zip(xs, colours):
         _lead(add, x, y, x, attach, colour=c, w=5)
 
-    bw, bh = 150, 92
-    bx1 = cx - bw / 2
-    up = -1 if not _bottom_half(row) else +1
-    far = top if up < 0 else bottom
-    # translucent blue SG90 case with a pale top and white horn
-    add(f'<rect x="{bx1}" y="{top+10}" width="{bw}" height="{bh-10}" rx="10" '
-        f'fill="#3a6ea5" stroke="#26496e" stroke-width="2.5"/>')
-    for fx in (bx1 - 16, bx1 + bw - 12):
-        add(f'<rect x="{fx}" y="{top}" width="28" height="16" rx="3" '
-            f'fill="#5b8fc9" stroke="#26496e" stroke-width="1.5"/>')
-        add(f'<circle cx="{fx+14}" cy="{top+8}" r="4" fill="#26496e"/>')
-    add(f'<circle cx="{cx}" cy="{top+40}" r="24" fill="#cfe0f5" stroke="#26496e" stroke-width="2"/>')
-    add(f'<circle cx="{cx}" cy="{top+40}" r="9" fill="#5b8fc9"/>')
-    add(f'<circle cx="{cx+32}" cy="{top+52}" r="13" fill="#cfe0f5" stroke="#26496e" stroke-width="1.5"/>')
-    add(f'<circle cx="{cx+32}" cy="{top+52}" r="4" fill="#5b8fc9"/>')
-    # cable boot where the wires leave the case
-    boot_y = attach - (10 if up < 0 else -10)
-    add(f'<rect x="{xs[0]-8}" y="{boot_y-8}" width="{xs[2]-xs[0]+16}" height="16" rx="4" '
+    # cable boot and the three leads where they enter the case
+    add(f'<rect x="{xs[0]-10}" y="{attach-9}" width="{xs[2]-xs[0]+20}" height="18" rx="5" '
         f'fill="#202024"/>')
-    horn_y = far + up * 26
-    add(f'<rect x="{cx-7}" y="{horn_y + (up*34 if up < 0 else 0)}" width="14" height="46" rx="7" '
-        f'fill="#f2f2f2" stroke="#c9c9d1" stroke-width="2"/>')
-    add(f'<circle cx="{cx}" cy="{horn_y}" r="15" fill="#f2f2f2" stroke="#c9c9d1" stroke-width="2"/>')
-    add(f'<circle cx="{cx}" cy="{horn_y}" r="4.5" fill="#9a9aa4"/>')
-    _text(add, cx, (top + bottom) / 2 + 5, "SG90", 15, "#cfe0f5")
-    _pin_labels(add, L, xs, row, names)
+
+    # mounting ears with their screw holes (drawn under the case)
+    for ex in (x1 - SERVO_EAR, x2):
+        add(f'<rect x="{ex}" y="{cy - 16}" width="{SERVO_EAR}" height="32" rx="4" '
+            f'fill="#24509a" stroke="#16376b" stroke-width="2"/>')
+        add(f'<circle cx="{ex + SERVO_EAR/2}" cy="{cy}" r="7" fill="#0b1f3d"/>')
+        add(f'<circle cx="{ex + SERVO_EAR/2}" cy="{cy}" r="3.5" fill="#3f6fb5"/>')
+
+    # translucent blue case, with a lighter top face
+    add(f'<rect x="{x1}" y="{top}" width="{SERVO_W}" height="{SERVO_H}" rx="10" '
+        f'fill="#2d5ca8" stroke="#16376b" stroke-width="2.5"/>')
+    add(f'<rect x="{x1+5}" y="{top+5}" width="{SERVO_W-10}" height="{SERVO_H-10}" rx="8" '
+        f'fill="#3f74c4" opacity="0.55"/>')
+
+    # gear housing around the output shaft, and the gears faintly through
+    # the plastic
+    add(f'<circle cx="{gx}" cy="{cy}" r="{SERVO_H*0.46:.1f}" fill="#2a559c" '
+        f'stroke="#1d477f" stroke-width="1.5"/>')
+    add(f'<circle cx="{gx}" cy="{cy}" r="{SERVO_H*0.34:.1f}" fill="#3568b5" '
+        f'stroke="#1d477f" stroke-width="1.2"/>')
+    add(f'<circle cx="{gx - SERVO_H*0.30:.1f}" cy="{cy + SERVO_H*0.12:.1f}" '
+        f'r="{SERVO_H*0.11:.1f}" fill="#4f83cf" opacity="0.75"/>')
+    add(f'<circle cx="{gx + SERVO_H*0.28:.1f}" cy="{cy - SERVO_H*0.10:.1f}" '
+        f'r="{SERVO_H*0.09:.1f}" fill="#4f83cf" opacity="0.75"/>')
+
+    # output horn: a single blade arm (default) or the four-arm cross
+    horn = str(spec.get("horn", "single")).lower()
+    add(f'<circle cx="{gx}" cy="{cy}" r="{SERVO_H*0.26:.1f}" fill="#dcdce4" '
+        f'stroke="#a8a8b4" stroke-width="1.5"/>')
+    if horn == "cross":
+        arm_l, arm_w = SERVO_H * 0.72, SERVO_H * 0.18
+        angles = (32, 122, 212, 302)
+    else:
+        arm_l, arm_w = SERVO_H * 1.25, SERVO_H * 0.22
+        angles = (-32,)
+    for ang in angles:
+        rad = math.radians(ang)
+        ux, uy = math.cos(rad), math.sin(rad)
+        bx, by = gx + ux * SERVO_H * 0.18, cy + uy * SERVO_H * 0.18
+        tx, ty = gx + ux * arm_l, cy + uy * arm_l
+        add(f'<line x1="{bx:.1f}" y1="{by:.1f}" x2="{tx:.1f}" y2="{ty:.1f}" stroke="#e8e8ec" '
+            f'stroke-width="{arm_w:.1f}" stroke-linecap="round"/>')
+        # row of lightening holes down the arm, as the real horn has
+        for frac in ((0.45, 0.68, 0.9) if horn != "cross" else (1.0,)):
+            hx, hy = gx + ux * arm_l * frac, cy + uy * arm_l * frac
+            add(f'<circle cx="{hx:.1f}" cy="{hy:.1f}" r="{arm_w*0.17:.1f}" '
+                f'fill="none" stroke="#b9b9c2" stroke-width="1.6"/>')
+    add(f'<circle cx="{gx}" cy="{cy}" r="{SERVO_H*0.09:.1f}" fill="#b9b9c2"/>')
+    add(f'<circle cx="{gx}" cy="{cy}" r="{SERVO_H*0.045:.1f}" fill="#8f8f9c"/>')
+    _text(add, x1 + 40, cy + 5, "SG90", 13, "#dce8f8")
+    _pin_labels_vertical(add, xs, y - 12 if _bottom_half(row) else y + 12, names)
 
 
 # --------------------------------------------------------------------------
@@ -765,43 +830,95 @@ def draw_speaker(add, L, spec):
 # --------------------------------------------------------------------------
 # HC-SR04 ultrasonic ranging module (4 pins)
 # --------------------------------------------------------------------------
-def holes_ultrasonic(L, spec):
+# True proportions from the true-scale Fritzing part (fritzing-parts,
+# CC BY-SA 3.0): board 45.1 x 20.0 mm => 2.25:1, not the 3.3:1 old drawing.
+# Transducers are 14.1 mm (31% of the board width) centred at 20% and 80% of
+# the board, the crystal is 15.0 x 7.2 mm at top centre, and the 4-pin header
+# spans only 2.54 x 3 = 7.6 mm (17% of the width). The body is never stretched
+# to reach the breadboard: the pins stay at their true pitch and the wires make
+# up the difference.
+ULTRA_W = 314
+ULTRA_H = round(ULTRA_W * 20.0 / 45.1)          # 139 px, true 2.25:1
+ULTRA_PITCH = 30                                # close to the true 2.54 mm header pitch
+ULTRA_PAD = 46                                  # clearance for the header + labels
+
+
+def _ultrasonic_geom(L, spec):
     col, row = spec["at"]
-    return [(col + i, row) for i in range(4)]
+    y = L.row_y(row)
+    cx = L.col_x(col)
+    _, top, bottom, _ = _module_slot(L, row, ULTRA_H, pad=ULTRA_PAD)
+    xs = [cx + (i - 1.5) * ULTRA_PITCH for i in range(4)]
+    return xs, cx, y, top, bottom
+
+
+def holes_ultrasonic(L, spec):
+    # wired with jumpers from the module's own pins; the body is far wider than
+    # the 4-hole group, so it is not plugged into the breadboard grid
+    return []
+
+
+def terminals_ultrasonic(L, spec):
+    xs, cx, y, top, bottom = _ultrasonic_geom(L, spec)
+    names = spec.get("pins") or ["VCC", "TRIG", "ECHO", "GND"]
+    return {n: (xs[i], y) for i, n in enumerate(names)}
 
 
 def draw_ultrasonic(add, L, spec):
     col, row = spec["at"]
-    y = L.row_y(row)
-    xs = [L.col_x(col + i) for i in range(4)]
-    cx = (xs[0] + xs[3]) / 2
-    _, top, bottom, _ = _module_slot(L, row, 96)
+    xs, cx, y, top, bottom = _ultrasonic_geom(L, spec)
     attach = top if _bottom_half(row) else bottom
+    bx1, bw = cx - ULTRA_W / 2, ULTRA_W
+    up = -1 if not _bottom_half(row) else 1
 
     for x in xs:
         _lead(add, x, y, x, attach)
-    bw = xs[3] - xs[0] + 110
-    bx1 = cx - bw / 2
+
     # blue PCB like the real HC-SR04
-    add(f'<rect x="{bx1}" y="{top}" width="{bw}" height="96" rx="8" '
+    add(f'<rect x="{bx1}" y="{top}" width="{bw}" height="{ULTRA_H}" rx="8" '
         f'fill="#2b6cb0" stroke="#1a4a8a" stroke-width="2.5"/>')
-    # black pin header along the bottom edge
-    add(f'<rect x="{xs[0]-14}" y="{attach-26 if not _bottom_half(row) else attach+4}" '
-        f'width="{xs[3]-xs[0]+28}" height="20" rx="3" fill="#1a1a1a"/>')
-    # two silver mesh transducers
-    for dx, tag in ((-44, "T"), (44, "R")):
-        cxx, cyy = cx + dx, top + 46
-        add(f'<circle cx="{cxx}" cy="{cyy}" r="34" fill="#f2f2f2" stroke="#9a9aa4" stroke-width="2"/>')
-        for i in range(7):
-            for j in range(7):
-                mx, my = cxx - 21 + i*7, cyy - 21 + j*7
-                if (mx-cxx)**2 + (my-cyy)**2 <= 21*21:
-                    add(f'<circle cx="{mx}" cy="{my}" r="1.1" fill="#c9c9d1"/>')
-        add(f'<circle cx="{cxx}" cy="{cyy}" r="15" fill="#d0d0d6" stroke="#9a9aa4" stroke-width="1.5"/>')
-        add(f'<circle cx="{cxx}" cy="{cyy}" r="7" fill="#8a8a94"/>')
-        _text(add, cxx, cyy + 50, tag, 14, "#cfe0f5")
-    _text(add, cx, top + 14, spec.get("label_text", "HC-SR04"), 13, "#fff")
-    _pin_labels(add, L, xs, row, spec.get("pins", ["VCC", "TRIG", "ECHO", "GND"]))
+    # 15.0 x 7.2 mm quartz crystal at top centre
+    cw, ch = bw * 15.0 / 45.1, ULTRA_H * 7.2 / 20.0
+    add(f'<rect x="{cx-cw/2}" y="{top+ULTRA_H*0.05}" width="{cw}" height="{ch}" rx="{ch/2}" '
+        f'fill="#c9c9d1" stroke="#9a9aa4" stroke-width="1.5"/>')
+    # four corner mounting holes, 3.4 mm in from each corner
+    hr = bw * 1.7 / 45.1
+    for hx in (bx1 + bw*3.4/45.1, bx1 + bw - bw*3.4/45.1):
+        for hy in (top + ULTRA_H*3.4/20.0, top + ULTRA_H - ULTRA_H*3.4/20.0):
+            add(f'<circle cx="{hx}" cy="{hy}" r="{hr}" fill="#f2f2f2" stroke="#9a9aa4" stroke-width="1"/>')
+            add(f'<circle cx="{hx}" cy="{hy}" r="{hr*0.45}" fill="#2b2b30"/>')
+    # two mesh transducers: 14.1 mm (31% of the width) at 20% and 80%.
+    # Ring order from the real part: pale bezel, black ring, dark silver mesh,
+    # pale centre dish.
+    tr = ULTRA_W * 0.5 * 14.1 / 45.1
+    for frac in (0.20, 0.80):
+        cxx, cyy = bx1 + bw*frac, top + ULTRA_H*0.5
+        add(f'<circle cx="{cxx}" cy="{cyy}" r="{tr*1.16:.1f}" fill="#f2f2f2" stroke="#c9c9d1" stroke-width="1.5"/>')
+        add(f'<circle cx="{cxx}" cy="{cyy}" r="{tr:.1f}" fill="#191919"/>')
+        add(f'<circle cx="{cxx}" cy="{cyy}" r="{tr*0.74:.1f}" fill="#6d7773"/>')
+        add(f'<circle cx="{cxx}" cy="{cyy}" r="{tr*0.50:.1f}" fill="#e6e6e6" stroke="#9a9aa4" stroke-width="1"/>')
+        # fine mesh dot grid across the inner silver face only
+        step = max(2.6, tr * 0.09)
+        span = tr * 0.46
+        n = int(span / step)
+        for i in range(-n, n + 1):
+            for j in range(-n, n + 1):
+                mx, my = cxx + i*step, cyy + j*step
+                if (mx-cxx)**2 + (my-cyy)**2 <= span*span:
+                    add(f'<circle cx="{mx:.1f}" cy="{my:.1f}" r="0.9" fill="#9a9aa4" opacity="0.5"/>')
+    # 4-pin header: a small block on the board edge
+    hw = xs[-1] - xs[0] + 22
+    hy = attach - 11 if up < 0 else attach + 2
+    add(f'<rect x="{cx-hw/2}" y="{hy}" width="{hw}" height="16" rx="3" fill="#1a1a1a"/>')
+    # transmitter / receiver markers, tucked between the transducers and the
+    # bottom edge so they clear the corner mounting holes
+    for frac, tag in ((0.20, "T"), (0.80, "R")):
+        _text(add, bx1 + bw*frac, top + ULTRA_H*0.92, tag, 11, "#cfe0f5", weight="400")
+    # title sits between the transducers, where the real silkscreen prints it
+    _text(add, cx, top + ULTRA_H*0.52, spec.get("label_text", "HC-SR04"), 10, "#cfe0f5")
+    # pin names vertical along each pin, as the real module prints them
+    _pin_labels_vertical(add, xs, y - 12 if _bottom_half(row) else y + 12,
+                         spec.get("pins", ["VCC", "TRIG", "ECHO", "GND"]))
 
 
 # --------------------------------------------------------------------------
@@ -1048,8 +1165,8 @@ def component_bounds(L, spec):
         return (cx - 190, cy - 62, 380, 124)
     if kind == "servo":
         cx = L.col_x(col)
-        _, top, bottom, _ = _module_slot(L, row, 92)
-        return (cx - 100, top - 50, 200, (bottom - top) + 60)
+        _, top, bottom, _ = _module_slot(L, row, SERVO_H)
+        return (cx - SERVO_W/2 - SERVO_EAR, top - 4, SERVO_W + 2*SERVO_EAR, (bottom - top) + 8)
     if kind == "l298n":
         cx = L.col_x(col)
         top = L.row_y(row) - 18 - L298_SIZE
@@ -1083,11 +1200,13 @@ def component_bounds(L, spec):
         return (cx - JOY_W / 2, top, JOY_W, JOY_H)
     if kind in ("lcd", "ultrasonic"):
         n = {"lcd": 4, "ultrasonic": 4}[kind]
-        pad = {"lcd": 0, "ultrasonic": 110}[kind]
-        h = {"lcd": 148, "ultrasonic": 96}[kind]
-        w = {"lcd": 420, "ultrasonic": 0}[kind]
+        pad = {"lcd": 0, "ultrasonic": 0}[kind]
+        h = {"lcd": 148, "ultrasonic": ULTRA_H}[kind]
+        w = {"lcd": 420, "ultrasonic": ULTRA_W}[kind]
         xs = [L.col_x(col + i) for i in range(n)]
         cx = (xs[0] + xs[-1]) / 2
+        if kind == "ultrasonic":
+            cx = L.col_x(col)
         bw = w or (xs[-1] - xs[0] + pad)
         _, top, _, _ = _module_slot(L, row, h)
         return (cx - bw / 2, top, bw, h)
@@ -1106,6 +1225,7 @@ TERMINALS = {
     "servo": terminals_servo,
     "motor": terminals_motor,
     "joystick": terminals_joystick,
+    "ultrasonic": terminals_ultrasonic,
 }
 
 

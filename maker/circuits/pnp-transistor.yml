@@ -1,0 +1,26 @@
+layout:
+  breadboard:
+    hidden: false
+board: freenove-esp32-wrover
+title: PNP transistor — Freenove ESP32-WROVER (FNK0046)
+subtitle: The S8550 switches a load HIGH from the 5V rail
+# The kit's other transistor: marked S8550 (PNP) alongside the S8050 (NPN).
+# The tutorial's PNP example drives the same 5V buzzer, but the emitter sits on
+# the supply and the GPIO pulls the base LOW to switch it on — the mirror of
+# the NPN doorbell.
+components:
+  - {type: transistor, at: [4, c], kind: pnp, pins: [E, B, C]}
+  - {type: resistor, value: "1k", from: [8, c], span: 2}
+  - {type: buzzer, at: [11, c]}
+wires:
+  - {from: bb.4.c, to: board.L19, color: red, label: emitter — 5V}
+  - {from: bb.5.c, to: bb.8.c, color: purple, label: base link}
+  - {from: bb.6.c, to: bb.11.c, color: blue, label: collector — buzzer +}
+  - {from: bb.10.c, to: board.GPIO13, color: orange, label: signal — GPIO 13}
+  - {from: bb.12.c, to: board.R17, color: black, label: ground — GND}
+notes:
+  - "PNP vs NPN: with the PNP the emitter goes to +V, not ground, and the GPIO switches it ON by going LOW."
+  - "The kit marks the PNP as S8550 and the NPN as S8050 — read the flat face of the package."
+  - "Same rule as the NPN: the base resistor limits the current the GPIO has to supply."
+  - text: "The load sits on the collector side, so the transistor passes the buzzer's 5 V without the GPIO seeing it."
+    warn: true

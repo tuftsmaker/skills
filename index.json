@@ -2,7 +2,7 @@
   "skills": [
     {
       "name": "maker",
-      "version": "c82897771691",
+      "version": "5ac634175c67",
       "files": [
         "SKILL.md",
         "bbd/__init__.py",
@@ -29,7 +29,9 @@
         "circuits/led.yml",
         "circuits/motor-driver.yml",
         "circuits/motor.yml",
+        "circuits/passive-buzzer.yml",
         "circuits/photoresistor.yml",
+        "circuits/pnp-transistor.yml",
         "circuits/potentiometer.yml",
         "circuits/rgb_led.yml",
         "circuits/robot-drive.yml",

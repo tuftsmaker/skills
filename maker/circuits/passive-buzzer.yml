@@ -1,0 +1,19 @@
+layout:
+  breadboard:
+    hidden: false
+board: freenove-esp32-wrover
+title: Passive buzzer — Freenove ESP32-WROVER (FNK0046)
+subtitle: Driven with PWM, so it can play any frequency
+# The kit's Project 6.2 (Alertor): same wiring as the active buzzer, but the
+# part is the open-backed one and the code drives it with machine.PWM.
+components:
+  - {type: buzzer, kind: passive, at: [3, c]}
+wires:
+  - {from: bb.3.c, to: board.GPIO13, color: orange, label: signal — GPIO 13}
+  - {from: bb.4.c, to: board.R17, color: black, label: ground — GND}
+notes:
+  - "The passive buzzer has no oscillator inside: PWM makes the sound, so you choose the frequency."
+  - "Resonant frequency is 2 kHz — it is loudest there. The kit's alertor sweeps 1500-2500 Hz."
+  - "You can tell the two apart by looking at the back: the passive one shows its coil and magnet."
+  - text: "Like the active buzzer, it draws more current than a GPIO should supply — switch it with the NPN transistor for full volume."
+    warn: true

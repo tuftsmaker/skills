@@ -3,10 +3,10 @@ layout:
     hidden: false
 board: freenove-esp32-wrover
 title: 7-segment display — Freenove ESP32-WROVER (FNK0046)
-subtitle: Ten pins, common cathode — driven through the 74HC595
+subtitle: Ten pins, common anode — driven through the 74HC595
 components:
   - {type: display_7seg, at: [3, e], pins: 10, label_text: 7-segment}
 notes:
   - "Segments a-g plus the decimal point: ten pins, five on each row."
   - "Drive it through the 74HC595 with one 220 Ω resistor per segment (see ic-74hc595.yml)."
-  - "Common-cathode part: the shared pins go to GND."
+  - "Common-anode part (as the kit's tutorial specifies): the shared pin goes to 3V3, and a segment lights when its output is LOW."

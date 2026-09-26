@@ -2,12 +2,12 @@ board: freenove-esp32-wrover
 title: HC-SR04 ultrasonic — Freenove ESP32-WROVER (FNK0046)
 subtitle: Trig on GPIO 13, Echo on GPIO 14
 components:
-  - {type: ultrasonic, at: [2, e]}
+  - {type: ultrasonic, id: sonar, at: [3, c], pins: [VCC, TRIG, ECHO, GND]}
 wires:
-  - {from: bb.2.e, to: board.L19, color: red, label: VCC — 5V}
-  - {from: bb.3.e, to: board.GPIO13, color: orange, label: TRIG — GPIO 13}
-  - {from: bb.4.e, to: board.GPIO14, color: yellow, label: ECHO — GPIO 14}
-  - {from: bb.5.e, to: board.L14, color: black, label: GND}
+  - {from: sonar.VCC, to: board.L19, color: red, label: VCC — 5V}
+  - {from: sonar.TRIG, to: board.GPIO13, color: orange, label: TRIG — GPIO 13}
+  - {from: sonar.ECHO, to: board.GPIO14, color: yellow, label: ECHO — GPIO 14}
+  - {from: sonar.GND, to: board.L14, color: black, label: GND}
 notes:
   - "Pulse Trig high for 10 µs; Echo stays high for the round-trip time — distance = time × 340 m/s ÷ 2."
   - "The module is 5 V powered; Echo's 3.3 V signal is safe for the ESP32."
