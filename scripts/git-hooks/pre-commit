@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# Rebuild index.json whenever skill content (or the index itself) is staged,
+# so a commit can never publish a stale registry.
+#
+# Git does not version .git/hooks; scripts/install-git-hooks.sh points
+# core.hooksPath at scripts/git-hooks/. Bypass with `git commit --no-verify`.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$ROOT"
+
+if git diff --cached --name-only | grep -qE '^(index\.json|maker/|maker-tasks/|box/)'; then
+  ./tools/skill-publish/rebuild.sh >/dev/null
+  git add index.json
+fi

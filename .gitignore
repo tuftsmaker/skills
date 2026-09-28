@@ -1,0 +1,8 @@
+.DS_Store
+__pycache__/
+*.pyc
+
+# skill-publish's build tree (build-index.py --dist default): a copy of the
+# skills plus a generated index, so committing it would publish a second,
+# stale set from a path nothing serves.
+tools/skill-publish/dist/
