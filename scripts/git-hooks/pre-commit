@@ -9,7 +9,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT"
 
-if git diff --cached --name-only | grep -qE '^(index\.json|breadboard-wiring/|laser-ready/|box-and-birdhouse/)'; then
+if git diff --cached --name-only | grep -qE '^(index\.json|breadboard-wiring/|laser-ready/|box-maker/)'; then
   ./tools/skill-publish/rebuild.sh >/dev/null
   git add index.json
 fi

@@ -1,8 +1,8 @@
 {
   "skills": [
     {
-      "name": "box-and-birdhouse",
-      "version": "0a66dac67402",
+      "name": "box-maker",
+      "version": "255cece1065a",
       "files": [
         "SKILL.md",
         "birdhouse.py",
@@ -60,7 +60,7 @@
     },
     {
       "name": "laser-ready",
-      "version": "17f7d32fee47",
+      "version": "868a1495084d",
       "files": [
         "SKILL.md",
         "ensure-runtime.ps1",

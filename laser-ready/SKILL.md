@@ -92,7 +92,7 @@ Nothing to install beyond the sandbox: the converter is standard library only â€
 no Inkscape, no Python packages â€” and it runs on the class Python sandbox (see
 Setup), so the file comes out the same on every machine. The hairline is spelled
 the way Inkscape reads it, so opening it there afterwards behaves; the
-`box-and-birdhouse` skill shares the same sandbox for its engraving.
+`box-maker` skill shares the same sandbox for its engraving.
 
 ## Finger joints that fit
 

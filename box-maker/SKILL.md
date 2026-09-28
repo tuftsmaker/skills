@@ -1,19 +1,20 @@
 ---
-name: box-and-birdhouse
-description: Generate a laser-ready, finger-jointed box or birdhouse — an open tray with a slip-on lid, or a gabled birdhouse with an entrance hole — from its dimensions. Output is one SVG of the flat panels in pure-red hairlines, ready for the laser at Nolop. Use when a student asks for a box, tray, enclosure, drawer or birdhouse to cut, wants one sized to given dimensions, needs finger joints sized to the material, or wants a laser file for a lidded box or a bird box.
+name: box-maker
+description: Generate the flat panels for a laser-ready, finger-jointed box — an open tray with a slip-on lid by default — or any custom part composed from the same joint primitives, such as a divider or the gabled birdhouse that ships as a worked example. Output is one SVG of pure-red hairlines on a millimetre page at true size, ready for the laser at Nolop. Use when a student asks for a box, tray, enclosure, drawer or birdhouse to cut, or wants finger joints sized to the material.
 ---
 
-# Make a laser-ready box or birdhouse
+# Make laser-ready, finger-jointed parts
 
-This generates the flat panels for a finger-jointed **box** — an open tray, and by
-default a slip-on lid — or a gabled **birdhouse**, from a few dimensions. Either
-way the result is one SVG in the colours the laser reads: pure red `#ff0000`, no
-fill, hairline, on a millimetre page at true size. Cut it and the parts slot
-together; no glue needed on the joints.
+From a few dimensions, this generates the flat panels for a finger-jointed
+**box** — an open tray, and by default a slip-on lid. The result is one SVG in
+the colours the laser reads: pure red `#ff0000`, no fill, hairline, on a
+millimetre page at true size. Cut it and the parts slot together; no glue
+needed on the joints.
 
-Two commands: `box.py` (tray and lid) and `birdhouse.py` (walls, floor, gable
-roof, entrance hole). They share the same joint rules and the same material
-default.
+The box is the common case and has a command of its own. Anything else — a
+divider, a custom enclosure, a birdhouse — is the same joint rules composed in
+a few lines against the **box API**; `birdhouse.py` ships as the worked example
+of that, and it is where the engraving lives.
 
 ## What to ask for
 
@@ -40,7 +41,7 @@ so a box whose panels cannot share one sheet is flagged, not silently written.
 ## Setup
 
 Resolve this skill's own folder from this file's location — opencode installs
-it somewhere like `~/.cache/opencode/skills/box-and-birdhouse` — and do not
+it somewhere like `~/.cache/opencode/skills/box-maker` — and do not
 assume the current directory:
 
 ```bash
@@ -65,7 +66,7 @@ engraving) and PyYAML. If the sandbox cannot download — no internet, or a
 locked-down machine — say so and point at the setup guide:
 <https://tuftsmaker.github.io/ENT-164/opencode-deepseek-guide/guide.html>.
 
-## Run it
+## Run it — a box
 
 ```bash
 PY="$HOME/.venvs/ent164-maker/bin/python"   # Windows: PY="$HOME\.venvs\ent164-maker\Scripts\python.exe"
@@ -87,28 +88,78 @@ The geometry is standard library only; with the sandbox set up (see Setup),
 a plain box needs nothing else. (`-h` is help; the height flag is `-H` or
 `--height`.)
 
-## Skilled at Python
+## Making your own part — the box API
 
-The generators are ordinary Python modules, so the agent can import them and
-compose a part that is not a plain box or birdhouse — a tray with a divider, a
-one-off panel — from the same proven pieces, instead of this skill growing a flag
-for every shape. Run the composition on the sandbox interpreter too (see Setup);
-the useful names:
+The generator is an ordinary Python module, and a part the command does not
+know is meant to be composed from its primitives, not to become another flag.
+Write a small script: build the panels, then `layout` them, then `svg` them.
+Run it on the sandbox interpreter too (see Setup). The useful names:
 
 | function | what it gives you |
 | --- | --- |
-| `box.finger_intervals(length, width)` | where the fingers sit along an edge |
-| `box.combed_edge(p0, p1, normal, intervals, depth, width, "tab"\|"slot", fit)` | one edge with a comb on it |
-| `box.tray_panels(...)` / `box.build` | the tray's panels / the whole laid-out job |
-| `box.layout(panels)` | pack panels into rows that fit the bed |
-| `box.fits_bed(w, h)` | does that page fit the Nolop bed |
-| `birdhouse.birdhouse_panels(...)` | the birdhouse's panels |
-| `birdhouse.render_text_png(text, height_mm)` | the engraved mark as a PNG |
+| `box.finger_intervals(length, width)` | where the fingers sit along an edge, with a butt at each end |
+| `box.combed_edge(p0, p1, normal, intervals, depth, width, kind, fit)` | one edge with a comb on it (`kind` is `"tab"` or `"slot"`) |
+| `box.tray_panels(length, width, height, thick, finger, fit)` | the tray's base and four walls, in assembly coordinates |
+| `box.layout(panels, margin=8, spacing=6)` | shelf-pack the panels into rows → `(placed, page_w, page_h)` |
+| `box.fits_bed(page_w, page_h)` | does that page fit the Nolop bed → `(ok, message)` |
+| `box.svg(placed, page_w, page_h)` | the finished SVG text |
+| `birdhouse.birdhouse_panels(...)` | the worked example's panels |
+| `birdhouse.render_text_png(text, height_mm)` | the engraved mark as a PNG (Pillow) |
 
 Import them by adding this skill's folder to `sys.path`. Keep to these pieces:
-they carry the joint rules (a finger is one thickness wide and never deeper, tabs
-and slots match, no doubled cuts), which is the part that is easy to get wrong by
-hand.
+they carry the joint rules (a finger is one thickness wide and never deeper,
+tabs and slots match, no doubled cuts), which is the part that is easy to get
+wrong by hand. `birdhouse.py` is the worked example of the whole pattern: its
+`birdhouse_panels()` and `build()` show a custom part end to end, roof slopes
+and entrance hole included.
+
+## Worked example — the birdhouse
+
+`birdhouse.py` makes a jointed birdhouse: four walls, a floor, a **gable roof**
+of two slopes, and a **round entrance hole** in the front. Same material
+default (3 mm) and the same bed check as the box. It is an example, not a
+second product — copy its pattern for a part of your own.
+
+Ask for **width**, **depth**, **wall height** and the **ridge** (apex height
+above the floor — the gable rise is `ridge − wall height`). The entrance
+`--hole` defaults to 35 mm (`0` for none); a bluebird box wants ~32 mm, a house
+sparrow ~35 mm, and too large lets starlings in.
+
+```bash
+SKILL="<directory containing this SKILL.md>"
+PY="$HOME/.venvs/ent164-maker/bin/python"   # Windows: PY="$HOME\.venvs\ent164-maker\Scripts\python.exe"
+"$PY" "$SKILL/birdhouse.py" --width 130 --depth 110 --wall-height 110 --ridge 160
+```
+
+That writes `birdhouse-laser-ready.svg` (534 × 292 mm — fits the Nolop bed),
+with a 35 mm hole. Variations:
+
+```bash
+PY="$HOME/.venvs/ent164-maker/bin/python"   # Windows: PY="$HOME\.venvs\ent164-maker\Scripts\python.exe"
+"$PY" "$SKILL/birdhouse.py" -w 130 -d 110 --wall-height 110 --ridge 160 -o out/box.svg
+"$PY" "$SKILL/birdhouse.py" -w 130 -d 110 --wall-height 110 --ridge 160 --hole 32
+"$PY" "$SKILL/birdhouse.py" -w 130 -d 110 --wall-height 110 --ridge 160 --engrave
+"$PY" "$SKILL/birdhouse.py" ... --open           # show it in the browser
+```
+
+`--engrave` (with no value) puts **ENT-164** on the front, below the entrance
+hole; `--engrave "TEXT"` engraves something else. The text is rendered with a
+real system font in **pure black**, which the laser *rasters* (engraves) —
+against the **pure red** hairlines it cuts — and is sized to fit the front panel,
+shrinking if needed. White stays unengraved, so only the letterforms are marked.
+Engraving is the only part that needs a package — **Pillow** — and the class
+sandbox already has it (see Setup), so there is nothing to install; the
+geometry is standard library only.
+
+How it fits: the **floor** tabs into slots in all four walls; the two **gable
+ends** are full width with a peak to the ridge, and the **front and back** sit
+between them, tabbing into the gable slots; the **roof** is two plain slopes that
+rest on the gable peaks (glue or screw them — the jointed shell holds it
+together). The entrance hole is cut as a loop inside the front panel, not as a
+separate piece on the sheet. Hang it with the hole high on the front, no perch
+below it, facing away from the prevailing weather. If a birdhouse does not fit
+the bed, reduce the size or the ridge — the script prints the same
+`bed :`/`CHECK :` line as the box.
 
 ## What you get, and how it fits
 
@@ -129,55 +180,3 @@ If you drew the part yourself instead, the `laser-ready` skill turns an Onshape
 DXF export into the same red-hairline format; and the
 [laser-cutting guide](https://tuftsmaker.github.io/ENT-164/laser-cutting/) walks
 through the Inkscape → UCP → laser steps.
-
----
-
-# The birdhouse
-
-`birdhouse.py` makes a jointed birdhouse: four walls, a floor, a **gable roof**
-of two slopes, and a **round entrance hole** in the front. Same material default
-(3 mm) and the same bed check as the box.
-
-Ask for **width**, **depth**, **wall height** and the **ridge** (apex height
-above the floor — the gable rise is `ridge − wall height`). The entrance
-`--hole` defaults to 35 mm (`0` for none); a bluebird box wants ~32 mm, a house
-sparrow ~35 mm, and too large lets starlings in.
-
-```bash
-SKILL="<directory containing this SKILL.md>"
-PY="$HOME/.venvs/ent164-maker/bin/python"   # Windows: PY="$HOME\.venvs\ent164-maker\Scripts\python.exe"
-"$PY" "$SKILL/birdhouse.py" --width 130 --depth 110 --wall-height 110 --ridge 160
-```
-
-That writes `birdhouse-laser-ready.svg` (534 × 292 mm — fits the Nolop bed), with
-a 35 mm hole. Variations:
-
-```bash
-PY="$HOME/.venvs/ent164-maker/bin/python"   # Windows: PY="$HOME\.venvs\ent164-maker\Scripts\python.exe"
-"$PY" "$SKILL/birdhouse.py" -w 130 -d 110 --wall-height 110 --ridge 160 -o out/box.svg
-"$PY" "$SKILL/birdhouse.py" -w 130 -d 110 --wall-height 110 --ridge 160 --hole 32
-"$PY" "$SKILL/birdhouse.py" -w 130 -d 110 --wall-height 110 --ridge 160 --engrave
-"$PY" "$SKILL/birdhouse.py" ... --open           # show it in the browser
-```
-
-`--engrave` (with no value) puts **ENT-164** on the front, below the entrance
-hole; `--engrave "TEXT"` engraves something else. The text is rendered with a
-real system font in **pure black**, which the laser *rasters* (engraves) —
-against the **pure red** hairlines it cuts — and is sized to fit the front panel,
-shrinking if needed. White stays unengraved, so only the letterforms are marked.
-
-Engraving is the only part that needs a package — **Pillow**, which rasterises
-the letters — and the class sandbox already has it (see Setup), so there is
-nothing to install. The geometry is standard library only. Neither ever looks
-at the student's own Python.
-
-How it fits: the **floor** tabs into slots in all four walls; the two **gable
-ends** are full width with a peak to the ridge, and the **front and back** sit
-between them, tabbing into the gable slots; the **roof** is two plain slopes that
-rest on the gable peaks (glue or screw them — the jointed shell holds it
-together). The entrance hole is cut as a loop inside the front panel, not as a
-separate piece on the sheet. Hang it with the hole high on the front, no perch
-below it, facing away from the prevailing weather.
-
-If a birdhouse does not fit the bed, reduce the size or the ridge — the script
-prints the same `bed :`/`CHECK :` line as the box.

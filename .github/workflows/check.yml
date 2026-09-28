@@ -45,8 +45,8 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq fonts-dejavu-core
           PY="$HOME/.venvs/ent164-maker/bin/python"
-          "$PY" box-and-birdhouse/box.py --length 150 --width 100 --height 60 -o /tmp/box.svg
-          "$PY" box-and-birdhouse/birdhouse.py --engrave -o /tmp/birdhouse.svg
+          "$PY" box-maker/box.py --length 150 --width 100 --height 60 -o /tmp/box.svg
+          "$PY" box-maker/birdhouse.py --engrave -o /tmp/birdhouse.svg
           grep -q 'data:image/png;base64' /tmp/birdhouse.svg
 
   windows:

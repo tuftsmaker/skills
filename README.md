@@ -1,8 +1,8 @@
 # TuftsMaker class skills
 
 The ENT-164 *Intro to Making* skills for [opencode](https://opencode.ai) —
-breadboard wiring diagrams, laser-ready files, and box/birdhouse generators
-that students run on their own machines.
+breadboard wiring diagrams, laser-ready files, and finger-jointed boxes that
+students run on their own machines.
 
 Served by GitHub Pages and consumed through opencode's `skills.urls`:
 
@@ -19,7 +19,7 @@ Students add that URL to opencode once (the class setup guide and the
 | --- | --- | --- |
 | `breadboard-wiring` | breadboard wiring diagrams for the Freenove ESP32-WROVER / FNK0046 kit (SVG + PNG) | PyYAML |
 | `laser-ready` | turns an Onshape DXF into the pure-red hairline SVG the Nolop laser reads; cuts finger joints | stdlib only |
-| `box-and-birdhouse` | finger-jointed trays, lids and birdhouses, laser-ready | Pillow (engraving) |
+| `box-maker` | finger-jointed boxes and custom parts — tray + lid by command, anything else from the API; the birdhouse is the worked example | Pillow (engraving) |
 
 **This repo is the source of truth.** There is no separate source tree and no
 build output to keep in sync — edit a skill file, run `rebuild.sh`, commit,
