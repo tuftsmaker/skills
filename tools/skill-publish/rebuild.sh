@@ -18,7 +18,7 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="$(dirname "$(dirname "$HERE")")"
 SKILLS="$REPO"
 
-if [ ! -f "$SKILLS/maker/SKILL.md" ]; then
+if [ ! -f "$SKILLS/breadboard-wiring/SKILL.md" ]; then
   echo "error: no skills at $SKILLS" >&2
   exit 1
 fi
@@ -33,7 +33,7 @@ fi
 # download skills independently, so each must carry it), which means the
 # copies must stay identical — a drifted copy is a different runtime.
 for name in ensure-runtime.sh ensure-runtime.ps1; do
-  ref="$SKILLS/maker/$name"
+  ref="$SKILLS/breadboard-wiring/$name"
   [ -f "$ref" ] || continue
   for copy in "$SKILLS"/*/"$name"; do
     [ -f "$copy" ] || continue

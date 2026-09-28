@@ -13,7 +13,7 @@ tray — sized to drop over the box with a little clearance.
 
 The output is one SVG whose cut lines are **pure red `#ff0000`, unfilled,
 hairline**, on a millimetre page at true size, so it goes straight to the laser
-at Nolop (the same conventions the `maker-tasks` skill checks for).
+at Nolop (the same conventions the `laser-ready` skill produces).
 
 The fit
 -------

@@ -1,8 +1,8 @@
 {
   "skills": [
     {
-      "name": "box",
-      "version": "67cb96b6e5ac",
+      "name": "box-and-birdhouse",
+      "version": "0a66dac67402",
       "files": [
         "SKILL.md",
         "birdhouse.py",
@@ -13,8 +13,8 @@
       ]
     },
     {
-      "name": "maker",
-      "version": "e1c719f98b71",
+      "name": "breadboard-wiring",
+      "version": "139ccf4ad5fd",
       "files": [
         "SKILL.md",
         "bbd/__init__.py",
@@ -59,8 +59,8 @@
       ]
     },
     {
-      "name": "maker-tasks",
-      "version": "daa3ef4eda49",
+      "name": "laser-ready",
+      "version": "17f7d32fee47",
       "files": [
         "SKILL.md",
         "ensure-runtime.ps1",

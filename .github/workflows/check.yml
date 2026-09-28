@@ -25,19 +25,19 @@ jobs:
           git diff --exit-code -- index.json
 
       - name: The sandbox bootstraps from nothing
-        run: sh maker/ensure-runtime.sh
+        run: sh breadboard-wiring/ensure-runtime.sh
 
       - name: A wiring diagram renders
         run: |
           PY="$HOME/.venvs/ent164-maker/bin/python"
-          "$PY" maker/render.py maker/circuits/led.yml \
+          "$PY" breadboard-wiring/render.py breadboard-wiring/circuits/led.yml \
             -o /tmp/led --no-png --no-open --no-gallery
           test -s /tmp/led.svg
 
       - name: A DXF becomes the laser file
         run: |
           PY="$HOME/.venvs/ent164-maker/bin/python"
-          "$PY" maker-tasks/laser/laser_svg.py tools/ci/part.dxf -o /tmp/part-laser.svg
+          "$PY" laser-ready/laser/laser_svg.py tools/ci/part.dxf -o /tmp/part-laser.svg
           grep -q 'inkscape-stroke:hairline' /tmp/part-laser.svg
 
       - name: A box and an engraved birdhouse generate
@@ -45,8 +45,8 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq fonts-dejavu-core
           PY="$HOME/.venvs/ent164-maker/bin/python"
-          "$PY" box/box.py --length 150 --width 100 --height 60 -o /tmp/box.svg
-          "$PY" box/birdhouse.py --engrave -o /tmp/birdhouse.svg
+          "$PY" box-and-birdhouse/box.py --length 150 --width 100 --height 60 -o /tmp/box.svg
+          "$PY" box-and-birdhouse/birdhouse.py --engrave -o /tmp/birdhouse.svg
           grep -q 'data:image/png;base64' /tmp/birdhouse.svg
 
   windows:
@@ -57,12 +57,12 @@ jobs:
 
       - name: The sandbox bootstraps from nothing
         shell: pwsh
-        run: powershell -ExecutionPolicy Bypass -File maker/ensure-runtime.ps1
+        run: powershell -ExecutionPolicy Bypass -File breadboard-wiring/ensure-runtime.ps1
 
       - name: A wiring diagram renders
         shell: pwsh
         run: |
           $py = Join-Path $HOME ".venvs\ent164-maker\Scripts\python.exe"
-          & $py maker/render.py maker/circuits/led.yml `
+          & $py breadboard-wiring/render.py breadboard-wiring/circuits/led.yml `
             -o "$env:TEMP\led" --no-png --no-open --no-gallery
           if (-not (Test-Path "$env:TEMP\led.svg")) { throw "no SVG was written" }

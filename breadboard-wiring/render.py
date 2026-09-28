@@ -41,7 +41,7 @@ DEFS = '''<defs>
 def load(path):
     if not os.path.exists(path):
         raise SystemExit(f"no such file: {path}")
-    with open(path) as f:
+    with open(path, encoding="utf-8") as f:
         text = f.read()
     if path.endswith(".json"):
         return json.loads(text)
@@ -532,13 +532,13 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
 def write_html(svg_path, html_path, title):
     """A zoomable, pannable wrapper around the SVG for a browser."""
     import re as _re
-    svg = open(svg_path).read()
+    svg = open(svg_path, encoding="utf-8").read()
     svg = _re.sub(r'<\?xml[^>]*\?>', '', svg)
     html = (HTML_TEMPLATE
             .replace('{title}', title or 'Wiring diagram')
             .replace('{svg_name}', os.path.basename(svg_path))
             .replace('{svg}', svg))
-    with open(html_path, 'w') as f:
+    with open(html_path, 'w', encoding="utf-8") as f:
         f.write(html)
 
 
@@ -574,14 +574,14 @@ def update_gallery(out_dir, base_name, title):
     items = []
     if os.path.exists(manifest_path):
         try:
-            items = _json.load(open(manifest_path))
+            items = _json.load(open(manifest_path, encoding="utf-8"))
         except Exception:
             items = []
     items = [i for i in items if i.get("name") != base_name]
     items.insert(0, {"name": base_name,
                      "title": title or base_name, "date": _today()})
     try:
-        with open(manifest_path, "w") as f:
+        with open(manifest_path, "w", encoding="utf-8") as f:
             _json.dump(items, f, indent=2)
     except Exception:
         return
@@ -616,7 +616,7 @@ def update_gallery(out_dir, base_name, title):
             "Click a picture to zoom and trace wires, or use the links for the "
             "plain PNG and the printable SVG.</p>"
             "</header><main>" + body + "</main></body></html>")
-    with open(os.path.join(out_dir, "gallery.html"), "w") as f:
+    with open(os.path.join(out_dir, "gallery.html"), "w", encoding="utf-8") as f:
         f.write(html)
 
 
@@ -645,7 +645,7 @@ def open_in_browser(path):
 def svg_size(path):
     """Read width/height attributes from the SVG header."""
     import re
-    with open(path) as f:
+    with open(path, encoding="utf-8") as f:
         head = f.read(400)
     w = re.search(r'width="(\d+)"', head)
     h = re.search(r'height="(\d+)"', head)
@@ -731,7 +731,7 @@ def main():
     os.makedirs(os.path.dirname(os.path.abspath(base)), exist_ok=True)
     base_name = os.path.basename(base) + ".html"
     svg_path = base + ".svg"
-    with open(svg_path, "w") as f:
+    with open(svg_path, "w", encoding="utf-8") as f:
         f.write(svg)
     print(f"wrote {svg_path}")
 

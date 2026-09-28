@@ -6,8 +6,8 @@ lives here so it lives with them.
 
 ## Publishing: one source, generated index
 
-- `maker/`, `maker-tasks/` and `box/` are the source of truth. `index.json` is
-  generated — never hand-edit it.
+- `breadboard-wiring/`, `laser-ready/` and `box-and-birdhouse/` are the source
+  of truth. `index.json` is generated — never hand-edit it.
 - After any skill edit: `./tools/skill-publish/rebuild.sh`, then commit and
   push. opencode re-downloads a skill only when its content-based `version`
   changes; editing without rebuilding means students silently keep the old
@@ -31,7 +31,7 @@ lives here so it lives with them.
   BOM-less `.ps1` as ANSI, so a UTF-8 em dash becomes a smart quote and the
   parser dies with a confusing "missing the terminator" error.
 - Nothing installs into or falls back to a student's own Python, even a
-  matching one. `box/env.py` only locates the sandbox.
+  matching one. `box-and-birdhouse/env.py` only locates the sandbox.
 
 ## Conventions that travel with the skills
 

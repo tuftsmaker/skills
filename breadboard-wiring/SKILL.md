@@ -1,5 +1,5 @@
 ---
-name: maker
+name: breadboard-wiring
 description: Generate beginner-friendly breadboard wiring diagrams (SVG + PNG) for the Freenove ESP32-WROVER / FNK0046 Super Starter Kit. Covers every part in the kit — LEDs, RGB LED, bar graph, 7-segment display, resistors, diodes, buttons, buzzers, speaker, transistors, potentiometer, photoresistor, thermistor, joystick, servo, TT motor, 9V battery, ultrasonic sensor, LCD1602, L298N driver, 74HC595 and the onboard camera. Use when asked for a wiring diagram, breadboard diagram, circuit diagram, Fritzing-style picture, jumper-wire instructions, or how to connect a part to an ESP32.
 ---
 
@@ -17,8 +17,8 @@ see the component table below.
 ## Setup
 
 Resolve this skill's own folder from this file's location — opencode installs
-it somewhere like `~/.cache/opencode/skills/maker` — and do not assume the
-current directory:
+it somewhere like `~/.cache/opencode/skills/breadboard-wiring` — and do not
+assume the current directory:
 
 ```bash
 SKILL="<directory containing this SKILL.md>"

@@ -245,7 +245,7 @@ def add_combs(src, out, seams, thickness, layer=LAYER, replace=True):
         parts.append(lwpolyline(pts, layer=layer))
         report.append(summarise(pts, start, end, thickness, fingers))
 
-    text = Path(src).read_text(errors="replace")
+    text = Path(src).read_text(encoding="utf-8", errors="replace")
     removed = 0
     if replace:
         text, removed = _strip_collinear_lines(
@@ -254,7 +254,7 @@ def add_combs(src, out, seams, thickness, layer=LAYER, replace=True):
     if at is None:
         raise dxf_reader.DxfError("no ENTITIES section found")
     text = text[:at] + "".join(parts) + text[at:]
-    Path(out).write_text(text)
+    Path(out).write_text(text, encoding="utf-8")
     return Path(out), report, drawing, removed
 
 

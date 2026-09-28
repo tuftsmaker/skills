@@ -17,9 +17,9 @@ Students add that URL to opencode once (the class setup guide and the
 
 | skill | what it does | packages |
 | --- | --- | --- |
-| `maker` | breadboard wiring diagrams for the Freenove ESP32-WROVER / FNK0046 kit (SVG + PNG) | PyYAML |
-| `maker-tasks` | turns an Onshape DXF into the pure-red hairline SVG the Nolop laser reads; cuts finger joints | stdlib only |
-| `box` | finger-jointed trays, lids and birdhouses, laser-ready | Pillow (engraving) |
+| `breadboard-wiring` | breadboard wiring diagrams for the Freenove ESP32-WROVER / FNK0046 kit (SVG + PNG) | PyYAML |
+| `laser-ready` | turns an Onshape DXF into the pure-red hairline SVG the Nolop laser reads; cuts finger joints | stdlib only |
+| `box-and-birdhouse` | finger-jointed trays, lids and birdhouses, laser-ready | Pillow (engraving) |
 
 **This repo is the source of truth.** There is no separate source tree and no
 build output to keep in sync — edit a skill file, run `rebuild.sh`, commit,
@@ -35,7 +35,7 @@ one.
 
 ```bash
 # 1. change something
-$EDITOR maker/circuits/led.yml
+$EDITOR breadboard-wiring/circuits/led.yml
 
 # 2. rebuild the index (rewrites index.json only)
 ./tools/skill-publish/rebuild.sh

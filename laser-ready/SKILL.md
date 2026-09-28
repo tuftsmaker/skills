@@ -1,5 +1,5 @@
 ---
-name: maker-tasks
+name: laser-ready
 description: Turn a DXF exported from Onshape into the laser-ready SVG that Nolop's laser cutter reads — pure-red hairlines, no fill, millimetres at true size. Use when a student asks how to prepare a part for laser cutting, wants the red-hairline SVG the cutter takes, needs a DXF turned into a cut file, asks how to set the colours UCP reads, or has an Onshape DXF export that needs to reach the laser.
 ---
 
@@ -32,7 +32,7 @@ the page they wrote, and a page larger than the bed will not cut in one piece:
 ## Setup
 
 Resolve this skill's own folder from this file's location — opencode installs
-it somewhere like `~/.cache/opencode/skills/maker-tasks` — and do not assume
+it somewhere like `~/.cache/opencode/skills/laser-ready` — and do not assume
 the current directory:
 
 ```bash
@@ -91,8 +91,8 @@ joint landed on the right edge and the size is right.
 Nothing to install beyond the sandbox: the converter is standard library only —
 no Inkscape, no Python packages — and it runs on the class Python sandbox (see
 Setup), so the file comes out the same on every machine. The hairline is spelled
-the way Inkscape reads it, so opening it there afterwards behaves; the `box`
-skill shares the same sandbox for its engraving.
+the way Inkscape reads it, so opening it there afterwards behaves; the
+`box-and-birdhouse` skill shares the same sandbox for its engraving.
 
 ## Finger joints that fit
 

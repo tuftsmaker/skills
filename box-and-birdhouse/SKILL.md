@@ -1,5 +1,5 @@
 ---
-name: box
+name: box-and-birdhouse
 description: Generate a laser-ready, finger-jointed box or birdhouse — an open tray with a slip-on lid, or a gabled birdhouse with an entrance hole — from its dimensions. Output is one SVG of the flat panels in pure-red hairlines, ready for the laser at Nolop. Use when a student asks for a box, tray, enclosure, drawer or birdhouse to cut, wants one sized to given dimensions, needs finger joints sized to the material, or wants a laser file for a lidded box or a bird box.
 ---
 
@@ -40,8 +40,8 @@ so a box whose panels cannot share one sheet is flagged, not silently written.
 ## Setup
 
 Resolve this skill's own folder from this file's location — opencode installs
-it somewhere like `~/.cache/opencode/skills/box` — and do not assume the
-current directory:
+it somewhere like `~/.cache/opencode/skills/box-and-birdhouse` — and do not
+assume the current directory:
 
 ```bash
 SKILL="<directory containing this SKILL.md>"
@@ -125,7 +125,7 @@ hand.
 ## Checking it and cutting it
 
 Open the SVG in a browser or in Inkscape to see the panels and confirm the size.
-If you drew the part yourself instead, the `maker-tasks` skill turns an Onshape
+If you drew the part yourself instead, the `laser-ready` skill turns an Onshape
 DXF export into the same red-hairline format; and the
 [laser-cutting guide](https://tuftsmaker.github.io/ENT-164/laser-cutting/) walks
 through the Inkscape → UCP → laser steps.
