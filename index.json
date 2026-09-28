@@ -1,8 +1,20 @@
 {
   "skills": [
     {
+      "name": "box",
+      "version": "a7fcd920fd3d",
+      "files": [
+        "SKILL.md",
+        "birdhouse.py",
+        "box.py",
+        "ensure-runtime.ps1",
+        "ensure-runtime.sh",
+        "env.py"
+      ]
+    },
+    {
       "name": "maker",
-      "version": "5ac634175c67",
+      "version": "d28927e0253b",
       "files": [
         "SKILL.md",
         "bbd/__init__.py",
@@ -41,36 +53,22 @@
         "circuits/speaker.yml",
         "circuits/thermistor.yml",
         "circuits/ultrasonic.yml",
+        "ensure-runtime.ps1",
+        "ensure-runtime.sh",
         "render.py"
       ]
     },
     {
       "name": "maker-tasks",
-      "version": "3871a022e189",
+      "version": "84fb0e19c2df",
       "files": [
         "SKILL.md",
-        "check/check_submission.py",
-        "check/checks.py",
-        "check/cli.py",
-        "check/dxf_reader.py",
-        "check/geom.py",
-        "check/laser_svg.py",
-        "check/report.py",
-        "check/runner.py",
-        "tasks/cad-01-first-sketch.yml",
-        "tasks/cad-02-update-dimension.yml",
-        "tasks/cad-03-cut-a-hole.yml",
-        "tasks/cad-04-center-a-hole.yml",
-        "tasks/cad-05-corner-hole.yml",
-        "tasks/cad-06-mirror.yml",
-        "tasks/cad-07-trim-tool.yml",
-        "tasks/cad-08-laser-joints.yml",
-        "tasks/cad-09-laser-ready.yml",
-        "tasks/unit-connected-device.yml",
-        "tasks/unit-intelligent-device.yml",
-        "tasks/unit-laser-ready.yml",
-        "tasks/unit-print-ready.yml",
-        "tasks/unit-working-circuit.yml"
+        "ensure-runtime.ps1",
+        "ensure-runtime.sh",
+        "laser/dxf_reader.py",
+        "laser/finger_joints.py",
+        "laser/geom.py",
+        "laser/laser_svg.py"
       ]
     }
   ]

@@ -14,18 +14,40 @@ The board drawing is written once in `boards/`. A new lesson is a ~20-line
 YAML file in `circuits/`. Everything the FNK0046 kit contains is supported —
 see the component table below.
 
-## Setup check
+## Setup
 
-Run these first; they are cheap and the failure messages are otherwise confusing:
+Resolve this skill's own folder from this file's location — opencode installs
+it somewhere like `~/.cache/opencode/skills/maker` — and do not assume the
+current directory:
 
 ```bash
-command -v python3
-python3 -c "import yaml" || echo "no pyyaml — JSON circuits still work"
+SKILL="<directory containing this SKILL.md>"
+```
+
+Then bring up the **class Python sandbox**: one pinned, private Python that
+every class skill shares. Nothing depends on the student's own Python and
+nothing is ever installed into it. Run this once per machine — it is cheap to
+re-run, and re-running repairs a broken sandbox:
+
+```bash
+sh "$SKILL/ensure-runtime.sh"                                          # macOS / Linux
+powershell -ExecutionPolicy Bypass -File "$SKILL\ensure-runtime.ps1"   # Windows
+```
+
+Its last line is `ENT164_PYTHON=…`: use exactly that interpreter for every
+command below. On macOS and Linux it is
+`"$HOME/.venvs/ent164-maker/bin/python"`, on Windows
+`"$HOME\.venvs\ent164-maker\Scripts\python.exe"`. It comes with PyYAML, so
+`.yml` circuits work.
+
+Only the rasteriser lives outside the sandbox — check it once too:
+
+```bash
 command -v rsvg-convert qlmanage
 ```
 
-- PyYAML is optional. `.yml` circuits need it (`python3 -m pip install --user pyyaml`); `.json` circuits work with no installs at all.
 - `rsvg-convert` (librsvg) is the preferred rasteriser. If it is missing the renderer falls back to `qlmanage` (macOS) or headless Chrome, and otherwise still writes the SVG.
+- If the sandbox cannot download — no internet, or a locked-down machine — say so and point at the setup guide: <https://tuftsmaker.github.io/ENT-164/opencode-deepseek-guide/guide.html>.
 
 ## Run it
 
@@ -39,22 +61,20 @@ looks at the new PNG inline in the reply). If a folder happens to be served
 over loopback, the page notices its SVG changing and updates itself in place,
 but that is a convenience only — never a requirement.
 
-The skill lives wherever opencode installed it (often
-`~/.cache/opencode/skills/maker`). Resolve that path from this file's
-location — do not assume the current directory:
-
 ```bash
 SKILL="<directory containing this SKILL.md>"
-python3 "$SKILL/render.py" "$SKILL/circuits/led.yml" -o out/led
+PY="$HOME/.venvs/ent164-maker/bin/python"   # Windows: PY="$HOME\.venvs\ent164-maker\Scripts\python.exe"
+"$PY" "$SKILL/render.py" "$SKILL/circuits/led.yml" -o out/led
 ```
 
 Writes `out/led.svg` and `out/led.png` **into the current project directory**
 (never into the skill directory). Also useful:
 
 ```bash
-render.py --list                       # boards and example circuits
-render.py circuits/led.yml --no-png    # SVG only
-render.py circuits/led.yml --scale 2   # bigger PNG
+PY="$HOME/.venvs/ent164-maker/bin/python"   # Windows: PY="$HOME\.venvs\ent164-maker\Scripts\python.exe"
+"$PY" "$SKILL/render.py" --list                       # boards and example circuits
+"$PY" "$SKILL/render.py" "$SKILL/circuits/led.yml" --no-png    # SVG only
+"$PY" "$SKILL/render.py" "$SKILL/circuits/led.yml" --scale 2   # bigger PNG
 ```
 
 ## Show the result inline
@@ -81,8 +101,9 @@ to the default browser (macOS `open`, Windows `start`, Linux `xdg-open`) — zoo
 pan and print, no settings or local server required:
 
 ```bash
-python3 "$SKILL/render.py" my-circuit.yml -o out/my-circuit            # opens it
-python3 "$SKILL/render.py" my-circuit.yml -o out/my-circuit --no-open  # batch
+PY="$HOME/.venvs/ent164-maker/bin/python"   # Windows: PY="$HOME\.venvs\ent164-maker\Scripts\python.exe"
+"$PY" "$SKILL/render.py" my-circuit.yml -o out/my-circuit            # opens it
+"$PY" "$SKILL/render.py" my-circuit.yml -o out/my-circuit --no-open  # batch
 ```
 
 This is the reliable route in the desktop app: a plain markdown link to a local

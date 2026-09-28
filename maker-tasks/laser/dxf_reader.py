@@ -42,8 +42,8 @@ class Entity:
     centre: tuple | None = None
     is_circle: bool = False
     handle: str | None = None
-    # Arcs keep their parameters as well as their tessellation: the checks work
-    # from the points, but writing a real SVG arc (rather than a many-point
+    # Arcs keep their parameters as well as their tessellation: the converter
+    # works from the points, but writing a real SVG arc (rather than a many-point
     # polyline) needs the centre, radius and angles. None on every other kind.
     a0: float | None = None  # start angle, degrees, CCW from +X
     a1: float | None = None  # end angle, degrees

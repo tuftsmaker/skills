@@ -1,7 +1,7 @@
-"""Geometry helpers for the task checks.
+"""Geometry helpers for the DXF reader and the laser-ready converter.
 
 Pure standard library on purpose: the same code runs on a student's laptop
-through the `maker-tasks` skill and on the TA's machine, with no installs.
+through the `maker-tasks` skill, with no installs.
 
 Everything is in millimetres. Tolerances are millimetres too.
 """

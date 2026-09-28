@@ -1,16 +1,22 @@
 #!/usr/bin/env python3
 """Convert an Onshape sketch DXF into a laser-ready SVG of pure-red hairlines.
 
-    python3 check/laser_svg.py part.dxf
-    python3 check/laser_svg.py part.dxf -o part-laser-ready.svg
-    python3 check/laser_svg.py part.dxf --margin 5
+    python3 laser/laser_svg.py part.dxf
+    python3 laser/laser_svg.py part.dxf -o part-laser-ready.svg
+    python3 laser/laser_svg.py part.dxf --margin 5
 
 Why this exists
 ---------------
-The checker tells you the DXF is *ready*. This turns it into the file the laser
-actually takes: an SVG whose cut lines are pure red, unfilled and hairline — the
-three things UCP reads (see `laser-cutting/guide.html`, "Set the colours the
-laser reads").
+This turns an Onshape DXF export into the file the laser actually takes: an SVG
+whose cut lines are pure red, unfilled and hairline — the three things UCP reads
+(see `laser-cutting/guide.html`, "Set the colours the laser reads").
+
+About the bed at Nolop
+----------------------
+The laser at Nolop cuts stock up to about 3 mm — the store sells 3 mm plywood and
+acrylic precut to the bed — and the bed is 300 x 600 mm (about 12 x 24 inches).
+The page printed below is the part plus its margin; if that page is larger than
+the bed, the file has to be rearranged or scaled, so a CHECK line says so.
 
 The rules, and where they come from
 -----------------------------------
@@ -55,8 +61,8 @@ sys.path.insert(0, str(HERE))
 import dxf_reader  # noqa: E402
 from dxf_reader import _near  # noqa: E402  (shared point tolerance)
 
-# $INSUNITS codes -> millimetres. Onshape writes none at all (normal, and why
-# the checker infers the unit from the stated size); a missing value is mm.
+# $INSUNITS codes -> millimetres. Onshape writes none at all; a missing value is
+# treated as millimetres, which is what the class exports in.
 INSUNITS_TO_MM = {
     "1": 25.4,    # inches
     "2": 304.8,   # feet
@@ -69,6 +75,9 @@ INSUNITS_TO_MM = {
 # docstring: `stroke-width="hairline"` alone is not it, and renders at 1 mm.
 HAIRLINE = ("stroke-width:1px;vector-effect:non-scaling-stroke;"
             "-inkscape-stroke:hairline")
+
+# The laser at Nolop: bed 300 x 600 mm (about 12 x 24 inches), stock up to ~3 mm.
+BED_MM = (300.0, 600.0)
 
 CUT_STYLE = ("fill:none;stroke:#ff0000;stroke-opacity:1;"
              "stroke-linejoin:round;stroke-linecap:round;" + HAIRLINE)
@@ -302,8 +311,7 @@ def build_svg(entities, header, margin, source_name):
 def convert(dxf_path, out_path=None, margin=0.0):
     """DXF -> laser-ready SVG. Returns (out_path, report, notes).
 
-    Raises dxf_reader.DxfError when the file has no usable geometry, with the
-    same wording the checker uses so a student sees one story.
+    Raises dxf_reader.DxfError when the file has no usable geometry.
     """
     dxf_path = Path(dxf_path)
     drawing = dxf_reader.read(dxf_path)
@@ -336,6 +344,8 @@ def main(argv=None) -> int:
                     "(default: <name>-laser-ready.svg beside the DXF)")
     ap.add_argument("--margin", type=float, default=0.0,
                     help="margin around the part, in mm (default 0)")
+    ap.add_argument("--open", action="store_true",
+                    help="open the written SVG in the browser to preview it")
     args = ap.parse_args(argv)
 
     try:
@@ -366,7 +376,24 @@ def main(argv=None) -> int:
               f"duplicate in Onshape")
     if rep["off_layer"]:
         print(f"CHECK       : geometry on unexpected layers: {rep['off_layer']}")
+    short, long_ = min(BED_MM), max(BED_MM)
+    if not ((rep["page_w"] <= long_ + 0.01 and rep["page_h"] <= short + 0.01)
+            or (rep["page_h"] <= long_ + 0.01 and rep["page_w"] <= short + 0.01)):
+        print(f"CHECK       : the page is {rep['page_w']:.0f} x {rep['page_h']:.0f} "
+              f"mm, larger than the Nolop bed ({short:g} x {long_:g} mm) — "
+              f"rearrange or scale the part before cutting")
     print(f"wrote       : {out}")
+    if args.open:
+        import platform
+        import subprocess
+        url = Path(out).resolve().as_uri()
+        try:
+            subprocess.Popen(
+                ["open", url] if platform.system() == "Darwin"
+                else ["cmd", "/c", "start", "", url] if platform.system() == "Windows"
+                else ["xdg-open", url])
+        except Exception:
+            pass
     return 0
 
 

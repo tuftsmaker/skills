@@ -1,161 +1,174 @@
 ---
 name: maker-tasks
-description: Self-check a maker task submission before handing it in for signoff, and turn a DXF into a laser-ready SVG. Use when a student asks whether their DXF is laser-ready, wants to check a task file against the task's criteria, needs to build the submission folder (DXF + manifest.md) for a CAD/laser task, asks what is left to fix in a sketch they exported from Onshape, or wants the red-hairline SVG the laser cutter reads.
+description: Turn a DXF exported from Onshape into the laser-ready SVG that Nolop's laser cutter reads — pure-red hairlines, no fill, millimetres at true size. Use when a student asks how to prepare a part for laser cutting, wants the red-hairline SVG the cutter takes, needs a DXF turned into a cut file, asks how to set the colours UCP reads, or has an Onshape DXF export that needs to reach the laser.
 ---
 
-# Maker skill tasks — check your own work first
+# Prepare a DXF for the laser
 
-ENT-164 turns maker skills into **tasks**: each one is a short video, something
-you make, and a file you hand in. A TA signs the task off against written
-criteria — and the same criteria are checked here, on your own machine, before
-you submit. Nothing is sent anywhere when you run this.
+This helper turns the DXF you exported from Onshape into the SVG the laser at
+Nolop actually takes: cut lines in pure red, nothing filled, hairline strokes,
+and a millimetre page so the part imports at its true size.
 
-The tasks live at <https://tuftsmaker.github.io/ENT-164/tasks/>, which opens with
-a map of the whole qualification, and the five tracks the course is building
-out. One track is open now; the others are written down but not yet available.
+It is a helper, not a grader — it does not score you or check you off. It makes
+the file and tells you what it did. The
+[laser-cutting guide](https://tuftsmaker.github.io/ENT-164/laser-cutting/)
+walks through the same preparation by hand in Inkscape, if you would rather see
+every step.
 
-## Run the check
+## The Nolop material and bed
 
-The checker is part of this skill, so there is nothing to install. Resolve the
-skill's own folder from this file's location (opencode puts it somewhere like
-`~/.cache/opencode/skills/maker-tasks`) — do not assume the current directory:
+The laser at Nolop cuts stock up to about 3 mm, and the store sells **3 mm**
+plywood and acrylic precut to the bed — so unless a student says they are using
+their own material, **assume 3 mm**. That is the finger width and the slot depth
+for a joint. If they have measured it with calipers, use their number.
 
-```bash
-SKILL="<directory containing this SKILL.md>"
-python3 "$SKILL/check/cli.py" --task cad-03-cut-a-hole part.dxf
-```
+The bed is **300 × 600 mm** (about 12 × 24 inches). Both tools report the size of
+the page they wrote, and a page larger than the bed will not cut in one piece:
 
-The report tells you one of three things for each criterion:
+- `laser_svg.py` prints the `page size` line.
+- `finger_joints.py` warns with a `CHECK` line when the jointed drawing is bigger
+  than the bed.
 
-- `[ok]` — it passes
-- `[FIX]` — it does not; the line under it says what to change in Onshape
-- `[?]` — a person will judge this one (a photo, your Onshape link)
+## Setup
 
-Fix everything marked `[FIX]`, then hand in. A submission with a `[?]` is fine —
-that is the part a TA looks at.
-
-## Take it to the laser: the red hairline SVG
-
-The checker says the file is *ready*. To hand something to the laser you also
-need the file with the **colours it reads**: add `--svg` and the same run writes
-one.
+Resolve this skill's own folder from this file's location — opencode installs
+it somewhere like `~/.cache/opencode/skills/maker-tasks` — and do not assume
+the current directory:
 
 ```bash
 SKILL="<directory containing this SKILL.md>"
-python3 "$SKILL/check/cli.py" --task cad-01-first-sketch part.dxf --svg
 ```
 
-You get `part-laser-ready.svg` beside your DXF. Its cut lines are:
-
-- **pure red `#ff0000`** — UCP cuts red, scores blue, rasters everything else
-  (RGB 255, 0, 0 exactly, not dark red and not 90% opaque)
-- **no fill** — a filled shape would be engraved instead of cut
-- **hairline** — the laser follows the centre of a line; a thick one gives it
-  nothing useful to follow and can make it fire twice
+The converter is standard library only, but it runs on the **class Python
+sandbox**: one pinned, private Python that every class skill shares, so
+nothing depends on the student's own Python and nothing is installed into it.
+Run this once per machine — cheap to re-run, and re-running repairs a broken
+sandbox:
 
 ```bash
-python3 "$SKILL/check/cli.py" --task cad-01-first-sketch part.dxf --svg out/part.svg
-python3 "$SKILL/check/cli.py" --task cad-01-first-sketch part.dxf --svg --svg-margin 5
-python3 "$SKILL/check/laser_svg.py" part.dxf     # the converter alone
+sh "$SKILL/ensure-runtime.sh"                                          # macOS / Linux
+powershell -ExecutionPolicy Bypass -File "$SKILL\ensure-runtime.ps1"   # Windows
 ```
 
-Sizes are millimetres and the page is the part plus any margin, so the drawing
-imports at its true size. This needs nothing installed: no Inkscape, no Python
-packages. It writes the SVG whether or not every criterion passed — but if
-anything is marked `[FIX]`, fix it in Onshape, re-export, and run it again, so
-the SVG is not made from a file you are about to change.
+Its last line is `ENT164_PYTHON=…`: use exactly that interpreter for every
+command below. On macOS and Linux it is
+`"$HOME/.venvs/ent164-maker/bin/python"`, on Windows
+`"$HOME\.venvs\ent164-maker\Scripts\python.exe"`. If the sandbox cannot
+download — no internet, or a locked-down machine — say so and point at the
+setup guide: <https://tuftsmaker.github.io/ENT-164/opencode-deepseek-guide/guide.html>.
 
-You can still do exactly this by hand in Inkscape — that is what
-[the laser-cutting guide](https://tuftsmaker.github.io/ENT-164/laser-cutting/)
-walks through — and opening the SVG there is the way to check it, adjust it, or
-add etched text. This just gets the colours and the hairline right for you.
-
-## What you hand in
-
-Each task expects a small folder. Two files, every time:
-
-```
-part.dxf        your sketch, exported from Onshape
-manifest.md     one or two lines — opencode writes them for you
-```
-
-The laser-ready SVG is what you *take to Nolop*; it is not one of the two files
-the submission is checked against, so keep it beside them rather than in the
-folder if you like.
-
-**Do not make the student hand-write `manifest.md`.** Ask for what the task
-reads, then write the file. For every task that is the Onshape share link
-(Share → set to "can view" → copy); two tasks add one more line:
-
-- `cad-08-laser-joints` — also the thickness they measured with calipers:
-  `material_thickness: 3.15`
-- `cad-09-laser-ready` — instead of the link, which DXF it came from:
-  `source_dxf: part.dxf`
-
-Never invent a link or copy one from somewhere else; if the student has not
-given one, ask. Missing lines come back as `[FIX]` with the line to add.
-
-For most tasks the whole file is one line:
-
-```
-onshape_url: https://cad.onshape.com/documents/.../w/.../e/...
-```
-
-Build the folder, check it, and zip it in one go:
+## Run it
 
 ```bash
-python3 "$SKILL/check/check_submission.py" --task cad-01-first-sketch ~/ent164/cad-01
+PY="$HOME/.venvs/ent164-maker/bin/python"   # Windows: PY="$HOME\.venvs\ent164-maker\Scripts\python.exe"
+"$PY" "$SKILL/laser/laser_svg.py" part.dxf
 ```
 
-If `manifest.md` is missing, that command writes a starter with just the lines
-this task reads. It checks the folder, writes the report into it as
-`check-report.txt`, and tells you the zip to upload in Canvas.
+That writes `part-laser-ready.svg` beside the DXF. Also useful:
 
-## The tasks
+```bash
+PY="$HOME/.venvs/ent164-maker/bin/python"   # Windows: PY="$HOME\.venvs\ent164-maker\Scripts\python.exe"
+"$PY" "$SKILL/laser/laser_svg.py" part.dxf -o out/part.svg   # choose the output
+"$PY" "$SKILL/laser/laser_svg.py" part.dxf --margin 5        # 5 mm page margin
+"$PY" "$SKILL/laser/laser_svg.py" part.dxf --open            # show it in the browser
+```
 
-| id | what it is | your file |
-|----|-----------|-----------|
-| `cad-01-first-sketch` | draw a 100 × 60 mm rectangle and export the DXF | `part.dxf` |
-| `cad-02-update-dimension` | change the width to 80 mm by editing the dimension | `part.dxf` |
-| `cad-03-cut-a-hole` | add a 10 mm hole 20 mm in from two edges | `part.dxf` |
-| `cad-04-center-a-hole` | find the centre with construction lines, hole there | `part.dxf` |
-| `cad-05-corner-hole` | anchor the hole 20 mm from a corner | `part.dxf` |
-| `cad-06-mirror` | draw half, mirror it, keep both halves identical | `part.dxf` |
-| `cad-07-trim-tool` | combine an arc with a rectangle using the trim tool | `part.dxf` |
-| `cad-08-laser-joints` | cut fingers and slots sized from measured material | `part.dxf` |
-| `cad-09-laser-ready` | prepare a part for the laser: red hairlines, mm page | `part-laser-ready.svg` |
+## Show the student what it made
 
-The nine together are the **Laser-Ready File** track (a qualification). The last step is a
-supervised cut at Nolop: a TA watches you cut one of your own files.
+Two ways, and after any joint or conversion you should do one of them:
 
-## Reading the report
+- **`--open`** (on both `laser_svg.py` and `finger_joints.py`) hands the written
+  SVG to the student's browser. On `finger_joints.py` it converts the jointed DXF
+  first, so what opens is the actual cut file, not just the DXF.
+- **Show it in opencode's review pane**: the SVG is a plain file the agent can
+  preview directly — use the browser preview tool on the `.svg` path (it renders
+  vector and can zoom). Do this when `--open` cannot (a headless or remote
+  session), or when you simply want the student to see it in the conversation.
 
-The checkers look at what actually reaches the laser:
+The SVG is vector and at true size, so a browser preview is what confirms the
+joint landed on the right edge and the size is right.
 
-- **closed** — every line end meets another. A corner that looks joined but
-  isn't becomes a cut that stops in mid-air.
-- **mm** — Onshape's DXF carries no unit label, so the size is checked against
-  the task's stated dimensions. If the numbers are out by ~25× the export is in
-  inches.
-- **a rectangle** — four straight sides at right angles, measured, not assumed.
-- **the hole** — size, position, and that the wall left around it is thicker
-  than the laser beam (~3 mm kerf).
-- **guides** — construction lines are not exported by Onshape. A stray line in
-  the file is real geometry and would be cut, so it is flagged.
+Nothing to install beyond the sandbox: the converter is standard library only —
+no Inkscape, no Python packages — and it runs on the class Python sandbox (see
+Setup), so the file comes out the same on every machine. The hairline is spelled
+the way Inkscape reads it, so opening it there afterwards behaves; the `box`
+skill shares the same sandbox for its engraving.
 
-## Two things the checker cannot do
+## Finger joints that fit
 
-1. **It cannot tell that the file is yours.** It checks the DXF. The manifest's
-   Onshape link is what lets a TA confirm the sketch and the dimension are
-   really in your document, so keep it accurate.
-2. **It cannot sign you off.** A pass here means "the file meets the criteria",
-   not "task complete". A TA signs the task, and the laser checkout at Nolop is
-   separate again — that one is about you, not the file.
+If the part joins another sheet, `laser/finger_joints.py` cuts finger joints
+along a straight seam you name. It needs the thickness you measured with
+calipers — a finger is one thickness wide and never deeper than one thickness:
 
-## Where things are
+```bash
+PY="$HOME/.venvs/ent164-maker/bin/python"   # Windows: PY="$HOME\.venvs\ent164-maker\Scripts\python.exe"
+"$PY" "$SKILL/laser/finger_joints.py" part.dxf -o jointed.dxf \
+    --seam 0,0,100,0 --thickness 3.15 --side up
+"$PY" "$SKILL/laser/finger_joints.py" jointed.dxf --check --thickness 3.15
+```
 
-- This skill's own folder: wherever opencode installed it — `$SKILL` above
-- Task list and videos: `tasks/` on the class site
-- The criteria for each task: `tasks/cad-NN-*.yml` inside this skill
-- The checks and the SVG converter: `check/` inside this skill
-- The videos: the **Onshape tips** page, `onshape-tips/index.html`
+Repeat `--seam x0,y0,x1,y1` for each seam. `--fingers N` sets the count, or leave
+it off for as many as fit while keeping a butt at each end; `--side up|down`
+picks which side of the seam the fingers cut to. The `--check` mode re-measures
+the combs already in a file and reports any whose finger is deeper than the
+thickness (or that ramp with a diagonal instead of a square mating face).
+
+## Joints on a drawing the student made
+
+Ask the student to **attach their DXF** (drop it into the chat, or give its
+path). Then find the seam they mean instead of asking for coordinates:
+
+```bash
+SKILL="<directory containing this SKILL.md>"
+PY="$HOME/.venvs/ent164-maker/bin/python"   # Windows: PY="$HOME\.venvs\ent164-maker\Scripts\python.exe"
+"$PY" "$SKILL/laser/finger_joints.py" part.dxf --list
+"$PY" "$SKILL/laser/finger_joints.py" part.dxf --preview seams.svg
+```
+
+`--list` prints every straight seam it can find, longest first, with its length,
+angle, centre and endpoints; `--preview` draws the same seams numbered and
+coloured, so a student can look and say "seam 3". Ask which seam and which side,
+and confirm the **measured** thickness, then:
+
+```bash
+PY="$HOME/.venvs/ent164-maker/bin/python"   # Windows: PY="$HOME\.venvs\ent164-maker\Scripts\python.exe"
+"$PY" "$SKILL/laser/finger_joints.py" part.dxf -o jointed.dxf \
+    --pick 3 --thickness 3.15 --side up
+```
+
+`--pick N` uses the same numbering as `--list` and `--preview`. Collinear pieces
+are merged, so a wall drawn as three lines is offered once. A **straight line
+already drawn along the seam is removed** and replaced by the comb, so the laser
+cuts the joint once; if the seam is part of a polyline the tool cannot remove it
+cleanly, and it says so — then that edge must come out in Onshape and be
+exported again. Add `--open` to show the jointed file in the browser as soon as
+it is written. The jointed DXF still needs the `laser_svg.py` step above to
+reach the cutter.
+
+## What "laser-ready" means
+
+UCP decides what to do with each line by its colour:
+
+- **pure red `#ff0000`, opacity 1** — UCP cuts red, scores blue, and rasters
+  everything else. A dark red or a 90%-opaque red is not read as a cut.
+- **no fill** — a filled shape is engraved, not cut.
+- **hairline** — the laser follows the centre of the line it is given; a thick
+  line gives it nothing useful to follow and can make it fire twice.
+
+The converter sets all three, and pages the drawing in millimetres at true
+size.
+
+## What it reports while it works
+
+Alongside the page and part size and the number of cut paths, it prints anything
+worth a second look rather than hiding it:
+
+- geometry it had to approximate (splines, ellipse arcs, polyline bulges);
+- cut lines sitting on an unexpected layer;
+- two entities drawn on the same line — the laser fires on each copy, so remove
+  the duplicate in Onshape and export again.
+
+## Looking at the result
+
+Open the SVG in a browser or in Inkscape to check the colour and the size before
+you take it to Nolop. The file path is printed when it is written.
