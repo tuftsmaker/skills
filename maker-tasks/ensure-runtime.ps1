@@ -1,7 +1,11 @@
 # The class Python sandbox (Windows twin of ensure-runtime.sh).
 #
-# Every class skill runs on this one interpreter — a pinned CPython that uv
-# downloads and manages — inside its own venv. The student's own Python is
+# Keep this file pure ASCII. Windows PowerShell 5.1 reads a .ps1 that has no
+# BOM as ANSI, so a UTF-8 em dash turns into a smart quote and the parser
+# fails with a confusing "missing the terminator" error.
+#
+# Every class skill runs on this one interpreter - a pinned CPython that uv
+# downloads and manages - inside its own venv. The student's own Python is
 # never used and never modified, even when it is a matching version.
 #
 # Run this once per machine; re-running is cheap and repairs a broken sandbox:
@@ -27,7 +31,7 @@ if (-not $Venv) { Die "ENT164_VENV is empty" }
 
 # 1. uv, the tool that installs and manages the pinned Python. It is a single
 #    user-space binary (never a system package), and UV_NO_MODIFY_PATH tells
-#    its installer to leave shell profiles alone — this script calls uv by
+#    its installer to leave shell profiles alone - this script calls uv by
 #    path, so nothing about the student's shell changes.
 if (-not (Test-Path -PathType Leaf $Uv)) {
     Say "installing uv (the Python runtime manager) ..."
@@ -41,7 +45,7 @@ if (-not (Test-Path -PathType Leaf $Uv)) {
 #    student already has a matching Python, the sandbox gets its own copy.
 Say "installing Python $PyVersion ..."
 & $Uv python install $PyVersion --python-preference only-managed --quiet
-if ($LASTEXITCODE -ne 0) { Die "could not install Python $PyVersion — check your internet connection" }
+if ($LASTEXITCODE -ne 0) { Die "could not install Python $PyVersion - check your internet connection" }
 
 # 3. The venv. It is rebuilt whenever it is missing, damaged, or was made by
 #    some other interpreter (an older version of this skill used the student's
@@ -73,11 +77,11 @@ Say "installing Pillow and PyYAML ..."
 & $Uv pip install --quiet --python $Py "Pillow==$PillowVersion" "PyYAML==$PyYamlVersion"
 if ($LASTEXITCODE -ne 0) {
     & $Uv pip install --quiet --python $Py Pillow PyYAML
-    if ($LASTEXITCODE -ne 0) { Die "could not install Pillow and PyYAML — check your internet connection" }
+    if ($LASTEXITCODE -ne 0) { Die "could not install Pillow and PyYAML - check your internet connection" }
 }
 
 & $Py -c "import PIL, yaml"
-if ($LASTEXITCODE -ne 0) { Die "the sandbox at $Venv cannot import Pillow and PyYAML — re-run this script" }
+if ($LASTEXITCODE -ne 0) { Die "the sandbox at $Venv cannot import Pillow and PyYAML - re-run this script" }
 
 Write-Host ""
 Write-Host "sandbox : Python $PyVersion at $Venv"

@@ -27,6 +27,9 @@ lives here so it lives with them.
   PyYAML.
 - The ensure scripts are the only place versions live; bump every copy
   together when bumping.
+- Keep `ensure-runtime.ps1` **pure ASCII**: Windows PowerShell 5.1 reads a
+  BOM-less `.ps1` as ANSI, so a UTF-8 em dash becomes a smart quote and the
+  parser dies with a confusing "missing the terminator" error.
 - Nothing installs into or falls back to a student's own Python, even a
   matching one. `box/env.py` only locates the sandbox.
 

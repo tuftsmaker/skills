@@ -2,7 +2,7 @@
   "skills": [
     {
       "name": "box",
-      "version": "a7fcd920fd3d",
+      "version": "67cb96b6e5ac",
       "files": [
         "SKILL.md",
         "birdhouse.py",
@@ -14,7 +14,7 @@
     },
     {
       "name": "maker",
-      "version": "d28927e0253b",
+      "version": "e1c719f98b71",
       "files": [
         "SKILL.md",
         "bbd/__init__.py",
@@ -60,7 +60,7 @@
     },
     {
       "name": "maker-tasks",
-      "version": "84fb0e19c2df",
+      "version": "daa3ef4eda49",
       "files": [
         "SKILL.md",
         "ensure-runtime.ps1",
