@@ -132,6 +132,7 @@ Copy `circuits/led.yml` and edit it. Full schema:
 ```yaml
 board: freenove-esp32-wrover      # required; see render.py --list
 # freenove-esp32-wrover-ext       # same board seated on the GPIO extension board
+# layout: {board: {hidden: true}} # leave the board off the canvas entirely
 
 title: Add an external LED
 subtitle: Four steps, two jumper wires
@@ -316,6 +317,18 @@ position components, and the net highlighting is simply skipped.
 | ------------------------------ | ----------------------------------------------- |
 | `freenove-esp32-wrover`        | bare board; wires go straight to its header pins |
 | `freenove-esp32-wrover-ext`    | ESP32 seated on the GPIO extension board — the class setup |
+
+Leave the board off the canvas for a circuit that never touches it — a battery
+pack, the breadboard and a few parts. The breadboard takes the left margin and
+the width the board would have used, and a wire that still names a board pin is
+refused with an error rather than drawn:
+
+```yaml
+board: freenove-esp32-wrover-ext
+layout:
+  board:
+    hidden: true
+```
 
 On the extension board every pin has a single pad that a jumper plugs into
 (gold when the pin is highlighted), and the labels sit inside the board so

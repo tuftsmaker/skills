@@ -64,6 +64,12 @@ def esc(s):
 def build_svg(spec, board):
     steps = spec.get("steps") or []
     notes = spec.get("notes") or []
+    for wire in spec.get("wires") or []:
+        for end in (wire.get("from"), wire.get("to")):
+            if str(end).startswith("board."):
+                raise SystemExit(
+                    f"circuit hides the board but wires {end!r} — remove that wire "
+                    f"or drop layout.board.hidden")
     # board-level layout defaults, then circuit overrides
     bl = board.get("layout") or {}
     sl = spec.get("layout") or {}
@@ -110,7 +116,8 @@ def build_svg(spec, board):
         add(f'<text x="{L.W/2}" y="92" font-size="19" fill="#6b6b70" '
             f'text-anchor="middle">{esc(spec["subtitle"])}</text>')
 
-    board_mod.draw_board(add, L, {**board, "camera": spec.get("camera", board.get("camera"))})
+    if not L.board_hidden:
+        board_mod.draw_board(add, L, {**board, "camera": spec.get("camera", board.get("camera"))})
 
     # Breadboard holes that carry a net (touched by a wire or a component leg).
     # The top half (a-e) and the bottom half (f-j) of a column are separate nets,
@@ -193,7 +200,8 @@ def legend_layout(L, spec, steps):
                      if str(w2.get("color", "red")).lower() == c and w2.get("label")),
                     f"{c} wire")
         items.append(("wire", (c, text), 34 + 9.6 * len(text) + 64))
-    items.append(("pin", None, 215))
+    if not L.board_hidden:
+        items.append(("pin", None, 215))
     if not L.bb_hidden:
         items.append(("net", None, 400))
     if any(s.get("at") for s in steps):

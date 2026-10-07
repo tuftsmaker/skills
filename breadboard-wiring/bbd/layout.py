@@ -18,6 +18,9 @@ class Layout:
 
         # ---- ESP32 board (bare, or seated on the GPIO extension board) ----
         b = g.get("board", {}) or {}
+        # A circuit that never touches the ESP32 can leave it off the canvas:
+        # the breadboard then takes the left margin and the width it used.
+        self.board_hidden = bool(b.get("hidden", False))
         self.board_x = int(b.get("x", 240))
         self.board_y = int(b.get("y", 120))
         self.board_w = int(b.get("w", 380))
@@ -43,6 +46,15 @@ class Layout:
         self.ncol = int(d.get("cols", 14))
 
         self.bb_hidden = bool(d.get("hidden", True))
+        if self.board_hidden:
+            # the tie-point columns are placed from `first_col_x`, so they move
+            # with the breadboard rather than staying where the board's gutter
+            # used to be
+            self.bb_x = int(d.get("x", 60))
+            self.col0 = int(d.get("first_col_x", self.bb_x + 60))
+            self.board_x = self.bb_x - 40
+            self.board_w = 0
+            self.W = self.bb_x + self.bb_w + 60
         rp = int(d.get("row_pitch", 32))
         top0 = int(d.get("first_row_y", 470))
         # Rows a-e, then a true 0.3" centre channel (3 row pitches), then f-j, so
