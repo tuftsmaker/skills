@@ -32,6 +32,16 @@ def parse_endpoint(L, board, text, parts=None):
     if text.startswith("board."):
         name = text[len("board."):]
         return ("board", find_pin(L, board, name))
+    if text.startswith("bb.rail."):
+        rest = text[len("bb.rail."):].split(".")
+        which = rest[0] if rest else ""
+        sign = rest[1].replace("+", "plus").replace("-", "minus") if len(rest) > 1 else ""
+        if which not in ("top", "bottom") or sign not in ("plus", "minus"):
+            raise ValueError(
+                f"cannot parse rail endpoint {text!r} — use "
+                f"'bb.rail.top.plus', 'bb.rail.bottom.minus' or add a column")
+        col = int(rest[2]) if len(rest) > 2 else None
+        return ("rail", ("rail", which, sign), L.rail_point(which, sign, col))
     if text.startswith("bb."):
         rest = text[len("bb."):]
         col, row = rest.split(".")
@@ -187,6 +197,21 @@ def route(L, board, spec, lane, parts=None):
         bx2, by2 = b[1]
         cy = _channel_y(L, lane)
         return [(ax, ay), (ax, cy), (bx2, cy), (bx2, by2)]
+
+    # a supply jumper: from a power rail to a tie-point hole. Same column, a
+    # straight run; a different column means the hole sits under a part, so the
+    # wire steps out below the row before it turns, instead of through the part
+    if {a[0], b[0]} == {"rail", "bb"}:
+        if a[0] == "rail":
+            (x1, y1), (x2, y2) = a[2], b[2]
+        else:
+            (x1, y1), (x2, y2) = b[2], a[2]
+        if abs(x1 - x2) < 0.5:
+            pts = [(x1, y1), (x2, y2)]
+        else:
+            dy = 26 if y2 > y1 else -26
+            pts = [(x1, y1), (x1, y2 + dy), (x2, y2 + dy), (x2, y2)]
+        return pts if a[0] == "rail" else list(reversed(pts))
 
     # breadboard to breadboard — hop through the centre channel
     if a[0] == "bb" and b[0] == "bb":

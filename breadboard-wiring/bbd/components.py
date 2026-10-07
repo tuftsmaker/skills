@@ -51,15 +51,28 @@ def parse_ohms(value):
     return float(s) * mult
 
 
+def value_label(value):
+    """The kit's naming for a resistor: 220 \u03a9, 1K \u03a9, 10K \u03a9."""
+    r = parse_ohms(value)
+    if r >= 1e6:
+        return f"{r / 1e6:g}M \u03a9"
+    if r >= 1000:
+        return f"{r / 1000:g}K \u03a9"
+    return f"{r:g} \u03a9"
+
+
 def bands_for(value):
-    """Return the four band colours for a resistor value (2 sig digits)."""
+    """The five band colours for a resistor value: three digits, the decade,
+    then the tolerance. The kit's resistors are 5-band metal film, 1 percent."""
     x, exp = float(parse_ohms(value)), 0
-    while x >= 100:
+    while x >= 1000:
         x, exp = x / 10, exp + 1
-    while x < 10:
+    while x < 100:
         x, exp = x * 10, exp - 1
-    d1, d2 = int(x) // 10, int(x) % 10
-    return [DIGIT_COLOUR[d1], DIGIT_COLOUR[d2], DIGIT_COLOUR[exp], "gold"]
+    n = int(round(x))
+    mult = DIGIT_COLOUR.get(exp, "gold" if exp == -1 else "silver")
+    return [DIGIT_COLOUR[n // 100], DIGIT_COLOUR[(n // 10) % 10],
+            DIGIT_COLOUR[n % 10], mult, "brown"]
 
 
 # --------------------------------------------------------------------------
@@ -70,9 +83,13 @@ def _lead(add, x1, y1, x2, y2, colour=LEAD, w=3.5):
         f'stroke-width="{w}"/>')
 
 
-def _text(add, x, y, text, size=15, fill="#26262b", weight="700", anchor="middle"):
+def _text(add, x, y, text, size=15, fill="#26262b", weight="700", anchor="middle",
+          halo=False):
+    # a paper halo keeps a label readable when a wire passes behind it
+    extra = (' stroke="#fdfaf3" stroke-width="6" paint-order="stroke" '
+             'stroke-linejoin="round"') if halo else ""
     add(f'<text x="{x}" y="{y}" font-size="{size}" font-weight="{weight}" '
-        f'fill="{fill}" text-anchor="{anchor}">{text}</text>')
+        f'fill="{fill}" text-anchor="{anchor}"{extra}>{text}</text>')
 
 
 def _bottom_half(row):
@@ -88,6 +105,19 @@ def _attach_slot(L, row, height, pad=18):
     if _bottom_half(row):
         return y, y + pad, y + pad + height, +1
     return y, y - pad - height, y - pad, -1
+
+
+def _row_offset(row, k):
+    """The row k rows below `row`, inside the same half (the channel is a gap)."""
+    r = str(row).lower()
+    for rows in (TOP_ROWS, BOT_ROWS):
+        if r in rows:
+            i = rows.index(r) + k
+            if not 0 <= i < len(rows):
+                raise ValueError(
+                    f"row {row!r} is only {len(rows) - 1} rows from the end of its half")
+            return rows[i]
+    raise ValueError(f"unknown breadboard row {row!r}")
 
 
 def _module_slot(L, row, height, pad=18):
@@ -133,25 +163,28 @@ def draw_resistor(add, L, spec):
     span = int(spec.get("span", 4))
     y = L.row_y(row)
     x1, x2 = L.col_x(col), L.col_x(col + span)
-    lead = min(34, (x2 - x1) / 4)
+    # The body keeps its own proportions; the grey leads take up the span, the
+    # way the real part does. The kit's resistors are blue metal film.
+    body = min(120, max(60, (x2 - x1) - 80))
+    bh = 44
+    bx0 = (x1 + x2) / 2 - body / 2
 
-    add(f'<line x1="{x1}" y1="{y}" x2="{x1+lead}" y2="{y}" stroke="#9a9a9a" stroke-width="3.5"/>')
-    add(f'<line x1="{x2-lead}" y1="{y}" x2="{x2}" y2="{y}" stroke="#9a9a9a" stroke-width="3.5"/>')
-    add(f'<rect x="{x1+lead}" y="{y-16}" width="{x2-x1-2*lead}" height="32" rx="12" '
-        f'fill="#ecdcae" stroke="#b09a6a" stroke-width="2"/>')
+    for a, b in ((x1, bx0), (bx0 + body, x2)):
+        add(f'<line x1="{a}" y1="{y}" x2="{b}" y2="{y}" stroke="{LEAD}" stroke-width="3.5"/>')
+    add(f'<rect x="{bx0}" y="{y-bh/2}" width="{body}" height="{bh}" rx="14" '
+        f'fill="#4a86c8" stroke="#2b5c92" stroke-width="2"/>')
 
     bands = spec.get("bands") or bands_for(spec.get("value", 220))
-    bx, bw = x1 + lead + 12, 13
+    bx, bw = bx0 + 12, 12
     for i, name in enumerate(bands):
-        add(f'<rect x="{bx + i*18}" y="{y-16}" width="{bw}" height="32" '
-            f'fill="{HEX.get(name, name)}"/>')
+        add(f'<rect x="{bx + i*15}" y="{y-bh/2}" width="{bw}" height="{bh}" '
+            f'fill="{HEX.get(name, name)}" stroke="#000000" stroke-opacity="0.28" '
+            f'stroke-width="1.2"/>')
 
     if spec.get("value") is not None:
-        label = str(spec["value"])
-        if not label.lower().endswith(("\u03a9", "ohm")):
-            label += " \u03a9"
-        add(f'<text x="{(x1+x2)/2}" y="{y-28}" font-size="16" font-weight="700" '
-            f'fill="#6b4423" text-anchor="middle">{label}</text>')
+        label = spec.get("label_text") or value_label(spec["value"])
+        add(f'<text x="{(x1+x2)/2}" y="{y-34}" font-size="16" font-weight="700" '
+            f'fill="#3a3a3f" text-anchor="middle">{label}</text>')
 
 
 # --------------------------------------------------------------------------
@@ -181,10 +214,9 @@ def draw_led(add, L, spec):
         add(f'<text x="{cx}" y="{cy-r-14}" font-size="15" font-weight="700" '
             f'fill="{edge}" text-anchor="middle">{spec.get("label_text", "LED")}</text>')
     if spec.get("polarity_notes", True):
-        add(f'<text x="{x2+30}" y="{y+38}" font-size="15" fill="#8a8a8a">'
-            f'flat side = cathode (\u2212)</text>')
-        add(f'<text x="{x1-14}" y="{y+38}" font-size="15" font-weight="700" '
-            f'fill="{edge}" text-anchor="end">anode (+)</text>')
+        _text(add, x2 + 30, y + 38, "flat side = cathode (\u2212)", 15, "#8a8a8a",
+              weight="400", anchor="start", halo=True)
+        _text(add, x1 - 14, y + 38, "anode (+)", 15, edge, anchor="end", halo=True)
 
 
 # --------------------------------------------------------------------------
@@ -192,35 +224,32 @@ def draw_led(add, L, spec):
 # --------------------------------------------------------------------------
 def holes_button(L, spec):
     col, row = spec["at"]
-    rows = L.row_top if str(row).lower() in "abcde" else L.row_bot
-    i = rows.index(L.row_y(row))
-    r2 = "abcde"[i + 1] if rows is L.row_top else "fghij"[i + 1]
-    return [(col, row), (col, r2), (col + 3, row), (col + 3, r2)]
+    # the part's legs sit 0.2" across and 0.3" down, like Fritzing's Pushbutton
+    return [(col, row), (col + 2, row),
+            (col, _row_offset(row, 3)), (col + 2, _row_offset(row, 3))]
 
 
 def draw_button(add, L, spec):
+    """Modelled after the Fritzing `Pushbutton` part: a grey square shell with
+    four corner rivets and a round plunger, legs 0.2" across and 0.3" down."""
     col, row = spec["at"]
-    y1, y2 = L.row_y(row), L.row_y(_next_row(row))
-    x1, x2 = L.col_x(col), L.col_x(col + 3)
+    row2 = _row_offset(row, 3)
+    x1, x2 = L.col_x(col), L.col_x(col + 2)
+    y1, y2 = L.row_y(row), L.row_y(row2)
     cx, cy = (x1 + x2) / 2, (y1 + y2) / 2
-
     for x in (x1, x2):
-        for y in (y1, y2):
-            add(f'<circle cx="{x}" cy="{y}" r="6" fill="#b9b3a6"/>')
-    add(f'<rect x="{x1+10}" y="{y1-14}" width="{x2-x1-20}" height="{y2-y1+28}" rx="8" '
-        f'fill="#2b2b30" stroke="#15151a" stroke-width="2"/>')
-    add(f'<circle cx="{cx}" cy="{cy}" r="14" fill="#3a3a3f" stroke="#15151a" stroke-width="2"/>')
-    add(f'<ellipse cx="{cx-4}" cy="{cy-5}" rx="5" ry="3" fill="#6d6d76" opacity="0.6"/>')
+        _lead(add, x, y1, x, y1 + 9)
+        _lead(add, x, y2 - 9, x, y2)
+    add(f'<rect x="{x1-15}" y="{y1+9}" width="{x2-x1+30}" height="{y2-y1-18}" '
+        f'rx="12" fill="#b9b9c2" stroke="#8a8a94" stroke-width="2"/>')
+    for rx_, ry_ in ((x1 + 9, y1 + 27), (x2 - 9, y1 + 27),
+                     (x1 + 9, y2 - 27), (x2 - 9, y2 - 27)):
+        add(f'<circle cx="{rx_}" cy="{ry_}" r="12" fill="#1a1a1a"/>')
+    add(f'<circle cx="{cx}" cy="{cy}" r="23" fill="#2b2b30"/>')
+    add(f'<circle cx="{cx}" cy="{cy}" r="19" fill="#1a1a1a"/>')   # our buttons are black
+    add(f'<circle cx="{cx-7}" cy="{cy-8}" r="6" fill="#fdfaf3" opacity="0.45"/>')
     if spec.get("label", True):
-        add(f'<text x="{cx}" y="{y1-26}" font-size="15" font-weight="700" fill="#3a3a3f" '
-            f'text-anchor="middle">{spec.get("label_text", "button")}</text>')
-
-
-def _next_row(row):
-    r = str(row).lower()
-    if r in "abcde":
-        return "abcde"["abcde".index(r) + 1]
-    return "fghij"["fghij".index(r) + 1]
+        _text(add, cx, y1 + 9 - 12, spec.get("label_text", "button"), 15, "#2b2b30")
 
 
 # --------------------------------------------------------------------------
@@ -313,7 +342,8 @@ def draw_photoresistor(add, L, spec):
     add(f'<path d="M{cx-r*0.55} {cy} q{r*0.28} -{r*0.42} {r*0.55} 0 '
         f'q{r*0.28} {r*0.42} {r*0.55} 0" fill="none" stroke="#5a4a2a" stroke-width="2.5"/>')
     if spec.get("label", True):
-        _text(add, cx, cy - r - 12, spec.get("label_text", "photoresistor"), 15, "#5a4a2a")
+        _text(add, cx, cy - r - 12, spec.get("label_text", "photoresistor"), 15,
+              "#5a4a2a", halo=True)
 
 
 def holes_thermistor(L, spec):
@@ -333,7 +363,8 @@ def draw_thermistor(add, L, spec):
         f'stroke="{DARK_EDGE}" stroke-width="2"/>')
     add(f'<ellipse cx="{cx-4}" cy="{cy-3}" rx="5" ry="3.5" fill="#6d6d76" opacity="0.7"/>')
     if spec.get("label", True):
-        _text(add, cx, cy - 24, spec.get("label_text", "thermistor"), 15, "#2b2b30")
+        _text(add, cx, cy - 24, spec.get("label_text", "thermistor"), 15, "#2b2b30",
+              halo=True)
 
 
 # --------------------------------------------------------------------------
@@ -341,33 +372,47 @@ def draw_thermistor(add, L, spec):
 # --------------------------------------------------------------------------
 def holes_potentiometer(L, spec):
     col, row = spec["at"]
-    return [(col + i, row) for i in range(3)]
+    # the part's terminals sit 0.2" apart, so two columns, not one
+    return [(col + 2 * i, row) for i in range(3)]
 
 
 def draw_potentiometer(add, L, spec):
+    """Modelled after the Fritzing SparkFun POT part (`U1`): a slab body, a
+    ribbed collar and a long knurled shaft, its three legs two columns apart."""
     col, row = spec["at"]
     y = L.row_y(row)
-    xs = [L.col_x(col + i) for i in range(3)]
-    cx = (xs[0] + xs[2]) / 2
-    _, top, bottom, _ = _attach_slot(L, row, 58, pad=16)
-    attach = top if _bottom_half(row) else bottom
+    xs = [L.col_x(col + 2 * i) for i in range(3)]
+    cx = xs[1]
+    body_w, body_h = 300, 52      # the shell overhangs all three legs
+    body_b = y - 18
+    body_t = body_b - body_h
+    collar_w, collar_h = 98, 30
+    shaft_w, shaft_h = 84, 120
 
     for x in xs:
-        _lead(add, x, y, x, attach)
-    # metal body with a blue base, like the kit's pots
-    add(f'<rect x="{xs[0]-24}" y="{top}" width="{xs[2]-xs[0]+48}" height="{bottom-top}" '
-        f'rx="7" fill="#c9c9d1" stroke="#8a8a94" stroke-width="2"/>')
-    add(f'<rect x="{xs[0]-24}" y="{bottom-14}" width="{xs[2]-xs[0]+48}" height="14" '
-        f'rx="4" fill="#2b6cb0" stroke="#1a4a8a" stroke-width="1.5"/>')
-    # threaded bushing + slotted shaft
-    add(f'<circle cx="{cx}" cy="{(top+bottom)/2}" r="19" fill="#b9b9c2" '
-        f'stroke="#8a8a94" stroke-width="2"/>')
-    add(f'<circle cx="{cx}" cy="{(top+bottom)/2}" r="13" fill="#dcdce4" '
-        f'stroke="#9a9aa4" stroke-width="1.5"/>')
-    add(f'<line x1="{cx}" y1="{(top+bottom)/2 - 10}" x2="{cx}" y2="{(top+bottom)/2 + 10}" '
-        f'stroke="#55555c" stroke-width="4" stroke-linecap="round"/>')
+        _lead(add, x, y, x, body_b)
+    add(f'<rect x="{cx-body_w/2}" y="{body_t}" width="{body_w}" height="{body_h}" '
+        f'rx="8" fill="#b9b9c2" stroke="#8a8a94" stroke-width="2"/>')
+    add(f'<path d="{_rrect(cx-body_w/2, body_b-14, cx+body_w/2, body_b, 7, ("bl", "br"))}" '
+        f'fill="#7c7c86"/>')
+    # the ribbed collar, then the shaft
+    collar_b = body_t - 2
+    add(f'<rect x="{cx-collar_w/2}" y="{collar_b-collar_h}" width="{collar_w}" '
+        f'height="{collar_h}" rx="4" fill="#3f3f46" stroke="#2a2a30" stroke-width="1.5"/>')
+    for i in range(1, 6):
+        lx = cx - collar_w / 2 + i * collar_w / 6
+        add(f'<line x1="{lx}" y1="{collar_b-collar_h+3}" x2="{lx}" y2="{collar_b-3}" '
+            f'stroke="#5a5a64" stroke-width="3"/>')
+    shaft_b = collar_b - collar_h
+    shaft_t = shaft_b - shaft_h
+    add(f'<path d="{_rrect(cx-shaft_w/2, shaft_t, cx+shaft_w/2, shaft_b, 10, ("tl", "tr"))}" '
+        f'fill="#2b2b30" stroke="#15151a" stroke-width="2"/>')
+    for i in range(1, 7):
+        lx = cx - shaft_w / 2 + i * shaft_w / 7
+        add(f'<line x1="{lx}" y1="{shaft_t+9}" x2="{lx}" y2="{shaft_b-2}" '
+            f'stroke="#43434c" stroke-width="3"/>')
     if spec.get("label", True):
-        _text(add, cx, top - 12, spec.get("label_text", "potentiometer"), 15, "#2b2b30")
+        _text(add, cx, shaft_t - 12, spec.get("label_text", "potentiometer"), 15, "#2b2b30")
     if spec.get("pins"):
         _pin_labels(add, L, xs, row, spec["pins"])
 
@@ -755,6 +800,149 @@ def draw_motor(add, L, spec):
               spec.get("label_text", "TT motor + wheel"), 17, "#3a3a3f",
               anchor="middle")
     _pin_labels(add, L, xs, row, spec.get("pins", ["+", "\u2212"]))
+
+
+# --------------------------------------------------------------------------
+# 2 x AA battery holder (its own leads drop onto the power rails)
+# --------------------------------------------------------------------------
+# Redrawn from the Fritzing core part `battery-AA` (batterypack_2xAA_leg.svg,
+# CC BY-SA 3.0): 167.2 x 87.5 units, two cells laid head to tail, one lead pair
+# leaving the case's end. Same geometry, flat house style, at 2x scale.
+PACK_W = 408
+PACK_H = 214
+PACK_CASE = "#1e1e22"
+PACK_CELL = "#3a3a3f"
+PACK_AMBER = "#c08a4a"
+PACK_TIN = "#c9c9cd"
+PACK_TEXT = "#e8e8e8"
+PACK_RED_EXIT = 0.389      # the lead exits sit on the part's own proportions
+PACK_BLACK_EXIT = 0.545
+
+
+def _pack_geom(L, spec):
+    col, row = spec["at"]
+    y = L.row_y(row)
+    h = PACK_H
+    _, top, bottom, _ = _module_slot(L, row, h)
+    cx = (L.col_x(col) + L.col_x(col + 1)) / 2
+    return cx, top, y, h
+
+
+def _pack_left_geom(L, spec):
+    """A pack parked beside the board, leads reaching the near rail pair."""
+    w, h = PACK_W, PACK_H
+    x0 = L.bb_x - 30 - w
+    which = str(spec.get("rail", "top")).lower()
+    rails = L.rail_bot if which == "bottom" else L.rail_top
+    # sit the case so each lead drops onto its rail with a visible run, the way
+    # the bench build looks: the near lead lands a hand's width above the rail
+    drop = 62          # the leads run clear of the board's title tag
+    if which == "bottom":
+        top = rails[0] - drop - PACK_RED_EXIT * h
+    else:
+        top = rails[1] - drop - PACK_BLACK_EXIT * h
+    return x0, top, w, h, rails
+
+
+def holes_battery_pack(L, spec):
+    return []
+
+
+def _rrect(x0, y0, x1, y1, r, corners=("tl", "tr", "br", "bl")):
+    """An SVG rounded rect with only the named corners rounded."""
+    r = max(0.0, min(r, (x1 - x0) / 2, (y1 - y0) / 2))
+    tl, tr, br, bl = (r if c in corners else 0 for c in ("tl", "tr", "br", "bl"))
+    return (f"M{x0 + tl},{y0} H{x1 - tr} "
+            f"A{tr},{tr} 0 0 1 {x1},{y0 + tr} V{y1 - br} "
+            f"A{br},{br} 0 0 1 {x1 - br},{y1} H{x0 + bl} "
+            f"A{bl},{bl} 0 0 1 {x0},{y1 - bl} V{y0 + tl} "
+            f"A{tl},{tl} 0 0 1 {x0 + tl},{y0} Z")
+
+
+def _pack_cell(add, x0, x1, y0, y1, amber_at_right):
+    """One AA cell: the wrapper's coloured end on one side or the other."""
+    r = 0.11 * (y1 - y0)
+    ax = (x1 - 0.27 * (x1 - x0)) if amber_at_right else (x0 + 0.27 * (x1 - x0))
+    if amber_at_right:
+        body = _rrect(x0, y0, ax, y1, r, ("tl", "bl"))
+        end = _rrect(ax, y0, x1, y1, r, ("tr", "br"))
+        tx = (x0 + ax) / 2
+    else:
+        body = _rrect(ax, y0, x1, y1, r, ("tr", "br"))
+        end = _rrect(x0, y0, ax, y1, r, ("tl", "bl"))
+        tx = (ax + x1) / 2
+    add(f'<path d="{body}" fill="{PACK_CELL}"/>')
+    add(f'<path d="{end}" fill="{PACK_AMBER}"/>')
+    add(f'<path d="{_rrect(x0, y0, x1, y1, r)}" fill="none" stroke="#232327" '
+        f'stroke-width="1.6"/>')
+    ty = (y0 + y1) / 2 + 0.125 * (y1 - y0)
+    # the two cells point opposite ways, so one wrapper's text reads upside down
+    flip = "" if amber_at_right else f' transform="rotate(180 {tx} {ty})"'
+    add(f'<text x="{tx}" y="{ty}"{flip} font-size="{0.34 * (y1 - y0):.0f}" '
+        f'font-weight="600" fill="{PACK_TEXT}" text-anchor="middle">AA Battery</text>')
+
+
+def _pack_clip(add, x, y, w, h):
+    """A metal clip, the sort that holds the cell's ends in the holder."""
+    add(f'<rect x="{x}" y="{y}" width="{0.034 * w:.1f}" height="{0.243 * h:.1f}" '
+        f'rx="2.5" fill="{PACK_TIN}" stroke="#9a9a9f" stroke-width="1.5"/>')
+
+
+def _pack_body(add, x0, top, w, h):
+    """The case with its two cells and four end clips, in the part's proportions."""
+    add(f'<rect x="{x0}" y="{top}" width="{w}" height="{h}" rx="{0.037 * h:.1f}" '
+        f'fill="{PACK_CASE}" stroke="#131317" stroke-width="2.5"/>')
+    cx0, cx1 = x0 + 0.020 * w, x0 + w - 0.078 * w
+    _pack_cell(add, cx0, cx1, top + 0.028 * h, top + 0.439 * h, True)
+    _pack_cell(add, cx0, cx1, top + 0.523 * h, top + 0.935 * h, False)
+    for cy in (top + 0.112 * h, top + 0.607 * h):
+        _pack_clip(add, x0 + 0.005 * w, cy, w, h)
+        _pack_clip(add, x0 + w - 0.088 * w, cy, w, h)
+
+
+def _pack_lead_block(add, x, y, w, h):
+    """The little block where a lead leaves the case."""
+    add(f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="2.5" '
+        f'fill="#8c8c8c" stroke="#6f6f74" stroke-width="1.5"/>')
+
+
+def draw_battery_pack(add, L, spec):
+    if str(spec.get("side", "")).lower() == "left":
+        # parked beside the board: the leads leave its right side and run
+        # straight onto the near rail pair, the way the bench build looks
+        x0, top, w, h, rails = _pack_left_geom(L, spec)
+        _pack_body(add, x0, top, w, h)
+        for k, (colour, rail_y, exit_f) in enumerate(
+                ((WIRE_RED, rails[0], PACK_RED_EXIT),
+                 (WIRE_BLACK, rails[1], PACK_BLACK_EXIT))):
+            ex_x, ex_y = x0 + w, top + exit_f * h
+            hx = L.col_x(k)
+            add(f'<polyline points="{ex_x},{ex_y} {hx},{ex_y} {hx},{rail_y}" '
+                f'fill="none" stroke="{colour}" stroke-width="5" '
+                f'stroke-linecap="round" stroke-linejoin="round"/>')
+            _pack_lead_block(add, ex_x - 7, ex_y - 6, 14, 12)
+        if spec.get("label", True):
+            _text(add, x0 + w / 2, top + h + 34,
+                  spec.get("label_text", "2 x AA pack"), 20, "#3a3a3f")
+        return
+
+    cx, top, y, h = _pack_geom(L, spec)
+    bottom_half = _bottom_half(spec["at"][1])
+    bw = PACK_W
+    bx1 = cx - bw / 2
+    _pack_body(add, bx1, top, bw, h)
+    # the rails this holder feeds: the near pair, and its two leads run straight
+    # from the case onto the red (+) and blue (-) rail holes
+    rails = L.rail_bot if bottom_half else L.rail_top
+    edge = top if bottom_half else top + h
+    for k, (colour, rail_y) in enumerate(((WIRE_RED, rails[0]), (WIRE_BLACK, rails[1]))):
+        x = L.col_x(spec["at"][0] + k)
+        by = edge - 4 if bottom_half else edge - 8
+        _pack_lead_block(add, x - 7, by, 14, 12)
+        _lead(add, x, edge, x, rail_y, colour=colour, w=5)
+    if spec.get("label", True):
+        _text(add, cx, top - 14 if not bottom_half else top + h + 34,
+              spec.get("label_text", "2 x AA pack"), 20, "#3a3a3f")
 
 
 # --------------------------------------------------------------------------
@@ -1246,6 +1434,7 @@ REGISTRY = {
     "servo": (draw_servo, holes_servo),
     "motor": (draw_motor, holes_motor),
     "battery": (draw_battery, holes_battery),
+    "battery_pack": (draw_battery_pack, holes_battery_pack),
     "speaker": (draw_speaker, holes_speaker),
     "ultrasonic": (draw_ultrasonic, holes_ultrasonic),
     "joystick": (draw_joystick, holes_joystick),
@@ -1267,3 +1456,18 @@ def component_holes(L, spec):
     if kind not in REGISTRY:
         raise ValueError(f"unknown component {kind!r}. Known: {', '.join(sorted(REGISTRY))}")
     return REGISTRY[kind][1](L, spec)
+
+
+def footer_bottom(L, spec):
+    """Lowest y a component draws below the breadboard (0 when it stays on it).
+
+    Anything hanging under the board claims that band: the footer (legend,
+    steps, notes) starts below it, so text never runs through the drawing.
+    Register a new below-board component here the same way.
+    """
+    if spec.get("type") != "battery_pack" or spec.get("side") or not spec.get("at"):
+        return 0
+    if not _bottom_half(spec["at"][1]):
+        return 0
+    _cx, top, _y, h = _pack_geom(L, spec)
+    return top + h + (40 if spec.get("label", True) else 0)

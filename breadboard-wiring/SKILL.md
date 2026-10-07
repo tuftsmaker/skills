@@ -179,7 +179,14 @@ camera: true                      # optional: draw the camera on the board
 | `board.R17`    | right header, 17th pin from the top (1-based)         |
 | `board.L1`     | left header, 1st pin from the top                     |
 | `bb.2.a`       | breadboard column 2, row a                            |
+| `bb.rail.top.plus` | a power-rail hole: `top|bottom` rail, `plus|minus` |
 | `driver.OUT1`  | a component terminal, when the component has an `id`  |
+
+**Power rails.** `bb.rail.top.plus.6` lands on the + rail at column 6; leave
+the column off (`bb.rail.top.plus`) and the first column is used. The rails are
+the supply bus: the pack feeds them, and every branch takes its own jumper from
+them, exactly as on the bench. A rail hole is not a tie-point hole — the two
+rails along an edge are one net each, not a column.
 
 **Component terminals.** Give a component an `id:` and you can wire to its
 terminals, e.g. the L298N's `OUT1`–`OUT4` screw outputs:
@@ -210,15 +217,15 @@ Defined in `bbd/components.py`. Footprints follow the real kit parts.
 
 | `type`            | Required keys            | Notes                                              |
 | ----------------- | ------------------------ | -------------------------------------------------- |
-| `resistor`        | `value`, `from`          | `span` defaults to 4 columns (0.4")                 |
+| `resistor`        | `value`, `from`          | `span` defaults to 4 columns (0.4"); 5-band 1% colours, blue body |
 | `led`             | `at`                     | anode at `at`, cathode one column right             |
 | `diode`           | `from`                   | axial, silver band = cathode; `band: left` to flip  |
 | `photoresistor`   | `at`                     | LDR, 2 legs one column apart                        |
 | `thermistor`      | `at`                     | 2 legs one column apart                             |
-| `button`          | `at`                     | 4 legs, 0.3" wide, 2 rows tall                      |
+| `button`          | `at`                     | 4 legs, 0.2" across, 3 rows down (Fritzing `Pushbutton`) |
 | `buzzer`          | `at`                     | 2 pins, one column apart; `kind: active\|passive`   |
 | `speaker`         | `at`                     | 2 wires (red/black), body above the board           |
-| `potentiometer`   | `at`                     | 3 legs; `pins: [left, wiper, right]` to label them  |
+| `potentiometer`   | `at`                     | 3 legs, two columns apart (0.2"); `pins: [left, wiper, right]` |
 | `transistor`      | `at`                     | TO-92, 3 legs; `kind: npn\|pnp`, `pins: [E, B, C]`  |
 | `rgb_led`         | `at`                     | 4 legs; `pins: [R, common, G, B]`, `common_at: 1`   |
 | `ic`              | `at`                     | DIP straddling the channel; `pins: 16`, `label_text`, `pin_labels: true` |
@@ -227,6 +234,7 @@ Defined in `bbd/components.py`. Footprints follow the real kit parts.
 | `servo`           | `at`                     | 3 wires (brown/red/orange); `horn: single\|cross` (default single) |
 | `motor`           | `at`                     | TT gearbox + wheel, 2 wires                         |
 | `battery`         | `at`                     | 9V clip, 2 wires                                    |
+| `battery_pack`    | `side: left` or `at`     | 2 x AA holder; leads land on the near power rails  |
 | `ultrasonic`      | `at`                     | HC-SR04, 4 pins; `pins:` to relabel                 |
 | `joystick`        | `at`                     | KY-023, 5 pins; `pins:` to relabel                  |
 | `lcd`             | `at`                     | LCD1602 + I2C backpack, 4 pins                      |
@@ -240,6 +248,24 @@ pins on breadboard holes — the `at: [col, row]` positions the body, the pins
 sit at their true pitch, and the wires take up the difference. The ultrasonic
 and servo geometry is measured off the true-scale Fritzing parts
 (fritzing-parts, CC BY-SA 3.0).
+
+`battery_pack` is the 2 x AA holder for circuits with no ESP32. Park it beside
+the board and reserve the room it needs:
+
+```yaml
+layout:
+  breadboard:
+    left_band: 430        # room for the pack beside the board
+components:
+  - {type: battery_pack, side: left}       # leads leave its right side
+```
+
+It lands its two leads on the near rail pair (add `rail: bottom` for the bottom
+pair), red on `+` and black on `-`, with the leads dropping onto the rails the
+way the bench build looks. Wire the circuit from the rails
+(`bb.rail.top.plus.<col>`) rather than from the pack. A pack placed under the
+board instead (`at: [15, j]`) draws its leads up to the near rails, and that
+band is kept clear: the legend and steps start below it.
 
 DIP parts (`ic`, `display_7seg`, `bar_graph`) always straddle the centre
 channel: pins land in row `e` and row `f`, so `at: [col, e]` and the row part
@@ -321,7 +347,8 @@ position components, and the net highlighting is simply skipped.
 Leave the board off the canvas for a circuit that never touches it — a battery
 pack, the breadboard and a few parts. The breadboard takes the left margin and
 the width the board would have used, and a wire that still names a board pin is
-refused with an error rather than drawn:
+refused with an error rather than drawn. `breadboard.left_band` reserves room
+left of the breadboard for a part parked beside it:
 
 ```yaml
 board: freenove-esp32-wrover-ext
@@ -346,6 +373,8 @@ showing the board itself.
   overlap, give one an explicit `via:`.
 - Tall parts (modules, LCD, servo, motor, battery) sit above their row. Leave
   the rows above them clear of other parts, or move the part to a lower row.
+  In the bottom half their bodies hang below the breadboard, so keep the board's
+  bottom edge free of anything you want read beside them.
 - **Re-render and actually look at the PNG after every edit.** Layout is
   geometry; reasoning about coordinates in your head is unreliable.
 
@@ -353,8 +382,11 @@ showing the board itself.
 
 The component drawings are our own, but the proportions and details were
 checked against: the kit's own parts list and class photos, the Fritzing
-`fritzing-parts` breadboard library (CC BY-SA 3.0), and the "L298N DC motor
-driver" part by Florian Schäffer from the Fritzing forum. When a diagram is
+`fritzing-parts` breadboard library (CC BY-SA 3.0) — the `battery_pack` follows
+its core `battery-AA` part, `batterypack_2xAA_leg.svg`, the `potentiometer` the
+SparkFun POT part (label `U`, `breadboard/potentiometer.svg`) and the `button`
+its core `Pushbutton` (`basic_pbutton.svg`) — and the
+"L298N DC motor driver" part by Florian Schäffer from the Fritzing forum. When a diagram is
 published outside class, credit Fritzing for the reference art. Fritzing part
 SVGs are true-scale; our canvas is not, so shapes are adapted rather than
 copied.

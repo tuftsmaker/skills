@@ -64,12 +64,6 @@ def esc(s):
 def build_svg(spec, board):
     steps = spec.get("steps") or []
     notes = spec.get("notes") or []
-    for wire in spec.get("wires") or []:
-        for end in (wire.get("from"), wire.get("to")):
-            if str(end).startswith("board."):
-                raise SystemExit(
-                    f"circuit hides the board but wires {end!r} — remove that wire "
-                    f"or drop layout.board.hidden")
     # board-level layout defaults, then circuit overrides
     bl = board.get("layout") or {}
     sl = spec.get("layout") or {}
@@ -78,6 +72,14 @@ def build_svg(spec, board):
         merged = {**(bl.get(key) or {}), **(sl.get(key) or {})}
         if merged:
             layout_over[key] = merged
+
+    if (layout_over.get("board") or {}).get("hidden"):
+        for wire in spec.get("wires") or []:
+            for end in (wire.get("from"), wire.get("to")):
+                if str(end).startswith("board."):
+                    raise SystemExit(
+                        f"circuit hides the board but wires {end!r} — remove that wire "
+                        f"or drop layout.board.hidden")
 
     layout_over.setdefault("height", 1200)
     L = Layout({**spec, "layout": layout_over})
@@ -91,6 +93,10 @@ def build_svg(spec, board):
     left_wires = sum(1 for l in lanes if l.get("side") == "L")
     if left_wires:
         L.notes_top = max(L.notes_top, L.corridor0 + (left_wires - 1) * L.corridor_pitch + 26)
+    # anything hanging under the breadboard claims its band: the legend and
+    # steps start below it, so their text never runs through the drawing
+    for comp in spec.get("components") or []:
+        L.notes_top = max(L.notes_top, comp_mod.footer_bottom(L, comp) + 28)
     if str(layout_over.get("notes_position", "bottom")).lower() == "right":
         L.notes_w = int(layout_over.get("notes_width", 640))
         L.notes_x = L.W + 30

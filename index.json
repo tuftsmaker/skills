@@ -14,7 +14,7 @@
     },
     {
       "name": "breadboard-wiring",
-      "version": "139ccf4ad5fd",
+      "version": "27ff6a710395",
       "files": [
         "SKILL.md",
         "bbd/__init__.py",

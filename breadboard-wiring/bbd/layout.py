@@ -49,8 +49,9 @@ class Layout:
         if self.board_hidden:
             # the tie-point columns are placed from `first_col_x`, so they move
             # with the breadboard rather than staying where the board's gutter
-            # used to be
-            self.bb_x = int(d.get("x", 60))
+            # used to be. `left_band` reserves room for a part parked beside the
+            # board (a battery pack with `side: left`).
+            self.bb_x = int(d.get("x", 60)) + int(d.get("left_band", 0))
             self.col0 = int(d.get("first_col_x", self.bb_x + 60))
             self.board_x = self.bb_x - 40
             self.board_w = 0
@@ -99,6 +100,12 @@ class Layout:
         return x0 + i * self.strip_pitch if which == "left" else x0 - i * self.strip_pitch
 
     # ---- breadboard ----
+    def rail_point(self, which, sign, col=None):
+        """A hole on a power rail: which is top|bottom, sign plus|minus."""
+        rows = self.rail_top if which == "top" else self.rail_bot
+        y = rows[0] if sign in ("plus", "+") else rows[1]
+        return (self.col_x(col if col is not None else 0), y)
+
     def col_x(self, col):
         return self.col0 + int(col) * self.dcol
 

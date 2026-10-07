@@ -11,7 +11,7 @@ components:
   - {type: buzzer, at: [11, c]}
 wires:
   - {from: board.GPIO4, to: bb.1.a, color: green, label: button — GPIO 4}
-  - {from: bb.4.a, to: board.R17, color: black, label: ground — GND}
+  - {from: bb.3.a, to: board.R17, color: black, label: ground — GND}
   - {from: board.GPIO13, to: bb.5.c, color: orange, label: signal — GPIO 13}
   - {from: bb.7.c, to: bb.9.c, color: purple, label: base link}
   - {from: bb.11.c, to: board.L19, color: red, label: buzzer + — 5V}
