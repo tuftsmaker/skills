@@ -1,34 +1,48 @@
 board: freenove-esp32-wrover-ext
 layout:
   notes_position: right
-  width: 2080
+  width: 2880
   breadboard:
     hidden: true
-title: Class robot — joystick, servo arm, motors and status LED (FNK0046)
-subtitle: Everything on the extension board; stick steers, arm aims, LED reports
+title: Class robot — stick, two pots, two servos, motors, status LED (FNK0046)
+subtitle: Stick steers, a pot per servo, LED reports
 components:
   - {type: l298n, id: driver, at: [2, a]}
   - {type: joystick, id: joy, at: [8, e], pins: [GND, +5V, VRx, VRy, SW]}
   - {type: motor, id: left_motor, at: [2, j], label_text: left motor}
   - {type: motor, id: right_motor, at: [8, j], label_text: right motor}
-  - {type: servo, id: servo, at: [11, j], label_text: arm servo}
+  - {type: servo, id: servo_1, at: [12, j], label_text: servo 1}
+  - {type: servo, id: servo_2, at: [18, j], label_text: servo 2}
+  - {type: potentiometer, id: pot_a, at: [20, c], pins: [left, wiper, right]}
+  - {type: potentiometer, id: pot_b, at: [26, c], pins: [left, wiper, right]}
   - {type: resistor, value: "220", from: [13, c], span: 3}
   - {type: led, color: red, at: [17, c], label_text: status LED, polarity_notes: false}
 wires:
-  # joystick
+  # steering stick
   - {from: joy.GND, to: board.R1, color: black, label: joystick GND}
   - {from: joy.+5V, to: board.L17, color: red, label: joystick +5V — 3V3}
   - {from: joy.VRx, to: board.GPIO36, color: orange, label: VRx — GPIO 36}
   - {from: joy.VRy, to: board.GPIO39, color: yellow, label: VRy — GPIO 39}
   - {from: joy.SW, to: board.GPIO4, color: green, label: SW — GPIO 4}
+  # pot A: left leg GND, right leg 3V3, wiper to its own ADC pin
+  - {from: bb.20.c, to: board.L14, color: black, label: pot A left — GND}
+  - {from: bb.22.c, to: board.GPIO34, color: orange, label: pot A wiper — GPIO 34}
+  - {from: bb.24.c, to: board.L16, color: red, label: pot A right — 3V3}
+  # pot B, wired the same way on the free ADC pin
+  - {from: bb.26.c, to: board.R11, color: black, label: pot B left — GND}
+  - {from: bb.28.c, to: board.GPIO35, color: yellow, label: pot B wiper — GPIO 35}
+  - {from: bb.30.c, to: board.L18, color: red, label: pot B right — 3V3}
   # status LED (mirrors the onboard LED on GPIO 2)
   - {from: board.GPIO2, to: bb.13.c, color: red, label: status LED — GPIO 2}
   - {from: bb.16.c, to: bb.17.c, color: blue, label: resistor → LED anode}
   - {from: bb.18.c, to: board.R1, color: black, label: LED cathode — GND}
-  # steering servo
-  - {from: servo.GND, to: board.R7, color: black, label: servo GND}
-  - {from: servo.5V, to: board.L19, color: red, label: servo 5V}
-  - {from: servo.SIG, to: board.GPIO15, color: orange, label: servo signal — GPIO 15}
+  # one servo per pot
+  - {from: servo_1.GND, to: board.R7, color: black, label: servo 1 GND}
+  - {from: servo_1.5V, to: board.L19, color: red, label: servo 1 5V}
+  - {from: servo_1.SIG, to: board.GPIO15, color: orange, label: servo 1 signal — GPIO 15}
+  - {from: servo_2.GND, to: board.R12, color: black, label: servo 2 GND}
+  - {from: servo_2.5V, to: board.L20, color: red, label: servo 2 5V}
+  - {from: servo_2.SIG, to: board.GPIO25, color: orange, label: servo 2 signal — GPIO 25}
   # driver logic
   - {from: driver.ENA, to: board.GPIO13, color: orange, label: ENA — GPIO 13 (left speed)}
   - {from: driver.IN1, to: board.GPIO12, color: blue, label: IN1 — GPIO 12}
@@ -44,15 +58,17 @@ wires:
   - {from: driver.OUT4, to: right_motor.M-, color: black, label: right motor −}
 steps:
   - text: "Driver and joystick first, as robot-drive.yml shows."
-  - text: "Servo: brown → GND, red → 5V, orange → GPIO 15."
+  - text: "Pots: left leg → GND, right leg → 3V3, middle leg (the wiper) → GPIO 34, then GPIO 35."
+  - text: "Servos: brown → GND, red → 5V, orange → GPIO 15, then GPIO 25."
   - text: "Motor leads: left → OUT1/OUT2, right → OUT3/OUT4."
   - text: "Status LED: GPIO 2 → 220 Ω → LED, then the cathode to GND."
   - text: "Power the driver from the 9V clip (12V and GND), sharing ground with the ESP32."
   - text: "9V clip → the driver's 12V and GND (not shown)."
 notes:
-  - "Drive: OUT1/OUT2 = left motor, OUT3/OUT4 = right. Servo: VRx sets the arm angle."
-  - "The status LED shares GPIO 2 with the onboard LED, so both blink together — a free way to see the code running."
-  - "Code: vrx = ADC(Pin(36)); servo = PWM(Pin(15), 50); duty = 26 + int(angle * 102 / 180)."
+  - "Drive: OUT1/OUT2 = left motor, OUT3/OUT4 = right. Each servo follows its own pot's wiper."
+  - "Pots read on ADC1 (GPIO 34 and 35), so the servos work with Wi-Fi on."
+  - "The status LED shares GPIO 2 with the onboard LED, so both blink together."
+  - "Code: pot = ADC(Pin(34)); servo = PWM(Pin(15), 50); duty = 26 + int(angle * 102 / 180)."
   - "Mix the two: stick fully sideways = both motors, VRy forward/back, VRx turns."
-  - text: "Motors and servo share the battery's ground with the ESP32; power the servo's 5V separately if the board resets."
+  - text: "Motors and servos share the battery's ground with the ESP32; power the servos' 5V separately if the board resets."
     warn: true
