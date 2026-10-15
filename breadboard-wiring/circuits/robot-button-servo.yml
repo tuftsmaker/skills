@@ -1,0 +1,31 @@
+board: freenove-esp32-wrover-ext
+layout:
+  notes_position: right
+  width: 1550
+  breadboard:
+    hidden: true
+title: Class robot — stick button and servo (FNK0046)
+subtitle: Press the stick's button; the servo opens and closes
+components:
+  - {type: joystick, id: joy, at: [5, e], pins: [GND, +5V, VRx, VRy, SW]}
+  - {type: servo, id: servo, at: [9, j], label_text: servo}
+wires:
+  - {from: joy.GND, to: board.R1, color: black, label: joystick GND}
+  - {from: joy.+5V, to: board.L17, color: red, label: joystick +5V — 3V3}
+  - {from: joy.VRx, to: board.GPIO36, color: orange, label: VRx — GPIO 36}
+  - {from: joy.VRy, to: board.GPIO39, color: yellow, label: VRy — GPIO 39}
+  - {from: joy.SW, to: board.GPIO4, color: green, label: SW — GPIO 4}
+  - {from: servo.GND, to: board.R7, color: black, label: servo GND}
+  - {from: servo.5V, to: board.L19, color: red, label: servo 5V}
+  - {from: servo.SIG, to: board.GPIO15, color: orange, label: servo signal — GPIO 15}
+steps:
+  - text: "Wire the joystick: GND and 3V3, VRx → GPIO 36, VRy → GPIO 39, SW → GPIO 4."
+  - text: "Wire the servo: brown → GND, red → 5V, orange → GPIO 15."
+  - text: "Ask for the first job alone: the button opens and closes the servo."
+  - text: "Press the stick and watch the arm; the loop from input to motion works."
+notes:
+  - "SW is the stick's push button: Pin(4, Pin.IN, Pin.PULL_UP) — pressed reads 0."
+  - "Code: servo = PWM(Pin(15), 50); open and close ≈ duty 26 and 77 (0° and 90°)."
+  - "VRx and VRy stay wired for the next step — the stick then drives the motors."
+  - text: "A stalled servo draws ~0.7 A; if the board resets when it moves, power the servo separately."
+    warn: true
