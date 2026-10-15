@@ -285,6 +285,7 @@ opencode — no separate editor is involved. Keep these in mind:
 - **Motor driver (L298N)**: IN1 GPIO 12, IN2 GPIO 14, ENA GPIO 13 (PWM); battery + common ground.
 - **74HC595**: DS GPIO 14, ST_CP GPIO 12, SH_CP GPIO 13, OE GPIO 5, MR tied high.
 - **Camera**: needs custom firmware (lemariva/micropython-camera-driver) and claims GPIO 4, 5, 18, 19, 21, 22, 23, 25, 26, 27, 34, 35, 36, 39 — pot/joystick/LDR circuits stop working while it is flashed. Say so in a note.
+- **Wi-Fi hotspot**: when a project makes the ESP32 its own access point (a page the phone opens, say), ask the student what to name it — their answer becomes the SSID. A room of ten boards sharing one default name is ten networks nobody can tell apart; something personal like `ENT164-amira` picks itself out.
 
 The examples in `circuits/` already follow this table — start from the closest one.
 

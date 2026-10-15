@@ -2,7 +2,7 @@
   "skills": [
     {
       "name": "box-maker",
-      "version": "255cece1065a",
+      "version": "f8f4c95824b9",
       "files": [
         "SKILL.md",
         "birdhouse.py",
@@ -14,7 +14,7 @@
     },
     {
       "name": "breadboard-wiring",
-      "version": "27ff6a710395",
+      "version": "5954a4073263",
       "files": [
         "SKILL.md",
         "bbd/__init__.py",
@@ -46,6 +46,7 @@
         "circuits/pnp-transistor.yml",
         "circuits/potentiometer.yml",
         "circuits/rgb_led.yml",
+        "circuits/robot-button-servo.yml",
         "circuits/robot-drive.yml",
         "circuits/robot-full.yml",
         "circuits/servo-extension-board.yml",
@@ -60,7 +61,7 @@
     },
     {
       "name": "laser-ready",
-      "version": "868a1495084d",
+      "version": "fdf0988a799f",
       "files": [
         "SKILL.md",
         "ensure-runtime.ps1",
@@ -69,6 +70,20 @@
         "laser/finger_joints.py",
         "laser/geom.py",
         "laser/laser_svg.py"
+      ]
+    },
+    {
+      "name": "print-ready",
+      "version": "ddb158619dd4",
+      "files": [
+        "SKILL.md",
+        "ensure-runtime.ps1",
+        "ensure-runtime.sh",
+        "slicer/geom.py",
+        "slicer/mesh.py",
+        "slicer/preview.py",
+        "slicer/profiles.py",
+        "slicer/slice_stl.py"
       ]
     }
   ]
