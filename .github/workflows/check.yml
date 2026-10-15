@@ -49,6 +49,110 @@ jobs:
           "$PY" box-maker/birdhouse.py --engrave -o /tmp/birdhouse.svg
           grep -q 'data:image/png;base64' /tmp/birdhouse.svg
 
+      - name: An STL slices to G-code
+        run: |
+          PY="$HOME/.venvs/ent164-maker/bin/python"
+          "$PY" print-ready/slicer/slice_stl.py tools/ci/washer.stl \
+            -o /tmp/washer.gcode --preview /tmp/washer.png
+          # The printer's own model check, and PLA settings from its profile.
+          grep -q 'M862.3 P "MK4"' /tmp/washer.gcode
+          grep -q 'M140 S60' /tmp/washer.gcode
+          grep -q 'M104 S230' /tmp/washer.gcode
+          test -s /tmp/washer.png
+
+      - name: The hole in the washer stays empty
+        run: |
+          PY="$HOME/.venvs/ent164-maker/bin/python"
+          "$PY" - <<'PY'
+          # A slicer that ignores contour orientation fills the hole in. This
+          # asserts no plastic is deposited strictly inside it.
+          pts = []
+          for line in open("/tmp/washer.gcode"):
+              parts = line.split()
+              if not parts or parts[0] != "G1":
+                  continue
+              vals = {}
+              for tok in parts[1:]:
+                  if tok[0] in "XYE" and len(tok) > 1:
+                      try:
+                          vals[tok[0]] = float(tok[1:])
+                      except ValueError:
+                          pass
+              if {"X", "Y", "E"} <= vals.keys():
+                  pts.append((vals["X"], vals["Y"]))
+          assert pts, "no extruding moves at all"
+          # 30 mm washer centred on a 250 x 210 bed: hole is 117.5..132.5 in x
+          # and 97.5..112.5 in y. Inset 2 mm so wall points are not flagged.
+          inside = [p for p in pts if 119.5 < p[0] < 130.5 and 99.5 < p[1] < 110.5]
+          assert not inside, f"{len(inside)} extruding moves inside the hole"
+          xs = [x for x, _ in pts]
+          assert 110.2 < min(xs) < 110.3, f"outer wall at {min(xs)}"
+          print(f"hole is empty; {len(pts)} extruding moves checked")
+          PY
+
+      - name: The CORE One profile is selected
+        run: |
+          PY="$HOME/.venvs/ent164-maker/bin/python"
+          "$PY" print-ready/slicer/slice_stl.py tools/ci/washer.stl \
+            --machine coreone -o /tmp/washer-core.gcode
+          grep -q 'M862.3 P "COREONE"' /tmp/washer-core.gcode
+          grep -q 'M141 S20' /tmp/washer-core.gcode
+
+      - name: Support appears under an overhang, and leaves a gap
+        run: |
+          PY="$HOME/.venvs/ent164-maker/bin/python"
+          # The T part is a 10 x 10 post under a 30 x 30 cap, so the cap's
+          # underside is a 10 mm horizontal overhang. No support by default.
+          "$PY" print-ready/slicer/slice_stl.py tools/ci/overhang.stl \
+            -o /tmp/oh-plain.gcode
+          "$PY" print-ready/slicer/slice_stl.py tools/ci/overhang.stl --support \
+            -o /tmp/oh-sup.gcode
+          "$PY" - <<'PY'
+          # Support moves use the support feedrates; the part does not.
+          def load(path, support):
+              out, layer, z = [], None, None
+              for line in open(path):
+                  m = line.strip()
+                  if m.startswith(";LAYER:"):
+                      layer = int(m.split(":")[1]); continue
+                  if m.startswith("; max_layer_z"):
+                      break
+                  p = m.split()
+                  if not p:
+                      continue
+                  if p[0] == "G1" and len(p) > 1 and p[1].startswith("Z"):
+                      z = float(p[1][1:]); continue
+                  if p[0] != "G1":
+                      continue
+                  v = {}
+                  for t in p[1:]:
+                      if t[0] in "XYEF" and len(t) > 1:
+                          try: v[t[0]] = float(t[1:])
+                          except ValueError: pass
+                  if "E" not in v or "X" not in v or "Y" not in v:
+                      continue
+                  if (v.get("F") in (7200.0, 3600.0)) == support:
+                      out.append((layer, z, v["X"], v["Y"]))
+              return out
+
+          plain = load("/tmp/oh-plain.gcode", True)
+          assert not plain, f"{len(plain)} support moves without --support"
+
+          sup = load("/tmp/oh-sup.gcode", True)
+          part = load("/tmp/oh-sup.gcode", False)
+          assert sup, "no support was generated for a horizontal overhang"
+          assert part, "no part moves at all"
+
+          # The cap spans x 110..140, the post x 120..130, on a 250 mm bed.
+          inside = [m for m in sup if 120.5 < m[2] < 129.5 and 100.5 < m[3] < 109.5]
+          assert not inside, f"{len(inside)} support moves inside the post"
+
+          top = max(z for _, z, _, _ in sup)
+          assert abs(top - 19.80) < 1e-6, f"support reaches z={top}, want 19.80"
+          print(f"support ok: {len(sup)} moves, top at z={top:.2f}, "
+                f"cap starts at 20.00 (one layer of clearance)")
+          PY
+
   windows:
     name: sandbox + render (Windows)
     runs-on: windows-latest
@@ -66,3 +170,14 @@ jobs:
           & $py breadboard-wiring/render.py breadboard-wiring/circuits/led.yml `
             -o "$env:TEMP\led" --no-png --no-open --no-gallery
           if (-not (Test-Path "$env:TEMP\led.svg")) { throw "no SVG was written" }
+
+      - name: An STL slices to G-code
+        shell: pwsh
+        run: |
+          $py = Join-Path $HOME ".venvs\ent164-maker\Scripts\python.exe"
+          & $py print-ready/slicer/slice_stl.py tools/ci/washer.stl `
+            -o "$env:TEMP\washer.gcode" --preview "$env:TEMP\washer.png"
+          if (-not (Select-String -Quiet -Path "$env:TEMP\washer.gcode" -Pattern 'M862.3 P "MK4"')) {
+            throw "the MK4 model check is missing from the G-code"
+          }
+          if (-not (Test-Path "$env:TEMP\washer.png")) { throw "no preview was written" }

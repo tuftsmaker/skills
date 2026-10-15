@@ -17,6 +17,8 @@ set -eu
 PY_VERSION=3.12.14                     # one pinned interpreter for the class
 PILLOW_VERSION=12.3.0
 PYYAML_VERSION=6.0.3
+NUMPY_VERSION=2.5.3                    # print-ready: slicing maths
+PYCLIPPER_VERSION=1.4.0                # print-ready: Clipper polygon offsets
 VENV="${ENT164_VENV:-$HOME/.venvs/ent164-maker}"
 UV="${ENT164_UV:-$HOME/.local/bin/uv}"
 
@@ -75,13 +77,14 @@ fi
 # 4. The class packages, pinned as well. Re-running verifies rather than
 #    reinstalls; the unpinned fallback covers a wheel disappearing for one
 #    platform.
-say "installing Pillow and PyYAML ..."
+say "installing Pillow, PyYAML, numpy and pyclipper ..."
 "$UV" pip install --quiet --python "$PY" \
   "Pillow==$PILLOW_VERSION" "PyYAML==$PYYAML_VERSION" \
-  || "$UV" pip install --quiet --python "$PY" Pillow PyYAML
+  "numpy==$NUMPY_VERSION" "pyclipper==$PYCLIPPER_VERSION" \
+  || "$UV" pip install --quiet --python "$PY" Pillow PyYAML numpy pyclipper
 
-"$PY" -c 'import PIL, yaml' \
-  || die "the sandbox at $VENV cannot import Pillow and PyYAML — re-run this script"
+"$PY" -c 'import PIL, yaml, numpy, pyclipper' \
+  || die "the sandbox at $VENV cannot import its packages — re-run this script"
 
 printf '\nsandbox : Python %s at %s\n' "$PY_VERSION" "$VENV"
 printf 'ENT164_PYTHON=%s\n' "$PY"

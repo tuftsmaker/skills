@@ -20,6 +20,8 @@ $ErrorActionPreference = "Stop"
 $PyVersion = "3.12.14"                 # one pinned interpreter for the class
 $PillowVersion = "12.3.0"
 $PyYamlVersion = "6.0.3"
+$NumpyVersion = "2.5.3"                # print-ready: slicing maths
+$PyClipperVersion = "1.4.0"            # print-ready: Clipper polygon offsets
 
 if ($env:ENT164_VENV) { $Venv = $env:ENT164_VENV } else { $Venv = Join-Path $HOME ".venvs\ent164-maker" }
 if ($env:ENT164_UV) { $Uv = $env:ENT164_UV } else { $Uv = Join-Path $HOME ".local\bin\uv.exe" }
@@ -73,15 +75,15 @@ if (-not $ready) {
 # 4. The class packages, pinned as well. Re-running verifies rather than
 #    reinstalls; the unpinned fallback covers a wheel disappearing for one
 #    platform.
-Say "installing Pillow and PyYAML ..."
-& $Uv pip install --quiet --python $Py "Pillow==$PillowVersion" "PyYAML==$PyYamlVersion"
+Say "installing Pillow, PyYAML, numpy and pyclipper ..."
+& $Uv pip install --quiet --python $Py "Pillow==$PillowVersion" "PyYAML==$PyYamlVersion" "numpy==$NumpyVersion" "pyclipper==$PyClipperVersion"
 if ($LASTEXITCODE -ne 0) {
-    & $Uv pip install --quiet --python $Py Pillow PyYAML
-    if ($LASTEXITCODE -ne 0) { Die "could not install Pillow and PyYAML - check your internet connection" }
+    & $Uv pip install --quiet --python $Py Pillow PyYAML numpy pyclipper
+    if ($LASTEXITCODE -ne 0) { Die "could not install the class packages - check your internet connection" }
 }
 
-& $Py -c "import PIL, yaml"
-if ($LASTEXITCODE -ne 0) { Die "the sandbox at $Venv cannot import Pillow and PyYAML - re-run this script" }
+& $Py -c "import PIL, yaml, numpy, pyclipper"
+if ($LASTEXITCODE -ne 0) { Die "the sandbox at $Venv cannot import its packages - re-run this script" }
 
 Write-Host ""
 Write-Host "sandbox : Python $PyVersion at $Venv"

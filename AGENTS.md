@@ -6,8 +6,8 @@ lives here so it lives with them.
 
 ## Publishing: one source, generated index
 
-- `breadboard-wiring/`, `laser-ready/` and `box-maker/` are the source
-  of truth. `index.json` is generated — never hand-edit it.
+- `breadboard-wiring/`, `laser-ready/`, `box-maker/` and `print-ready/`
+  are the source of truth. `index.json` is generated — never hand-edit it.
 - After any skill edit: `./tools/skill-publish/rebuild.sh`, then commit and
   push. opencode re-downloads a skill only when its content-based `version`
   changes; editing without rebuilding means students silently keep the old
@@ -23,8 +23,8 @@ lives here so it lives with them.
 - Every skill carries `ensure-runtime.sh` and `ensure-runtime.ps1`; the copies
   must stay byte-identical (`rebuild.sh` checks, CI runs both platforms). The
   first skill a student runs installs uv, has it download the pinned CPython
-  (exact patch) and builds `~/.venvs/ent164-maker` with pinned Pillow and
-  PyYAML.
+  (exact patch) and builds `~/.venvs/ent164-maker` with pinned Pillow,
+  PyYAML, numpy and pyclipper.
 - The ensure scripts are the only place versions live; bump every copy
   together when bumping.
 - Keep `ensure-runtime.ps1` **pure ASCII**: Windows PowerShell 5.1 reads a

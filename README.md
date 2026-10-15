@@ -1,8 +1,8 @@
 # TuftsMaker class skills
 
 The ENT-164 *Intro to Making* skills for [opencode](https://opencode.ai) —
-breadboard wiring diagrams, laser-ready files, and finger-jointed boxes that
-students run on their own machines.
+breadboard wiring diagrams, laser-ready files, finger-jointed box makers, and
+3D-print slicing that students run on their own machines.
 
 Served by GitHub Pages and consumed through opencode's `skills.urls`:
 
@@ -20,6 +20,7 @@ Students add that URL to opencode once (the class setup guide and the
 | `breadboard-wiring` | breadboard wiring diagrams for the Freenove ESP32-WROVER / FNK0046 kit (SVG + PNG) | PyYAML |
 | `laser-ready` | turns an Onshape DXF into the pure-red hairline SVG the Nolop laser reads; cuts finger joints | stdlib only |
 | `box-maker` | finger-jointed boxes and custom parts — tray + lid by command, anything else from the API; the birdhouse is the worked example | Pillow (engraving) |
+| `print-ready` | slices an STL into G-code for the Nolop Prusa MK4 and CORE One, with a toolpath preview | numpy, pyclipper, Pillow (preview) |
 
 **This repo is the source of truth.** There is no separate source tree and no
 build output to keep in sync — edit a skill file, run `rebuild.sh`, commit,
@@ -27,9 +28,9 @@ push.
 
 Every command students run goes through the **pinned Python sandbox** each
 skill carries (`ensure-runtime.sh` / `ensure-runtime.ps1` for Windows): uv
-downloads a pinned CPython into `~/.venvs/ent164-maker` with pinned Pillow and
-PyYAML. Nothing ever uses or changes the student's own Python, even a matching
-one.
+downloads a pinned CPython into `~/.venvs/ent164-maker` with pinned Pillow,
+PyYAML, numpy and pyclipper. Nothing ever uses or changes the student's own
+Python, even a matching one.
 
 ## Editing a skill
 
@@ -125,5 +126,5 @@ the Canvas copy of the page.
 `.github/workflows/check.yml` proves, on every push:
 
 - `index.json` matches the skills (rebuild + `git diff --exit-code`),
-- the sandbox bootstraps from nothing and all three skills run on Linux,
+- the sandbox bootstraps from nothing and all four skills run on Linux,
 - the same bootstrap runs under Windows PowerShell and a diagram renders.
